@@ -24,7 +24,7 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
         private readonly Dictionary<int, string> dataTypeDictionary = ConfigDictionaries.DataTypeDictionary;
 
 
-		private FrmCnlsMerge()
+        private FrmCnlsMerge()
         {
             InitializeComponent();
             dataGridView1.AutoGenerateColumns = false;
@@ -44,9 +44,9 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
             this.CtrlImport2 = ctrlImport2;
             this.CtrlImport3 = ctrlImport3;
             setDictio(ctrlImport3._dictio);
-                
+
             gridViewFiller();
-          
+
         }
 
         public void setDictio(Dictionary<string, List<string>> dictio)
@@ -57,14 +57,14 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
         {
             dataGridView1.Rows.Clear();
 
-			List<Cnl>  channelPrototypes = CreateChannels();
-            
+            List<Cnl> channelPrototypes = CreateChannels();
+
             foreach (var prototype in channelPrototypes)
             {
-                int rowIndex = dataGridView1.Rows.Add(); 
+                int rowIndex = dataGridView1.Rows.Add();
                 DataGridViewRow row = dataGridView1.Rows[rowIndex];
 
-                
+
                 var cnlNum = prototype.CnlNum;
                 var projectItem = project.ConfigDatabase.CnlTable.GetItem(cnlNum);
 
@@ -75,27 +75,27 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
                 string prototypeCnlType = cnlTypeDictionary[prototype.CnlTypeID];
                 string prototypeDataType = prototype.DataTypeID.HasValue ? dataTypeDictionary[prototype.DataTypeID.Value] : "";
 
-                row.Cells[0].Value = prototype.CnlNum;  
-                row.Cells[1].Value = false;             
-                row.Cells[2].Value = prototype.Name;    
-                row.Cells[3].Value = prototypeDataType; 
-                row.Cells[4].Value = prototypeCnlType;  
-                row.Cells[5].Value = prototype.TagCode; 
-                row.Cells[6].Value = "";                
-                row.Cells[7].Value = false;             
-                row.Cells[8].Value = projectCnlName;    
-                row.Cells[9].Value = projectDataType;  
-                row.Cells[10].Value = projectCnlType;   
+                row.Cells[0].Value = prototype.CnlNum;
+                row.Cells[1].Value = false;
+                row.Cells[2].Value = prototype.Name;
+                row.Cells[3].Value = prototypeDataType;
+                row.Cells[4].Value = prototypeCnlType;
+                row.Cells[5].Value = prototype.TagCode;
+                row.Cells[6].Value = "";
+                row.Cells[7].Value = false;
+                row.Cells[8].Value = projectCnlName;
+                row.Cells[9].Value = projectDataType;
+                row.Cells[10].Value = projectCnlType;
                 row.Cells[11].Value = projectTagCode;
 
                 row.Cells[6].Value = prototype;
             }
 
             dataGridView1.Columns[6].Visible = false;
-            
+
         }
 
-        
+
         private bool AddSelectedChannels()
         {
             List<Cnl> selectedChannels = new List<Cnl>();
@@ -109,7 +109,7 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
                     selectedChannels.Add(cnl);
                 }
             }
-            if(selectedChannels.Count > 0)
+            if (selectedChannels.Count > 0)
             {
                 AddChannels(selectedChannels);
                 return true;
@@ -117,9 +117,9 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
             else
             {
                 ScadaUiUtils.ShowWarning(ExtensionPhrases.SelectWarning);
-				return false;
-			}
-            
+                return false;
+            }
+
         }
 
 
@@ -198,22 +198,22 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
             return cnls;
         }
 
-		/// <summary>
-		/// Add cnls 
-		/// </summary>
-		/// <param name="cnls"></param>
-		private void AddChannels(List<Cnl> cnls)
-		{
-			if (cnls == null || cnls.Count <= 0)
-			{
-				return;
-			}
+        /// <summary>
+        /// Add cnls 
+        /// </summary>
+        /// <param name="cnls"></param>
+        private void AddChannels(List<Cnl> cnls)
+        {
+            if (cnls == null || cnls.Count <= 0)
+            {
+                return;
+            }
 
-			cnls.ForEach(cnl => project.ConfigDatabase.CnlTable.AddItem(cnl));
-			project.ConfigDatabase.CnlTable.Modified = true;
-		}
+            cnls.ForEach(cnl => project.ConfigDatabase.CnlTable.AddItem(cnl));
+            project.ConfigDatabase.CnlTable.Modified = true;
+        }
 
-		private void dataGridView1_CellContentClick(object sender, DataGridViewCellEventArgs e)
+        private void dataGridView1_CellContentClick(object sender, DataGridViewCellEventArgs e)
         {
             if (dataGridView1.Columns[e.ColumnIndex] is DataGridViewCheckBoxColumn && e.RowIndex >= 0)
             {
@@ -384,9 +384,6 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
             SetCheckboxLocation(_headerCheckBox1, 1);
             SetCheckboxLocation(_headerCheckBox2, 7);
 
-            SetLabelLocation(lblSource, -1, 5);
-            SetLabelLocation(lblDestination, 6, 9);
-
             dataGridView1.Controls.Add(_headerCheckBox1);
             _headerCheckBox1.CheckedChanged += _headerCheckBox1_CheckedChanged;
             dataGridView1.Controls.Add(_headerCheckBox2);
@@ -400,9 +397,6 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
         {
             SetCheckboxLocation(_headerCheckBox1, 1);
             SetCheckboxLocation(_headerCheckBox2, 7);
-
-            SetLabelLocation(lblSource, -1, 5);
-            SetLabelLocation(lblDestination, 6, 9);
         }
 
         private void SetCheckboxLocation(System.Windows.Forms.CheckBox ck, int columnIndex)
@@ -414,23 +408,13 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
             ck.Size = new Size(18, 18);
         }
 
-        private void SetLabelLocation(System.Windows.Forms.Label lbl, int columnStartIndex, int columnEndIndex)
-        {
-            Rectangle headerCell1Rectangle = this.dataGridView1.GetCellDisplayRectangle(columnStartIndex, -1, true);
-            Rectangle headerCell2Rectangle = this.dataGridView1.GetCellDisplayRectangle(columnEndIndex, -1, true);
-
-            lbl.Location = new Point(headerCell1Rectangle.X + dataGridView1.Location.X, lbl.Location.Y);
-            lbl.Size = new Size((headerCell2Rectangle.X + dataGridView1.Location.X + headerCell2Rectangle.Width) - headerCell1Rectangle.X, 21);
-        }
-
         /// <summary>
         /// Create or update cnl from file
         /// </summary>
         private void btnAdd_Click_1(object sender, EventArgs e)
         {
-            if(AddSelectedChannels())
+            if (AddSelectedChannels())
                 DialogResult = DialogResult.OK;
         }
-
     }
 }
