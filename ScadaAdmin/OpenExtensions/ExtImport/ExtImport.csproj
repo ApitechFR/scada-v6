@@ -47,6 +47,9 @@
     <Compile Update="Forms\FrmCnlImport.cs">
       <SubType>Form</SubType>
     </Compile>
+    <Compile Update="Forms\FrmCnlsMergeCopy.cs">
+      <SubType>Form</SubType>
+    </Compile>
     <Compile Update="Forms\FrmCnlsMerge.cs">
       <SubType>Form</SubType>
     </Compile>

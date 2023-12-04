@@ -338,6 +338,7 @@ namespace Scada.Admin.Extensions.ExtImport.Controls
         private void readTxtControlExpert(string l)
         {
             string[] colums = l.Split("\t");
+            Console.WriteLine(colums[3].Replace("\"", ""));
 
             bool isAVar = true;
 
@@ -353,12 +354,14 @@ namespace Scada.Admin.Extensions.ExtImport.Controls
                 _adress = new string(_adress.SkipWhile(x => !char.IsDigit(x)).ToArray());
                 _comment = colums[3].Replace("\"", "");
                 string prefix = Regex.Split(_adress, @"[0-9]").First();
-
+                Console.WriteLine("commeny :");
+                Console.WriteLine(_comment);
                 List<string> list = new List<string>();
                 list.Add(_mnemonique);
                 list.Add(colums[2]);
                 list.Add(_comment);
                 list.Add(prefix);
+                Console.WriteLine(_comment);
 
                 if (!_dictio.ContainsKey(_adress))
                     _dictio.Add(_adress, list);

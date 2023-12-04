@@ -9,15 +9,14 @@ using Scada.Forms;
 
 namespace Scada.Admin.Extensions.ExtImport.Forms
 {
-    public partial class FrmCnlsMerge : Form
+    public partial class FrmCnlsMergeCopy : Form
     {
 
-        private Dictionary<string, List<string>> dictio;
+        private List<Cnl> currentChanels;
+        private Dictionary<string, List<string>> incomingRows;
+        private int deviceNum;
         private IAdminContext adminContext; // the Administrator context
         private ScadaProject project;       // the project under development
-        private Controls.CtrlImport3 CtrlImport3;
-        private Controls.CtrlImport2 CtrlImport2;
-        private Controls.CtrlImport1 CtrlImport1;
         private CheckBox _headerCheckBox1 = new CheckBox();
         private CheckBox _headerCheckBox2 = new CheckBox();
 
@@ -25,7 +24,7 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
         private readonly Dictionary<int, string> dataTypeDictionary = ConfigDictionaries.DataTypeDictionary;
 
 
-		private FrmCnlsMerge()
+		private FrmCnlsMergeCopy()
         {
             InitializeComponent();
             dataGridView1.AutoGenerateColumns = false;
@@ -38,62 +37,64 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
 
         }
 
-        public FrmCnlsMerge(ScadaProject project, Controls.CtrlImport1 ctrlImport1, Controls.CtrlImport2 ctrlImport2, Controls.CtrlImport3 ctrlImport3) : this()
+        public FrmCnlsMergeCopy(ScadaProject project, List<Cnl> currentChanels, Dictionary<string, List<string>> incomingRows, int deviceNum)// Controls.CtrlImport1 ctrlImport1, Controls.CtrlImport2 ctrlImport2, Controls.CtrlImport3 ctrlImport3) : this()
         {
             this.project = project;
-            this.CtrlImport1 = ctrlImport1;
-            this.CtrlImport2 = ctrlImport2;
-            this.CtrlImport3 = ctrlImport3;
-            setDictio(ctrlImport3._dictio);
-                
-            gridViewFiller();
-          
+            this.incomingRows =  incomingRows;
+            this.currentChanels = currentChanels;
+            this.deviceNum = deviceNum;
+            dataGridView1 = new DataGridView();
+
+            FillGridView();
         }
 
-        public void setDictio(Dictionary<string, List<string>> dictio)
+        public Cnl CreateChanelFromIncomingRow(string rowKey, List<string> rowValue)
         {
-            this.dictio = dictio;
+            Cnl cnl = new Cnl();
+            cnl.Name = rowValue[0] + " (" + rowValue[2] + ")"; ;
+            cnl.TagCode = rowKey;
+            cnl.CnlTypeID = Convert.ToInt32(rowValue[1]);
+            cnl.CnlNum = currentChanels.Count + 1;
+            cnl.DeviceNum = deviceNum;
+
+            return cnl;
         }
-        public void gridViewFiller()
+
+        public void FillGridView()
         {
             dataGridView1.Rows.Clear();
 
-			List<Cnl>  channelPrototypes = CreateChannels();
-            
-            foreach (var prototype in channelPrototypes)
+            foreach(var incomingRow in incomingRows)
             {
-                int rowIndex = dataGridView1.Rows.Add(); 
-                DataGridViewRow row = dataGridView1.Rows[rowIndex];
+                var sameCodeCurrentChanels = currentChanels.Where(cnl => cnl.TagCode == incomingRow.Key).ToList();
 
-                
-                var cnlNum = prototype.CnlNum;
-                var projectItem = project.ConfigDatabase.CnlTable.GetItem(cnlNum);
+                foreach (var cnl in sameCodeCurrentChanels)
+                {
+                    int rowIndex = dataGridView1.Rows.Add();
+                    DataGridViewRow row = dataGridView1.Rows[rowIndex];
+                    Cnl generatedChanelfromIncomingRow = CreateChanelFromIncomingRow(incomingRow.Key, incomingRow.Value);
 
-                string projectCnlName = projectItem != null ? projectItem.Name : "";
-                string projectCnlType = projectItem != null ? cnlTypeDictionary[projectItem.CnlTypeID] : "";
-                string projectDataType = (projectItem != null && projectItem.DataTypeID.HasValue) ? dataTypeDictionary[projectItem.DataTypeID.Value] : "";
-                string projectTagCode = projectItem != null ? projectItem.TagCode : "";
-                string prototypeCnlType = cnlTypeDictionary[prototype.CnlTypeID];
-                string prototypeDataType = prototype.DataTypeID.HasValue ? dataTypeDictionary[prototype.DataTypeID.Value] : "";
+                    //Cells from 0 to 5 are for incoming row
+                    row.Cells[0].Value = cnl.CnlNum;
+                    row.Cells[1].Value = false;
+                    row.Cells[8].Value = generatedChanelfromIncomingRow.Name;
+                    row.Cells[9].Value = (generatedChanelfromIncomingRow.DataTypeID.HasValue) ? dataTypeDictionary[generatedChanelfromIncomingRow.DataTypeID.Value] : "";
+                    row.Cells[10].Value = cnlTypeDictionary[generatedChanelfromIncomingRow.CnlTypeID];
+                    row.Cells[11].Value = generatedChanelfromIncomingRow.TagCode;
 
-                row.Cells[0].Value = prototype.CnlNum;  
-                row.Cells[1].Value = false;             
-                row.Cells[2].Value = prototype.Name;    
-                row.Cells[3].Value = prototypeDataType; 
-                row.Cells[4].Value = prototypeCnlType;  
-                row.Cells[5].Value = prototype.TagCode; 
-                row.Cells[6].Value = "";                
-                row.Cells[7].Value = false;             
-                row.Cells[8].Value = projectCnlName;    
-                row.Cells[9].Value = projectDataType;  
-                row.Cells[10].Value = projectCnlType;   
-                row.Cells[11].Value = projectTagCode;
+                    //Cell 6 contains incomingRow as a chanel
+                    row.Cells[6].Value = generatedChanelfromIncomingRow;
 
-                row.Cells[6].Value = prototype;
+                    //Cells from 7 to 11 are for current row
+                    row.Cells[7].Value = false;
+                    row.Cells[8].Value = cnl.Name;
+                    row.Cells[9].Value = (cnl.DataTypeID.HasValue) ? dataTypeDictionary[cnl.DataTypeID.Value] : "";
+                    row.Cells[10].Value = cnlTypeDictionary[cnl.CnlTypeID];
+                    row.Cells[11].Value = cnl.TagCode;
+
+                }
             }
-
-            dataGridView1.Columns[6].Visible = false;
-            
+            //dataGridView1.Columns[6].Visible = false;
         }
 
         
@@ -106,7 +107,6 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
                 if (Convert.ToBoolean(row.Cells[1].Value) == true)
                 {
                     Cnl cnl = (Cnl)row.Cells[6].Value;
-
                     selectedChannels.Add(cnl);
                 }
             }
@@ -121,82 +121,6 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
 				return false;
 			}
             
-        }
-
-
-        /// <summary>
-        /// Creates channels based on the channel prototypes.
-        /// </summary>
-        private List<Cnl> CreateChannels()
-        {
-            List<Cnl> cnls = new();
-            int cnlNum = CtrlImport3.StartCnlNum;
-            string name, separator, prefix, suffix;
-            CtrlImport3.CnlNameFormat.TryGetValue("separator", out separator);
-            CtrlImport3.CnlNameFormat.TryGetValue("prefix", out prefix);
-            CtrlImport3.CnlNameFormat.TryGetValue("suffix", out suffix);
-
-            int? objNum = CtrlImport2.ObjNum;
-            int deviceNum = CtrlImport1.SelectedDevice.DeviceNum;
-
-            foreach (CnlPrototype cnlPrototype in CtrlImport1.CnlPrototypes)
-            {
-                if (!string.IsNullOrWhiteSpace(prefix) || !string.IsNullOrWhiteSpace(suffix))
-                {
-                    name = prefix switch
-                    {
-                        "DeviceName" => CtrlImport3.DeviceName,
-                        "TagCode" => cnlPrototype.TagCode,
-                        "TagNumber" => cnlPrototype.TagNum.ToString(),
-                        "Type" => cnlPrototype.CnlTypeID.ToString(),
-                        _ => prefix
-                    };
-                    name += separator;
-                    name += suffix switch
-                    {
-                        "DeviceName" => CtrlImport3.DeviceName,
-                        "TagCode" => cnlPrototype.TagCode,
-                        "TagNumber" => cnlPrototype.TagNum.ToString(),
-                        "Type" => cnlPrototype.CnlTypeID.ToString(),
-                        _ => ""
-                    };
-                }
-                else
-                {
-                    name = CtrlImport3.DeviceName + "-" + cnlPrototype.TagCode;
-                }
-
-                cnls.Add(new Cnl
-                {
-                    CnlNum = cnlNum,
-                    Active = cnlPrototype.Active,
-                    Name = name + CtrlImport3._dictio[cnlPrototype.TagCode][2],
-                    DataTypeID = cnlPrototype.DataTypeID,
-                    DataLen = cnlPrototype.DataLen,
-                    CnlTypeID = cnlPrototype.CnlTypeID,
-                    ObjNum = objNum,
-                    DeviceNum = deviceNum,
-                    TagNum = cnlPrototype.TagNum,
-                    TagCode = cnlPrototype.TagCode,
-                    FormulaEnabled = cnlPrototype.FormulaEnabled,
-                    InFormula = cnlPrototype.InFormula,
-                    OutFormula = cnlPrototype.OutFormula,
-                    FormatID = project.ConfigDatabase.GetFormatByCode(cnlPrototype.FormatCode)?.FormatID,
-                    QuantityID = project.ConfigDatabase.GetQuantityByCode(cnlPrototype.QuantityCode)?.QuantityID,
-                    UnitID = project.ConfigDatabase.GetUnitByCode(cnlPrototype.UnitCode)?.UnitID,
-                    LimID = null,
-                    ArchiveMask = cnlPrototype.ArchiveMask,
-                    EventMask = cnlPrototype.EventMask
-                });
-
-                int dataLength = cnlPrototype.GetDataLength();
-                if (cnlNum > ConfigDatabase.MaxID - dataLength)
-                    break;
-                cnlNum += dataLength;
-                name = "";
-            }
-
-            return cnls;
         }
 
 		/// <summary>
