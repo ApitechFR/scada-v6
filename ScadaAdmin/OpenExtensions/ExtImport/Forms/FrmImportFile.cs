@@ -1,14 +1,19 @@
 ﻿using System.Text.RegularExpressions;
+using Scada.Admin.Extensions.ExtImport.Code;
 using Scada.Admin.Project;
+using Scada.Data.Entities;
 
 namespace Scada.Admin.Extensions.ExtImport.Forms
 {
     public partial class FrmImportFile : Form
     {
-        public Dictionary<string, List<string>> rowsToImport;
+        public Dictionary<string, List<string>> importedRows;
+        public List<Cnl> chanelsToCreateAfterMerge;
         public string selectedFileName;
         public string selectedDeviceName;
-        public List<Scada.Data.Entities.Cnl> conflictualChanels;
+        public List<Cnl> conflictualChanels;
+        private bool conflictsAreSolved = false;
+
         private readonly ScadaProject project;
         public FrmImportFile(ScadaProject prj)
         {
@@ -19,9 +24,15 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
             selectedFileName = "";
             panel2.Visible = false;
             panel3.Visible = false;
-            rowsToImport = new Dictionary<string, List<string>>();
+            importedRows = new Dictionary<string, List<string>>();
+            button1.Enabled = false;
         }
 
+        /// <summary>
+        /// Action triggered on click on "select file" button
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void btnSelectFile_Click_1(object sender, EventArgs e)
         {
             OpenFileDialog openFileDialog = new OpenFileDialog();
@@ -34,11 +45,16 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
                 if (selectedFileName != "")
                 {
                     readFile(selectedFileName);
+                    conflictsAreSolved = false;
                     refreshFormAccesses();
                 }
             }
         }
 
+        /// <summary>
+        /// read the file and fill the importedRows dictionary
+        /// </summary>
+        /// <param name="fileName"></param>
         private void readFile(string fileName)
         {
             using (StreamReader sr = new StreamReader(fileName))
@@ -47,7 +63,7 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
                 {
                     bool isFirstLine = true;
                     bool isPL7 = false;
-                    rowsToImport.Clear();
+                    importedRows.Clear();
 
                     while (!sr.EndOfStream)
                     {
@@ -80,40 +96,71 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
                 }
             }
         }
+
+        /// <summary>
+        /// Create a chanel object, filled with data from a row of the imported file
+        /// </summary>
+        /// <param name="rowKey"></param>
+        /// <param name="rowValue"></param>
+        /// <returns></returns>
+        public Cnl CreateChanelFromIncomingRow(string rowKey, List<string> rowValue)
+        {
+            Cnl cnl = new Cnl();
+            cnl.Name = rowValue[0] + " (" + rowValue[2] + ")";
+            cnl.TagCode = rowKey;
+            if (ConfigDictionaries.CnlDataType.ContainsKey(rowValue[1]))
+            {
+                cnl.DataTypeID = ConfigDictionaries.CnlDataType[rowValue[1]];
+            }
+            //default Type is input/output
+            cnl.CnlTypeID = 2; 
+            //todo: cnl.DeviceNum = deviceNum;
+
+            return cnl;
+        }
+
         /// <summary>
         /// Hides or shows elements in the form, considering different verifications.
         /// </summary>
-
         private void refreshFormAccesses()
         {
             //check if device is selected and if file is chosen
             bool areFileAndDeviceSelected = selectedFileName != "";// && selectedDeviceName != null;
 
-            //enable prefix and suffix selection if file and deviceare selected, disbale otherwise
+            //enable controls if file and device are selected, disbale otherwise
             cbBoxPrefix.Enabled = areFileAndDeviceSelected;
             cbBoxSuffix.Enabled = areFileAndDeviceSelected;
+            button1.Enabled = areFileAndDeviceSelected;
 
             if (areFileAndDeviceSelected)
             {
-                //update detectedConflicts
                 DetectConflicts();
-                bool hasConflicts = conflictualChanels.Count() > 0;
+                //We consider that there is a conflict if there are conflictual channels and if user has not already solved conflicts
+                bool hasConflicts = conflictualChanels.Count() > 0 && !conflictsAreSolved;
+                if (!hasConflicts && !conflictsAreSolved)
+                {
+                    chanelsToCreateAfterMerge = importedRows.Select(r => CreateChanelFromIncomingRow(r.Key, r.Value)).ToList();
+                }
                 //hide and display conflicts related labels and button container
-                panel2.Visible= hasConflicts;
-                panel3.Visible= !hasConflicts;
+                panel2.Visible = hasConflicts;
+                panel3.Visible = !hasConflicts;
                 button1.Enabled = !hasConflicts;
             }
         }
 
         /// <summary>
-        /// 
+        /// Find channels that enter in conflict with imported file rows
         /// </summary>
         private void DetectConflicts()
         {
-            //find channels with same adress in project
-            conflictualChanels = project.ConfigDatabase.CnlTable.Where(chanel => rowsToImport.ContainsKey(chanel.TagCode)).ToList();
+            conflictualChanels = project.ConfigDatabase.CnlTable.Where(chanel => importedRows.ContainsKey(chanel.TagCode)).ToList();
         }
 
+
+        /// <summary>
+        /// Read a line from an automate file
+        /// </summary>
+        /// <param name="l"></param>
         private void readAutomateLine(string line, bool isPL7)
         {
             int adressIndex = isPL7 ? 0 : 1;
@@ -128,14 +175,14 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
             }
 
             string adress = new string(columns[adressIndex].SkipWhile(x => !char.IsDigit(x)).ToArray());
-            if (rowsToImport.ContainsKey(adress))
+            if (importedRows.ContainsKey(adress))
             {
                 return;
             }
 
             string prefix = Regex.Split(columns[adressIndex], @"[0-9]").First();
 
-            this.rowsToImport.Add(adress, new List<string>
+            this.importedRows.Add(adress, new List<string>
             {
                 columns[mnemoniqueIndex],
                 columns[typeIndex],
@@ -144,6 +191,10 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
             });
         }
 
+        /// <summary>
+        /// Read a line from a SCY file
+        /// </summary>
+        /// <param name="l"></param>
         private void readSCYPL7(string l)
         {
             string[] splitInTwo = l.Split(" AT ");
@@ -171,8 +222,26 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
                     prefix,
                 };
 
-                rowsToImport.Add(adress, list);
+                importedRows.Add(adress, list);
             }
+        }
+
+        /// <summary>
+        /// We add created channels to the project
+        /// </summary>
+        /// <param name="cnls"></param>
+        private void CreateChanels(List<Cnl> cnls)
+        {
+            foreach (var cnl in cnls)
+            {
+                //if cnl.cnlnum is not defined, take the next one in the project's channels list
+                if (cnl.CnlNum == 0)
+                {
+                    cnl.CnlNum = project.ConfigDatabase.CnlTable.Count() > 0 ? project.ConfigDatabase.CnlTable.OrderBy(cnl => cnl.CnlNum).Last().CnlNum + 1 : 1;
+                }
+                project.ConfigDatabase.CnlTable.AddItem(cnl);
+            }
+            project.ConfigDatabase.CnlTable.Modified = true;
         }
 
         /// <summary>
@@ -182,8 +251,53 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
         /// <param name="e"></param>
         private void button3_Click(object sender, EventArgs e)
         {
-            FrmCnlsMergeCopy frmCnlsMerge = new(project, conflictualChanels, rowsToImport, 1);
-            frmCnlsMerge.ShowDialog();
+            conflictsAreSolved = false;
+
+            //We open the merge form
+            FrmCnlsMergeCopy frmCnlsMerge = new(project, conflictualChanels, importedRows, 1);
+
+            //If the merge form is closed with OK, we update the chanels to create
+            if (frmCnlsMerge.ShowDialog() == DialogResult.OK)
+            {
+                chanelsToCreateAfterMerge = frmCnlsMerge.chanelsToCreate;
+                conflictsAreSolved = true;
+
+                //We refresh the display of the form
+                refreshFormAccesses();
+            }
+        }
+
+        /// <summary>
+        /// On click on OK button, create chanels in project according to merge form result
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void button1_Click(object sender, EventArgs e)
+        {
+            //First, we create channels chosen in merge form
+            CreateChanels(chanelsToCreateAfterMerge);
+
+            //If not all imported rows were in conflict, we create chanels for all other rows
+            if(importedRows.Count() != importedRows.Where(r => conflictualChanels.Any(c => c.TagCode == r.Key)).Count() && conflictualChanels.Count()>0)
+            {
+                // we create channels for all other rows, which were not in conflict
+                List<Cnl> nonConflictualChanels = importedRows.Where(r=>!conflictualChanels.Any(c=>c.TagCode == r.Key)).Select(r => CreateChanelFromIncomingRow(r.Key, r.Value)).ToList();
+                //we add them to the project's chanels
+                CreateChanels(nonConflictualChanels);
+            }
+
+            //Finally, we close the form
+            DialogResult = DialogResult.OK;
+        }
+
+        /// <summary>
+        /// On click on Cancel button, close the form
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void button2_Click(object sender, EventArgs e)
+        {
+            DialogResult = DialogResult.Cancel;
         }
     }
 }

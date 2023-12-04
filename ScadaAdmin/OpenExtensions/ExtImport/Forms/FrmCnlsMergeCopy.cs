@@ -13,6 +13,7 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
     {
 
         private List<Cnl> currentChanels;
+        public List<Cnl> chanelsToCreate;
         private Dictionary<string, List<string>> incomingRows;
         private int deviceNum;
         private IAdminContext adminContext; // the Administrator context
@@ -34,16 +35,17 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
         {
             this.adminContext = adminContext ?? throw new ArgumentNullException(nameof(adminContext));
             this.project = project ?? throw new ArgumentNullException(nameof(project));
-
         }
 
         public FrmCnlsMergeCopy(ScadaProject project, List<Cnl> currentChanels, Dictionary<string, List<string>> incomingRows, int deviceNum)// Controls.CtrlImport1 ctrlImport1, Controls.CtrlImport2 ctrlImport2, Controls.CtrlImport3 ctrlImport3) : this()
         {
+            InitializeComponent();
+            dataGridView1.AutoGenerateColumns = false;
+
             this.project = project;
             this.incomingRows =  incomingRows;
             this.currentChanels = currentChanels;
             this.deviceNum = deviceNum;
-            dataGridView1 = new DataGridView();
 
             FillGridView();
         }
@@ -51,9 +53,13 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
         public Cnl CreateChanelFromIncomingRow(string rowKey, List<string> rowValue)
         {
             Cnl cnl = new Cnl();
-            cnl.Name = rowValue[0] + " (" + rowValue[2] + ")"; ;
+            cnl.Name = rowValue[0] + " (" + rowValue[2] + ")";
             cnl.TagCode = rowKey;
-            cnl.CnlTypeID = Convert.ToInt32(rowValue[1]);
+            if (ConfigDictionaries.CnlDataType.ContainsKey(rowValue[1]))
+            {
+                cnl.DataTypeID = ConfigDictionaries.CnlDataType[rowValue[1]];
+            }
+            cnl.CnlTypeID = 2; //corresponds to input/output
             cnl.CnlNum = currentChanels.Count + 1;
             cnl.DeviceNum = deviceNum;
 
@@ -73,14 +79,16 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
                     int rowIndex = dataGridView1.Rows.Add();
                     DataGridViewRow row = dataGridView1.Rows[rowIndex];
                     Cnl generatedChanelfromIncomingRow = CreateChanelFromIncomingRow(incomingRow.Key, incomingRow.Value);
+                    generatedChanelfromIncomingRow.CnlNum = cnl.CnlNum;
+                    generatedChanelfromIncomingRow.DeviceNum = null;
 
                     //Cells from 0 to 5 are for incoming row
                     row.Cells[0].Value = cnl.CnlNum;
                     row.Cells[1].Value = false;
-                    row.Cells[8].Value = generatedChanelfromIncomingRow.Name;
-                    row.Cells[9].Value = (generatedChanelfromIncomingRow.DataTypeID.HasValue) ? dataTypeDictionary[generatedChanelfromIncomingRow.DataTypeID.Value] : "";
-                    row.Cells[10].Value = cnlTypeDictionary[generatedChanelfromIncomingRow.CnlTypeID];
-                    row.Cells[11].Value = generatedChanelfromIncomingRow.TagCode;
+                    row.Cells[2].Value = generatedChanelfromIncomingRow.Name;
+                    row.Cells[3].Value = (generatedChanelfromIncomingRow.DataTypeID.HasValue) ? dataTypeDictionary[generatedChanelfromIncomingRow.DataTypeID.Value] : "";
+                    row.Cells[4].Value = cnlTypeDictionary[generatedChanelfromIncomingRow.CnlTypeID];
+                    row.Cells[5].Value = generatedChanelfromIncomingRow.TagCode;
 
                     //Cell 6 contains incomingRow as a chanel
                     row.Cells[6].Value = generatedChanelfromIncomingRow;
@@ -94,49 +102,8 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
 
                 }
             }
-            //dataGridView1.Columns[6].Visible = false;
+            dataGridView1.Columns[6].Visible = false;
         }
-
-        
-        private bool AddSelectedChannels()
-        {
-            List<Cnl> selectedChannels = new List<Cnl>();
-
-            foreach (DataGridViewRow row in dataGridView1.Rows)
-            {
-                if (Convert.ToBoolean(row.Cells[1].Value) == true)
-                {
-                    Cnl cnl = (Cnl)row.Cells[6].Value;
-                    selectedChannels.Add(cnl);
-                }
-            }
-            if(selectedChannels.Count > 0)
-            {
-                AddChannels(selectedChannels);
-                return true;
-            }
-            else
-            {
-                ScadaUiUtils.ShowWarning(ExtensionPhrases.SelectWarning);
-				return false;
-			}
-            
-        }
-
-		/// <summary>
-		/// Add cnls 
-		/// </summary>
-		/// <param name="cnls"></param>
-		private void AddChannels(List<Cnl> cnls)
-		{
-			if (cnls == null || cnls.Count <= 0)
-			{
-				return;
-			}
-
-			cnls.ForEach(cnl => project.ConfigDatabase.CnlTable.AddItem(cnl));
-			project.ConfigDatabase.CnlTable.Modified = true;
-		}
 
 		private void dataGridView1_CellContentClick(object sender, DataGridViewCellEventArgs e)
         {
@@ -353,8 +320,19 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
         /// </summary>
         private void btnAdd_Click_1(object sender, EventArgs e)
         {
-            if(AddSelectedChannels())
-                DialogResult = DialogResult.OK;
+            //todo: chanelsToDelete ?
+            chanelsToCreate = new List<Cnl>();
+
+            foreach (DataGridViewRow row in dataGridView1.Rows)
+            {
+                if (Convert.ToBoolean(row.Cells[1].Value) == true)
+                {
+                    Cnl cnl = (Cnl)row.Cells[6].Value;
+                    chanelsToCreate.Add(cnl);
+                }
+            }
+
+            DialogResult = DialogResult.OK;
         }
 
     }
