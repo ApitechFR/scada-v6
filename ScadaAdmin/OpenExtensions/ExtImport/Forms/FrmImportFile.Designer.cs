@@ -98,6 +98,7 @@
             cbDevice.Size = new Size(238, 23);
             cbDevice.TabIndex = 13;
             cbDevice.ValueMember = "DeviceNum";
+            cbDevice.SelectedIndexChanged += cbDevice_SelectedIndexChanged;
             // 
             // label1
             // 
@@ -265,7 +266,7 @@
             Controls.Add(btnSelectFile);
             Margin = new Padding(3, 2, 3, 2);
             Name = "FrmImportFile";
-            Text = "FrmImportFile";
+            Text = "File import";
             ((System.ComponentModel.ISupportInitialize)pbStatus).EndInit();
             ((System.ComponentModel.ISupportInitialize)pictureBox1).EndInit();
             panel1.ResumeLayout(false);

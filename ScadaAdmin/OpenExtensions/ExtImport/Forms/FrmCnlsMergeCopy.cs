@@ -14,7 +14,7 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
 
         private List<Cnl> currentChanels;
         public List<Cnl> chanelsToCreate;
-        private Dictionary<string, List<string>> incomingRows;
+        private List<Cnl> incomingChanels;
         private int deviceNum;
         private IAdminContext adminContext; // the Administrator context
         private ScadaProject project;       // the project under development
@@ -37,61 +37,44 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
             this.project = project ?? throw new ArgumentNullException(nameof(project));
         }
 
-        public FrmCnlsMergeCopy(ScadaProject project, List<Cnl> currentChanels, Dictionary<string, List<string>> incomingRows, int deviceNum)// Controls.CtrlImport1 ctrlImport1, Controls.CtrlImport2 ctrlImport2, Controls.CtrlImport3 ctrlImport3) : this()
+        public FrmCnlsMergeCopy(ScadaProject project, List<Cnl> currentChanels, List<Cnl> incomingChanels, int deviceNum)// Controls.CtrlImport1 ctrlImport1, Controls.CtrlImport2 ctrlImport2, Controls.CtrlImport3 ctrlImport3) : this()
         {
             InitializeComponent();
             dataGridView1.AutoGenerateColumns = false;
 
             this.project = project;
-            this.incomingRows =  incomingRows;
+            this.incomingChanels = incomingChanels;
             this.currentChanels = currentChanels;
             this.deviceNum = deviceNum;
 
             FillGridView();
         }
 
-        public Cnl CreateChanelFromIncomingRow(string rowKey, List<string> rowValue)
-        {
-            Cnl cnl = new Cnl();
-            cnl.Name = rowValue[0] + " (" + rowValue[2] + ")";
-            cnl.TagCode = rowKey;
-            if (ConfigDictionaries.CnlDataType.ContainsKey(rowValue[1]))
-            {
-                cnl.DataTypeID = ConfigDictionaries.CnlDataType[rowValue[1]];
-            }
-            cnl.CnlTypeID = 2; //corresponds to input/output
-            cnl.CnlNum = currentChanels.Count + 1;
-            cnl.DeviceNum = deviceNum;
-
-            return cnl;
-        }
-
         public void FillGridView()
         {
             dataGridView1.Rows.Clear();
 
-            foreach(var incomingRow in incomingRows)
+            foreach(var incomingChanel in incomingChanels)
             {
-                var sameCodeCurrentChanels = currentChanels.Where(cnl => cnl.TagCode == incomingRow.Key).ToList();
+                var sameCodeCurrentChanels = currentChanels.Where(cnl => cnl.TagCode == incomingChanel.TagCode).ToList();
 
                 foreach (var cnl in sameCodeCurrentChanels)
                 {
                     int rowIndex = dataGridView1.Rows.Add();
                     DataGridViewRow row = dataGridView1.Rows[rowIndex];
-                    Cnl generatedChanelfromIncomingRow = CreateChanelFromIncomingRow(incomingRow.Key, incomingRow.Value);
-                    generatedChanelfromIncomingRow.CnlNum = cnl.CnlNum;
-                    generatedChanelfromIncomingRow.DeviceNum = null;
+                    incomingChanel.CnlNum = cnl.CnlNum;
+                    //incomingChanel.DeviceNum = null;
 
                     //Cells from 0 to 5 are for incoming row
                     row.Cells[0].Value = cnl.CnlNum;
                     row.Cells[1].Value = false;
-                    row.Cells[2].Value = generatedChanelfromIncomingRow.Name;
-                    row.Cells[3].Value = (generatedChanelfromIncomingRow.DataTypeID.HasValue) ? dataTypeDictionary[generatedChanelfromIncomingRow.DataTypeID.Value] : "";
-                    row.Cells[4].Value = cnlTypeDictionary[generatedChanelfromIncomingRow.CnlTypeID];
-                    row.Cells[5].Value = generatedChanelfromIncomingRow.TagCode;
+                    row.Cells[2].Value = incomingChanel.Name;
+                    row.Cells[3].Value = (incomingChanel.DataTypeID.HasValue) ? dataTypeDictionary[incomingChanel.DataTypeID.Value] : "";
+                    row.Cells[4].Value = cnlTypeDictionary[incomingChanel.CnlTypeID];
+                    row.Cells[5].Value = incomingChanel.TagCode;
 
                     //Cell 6 contains incomingRow as a chanel
-                    row.Cells[6].Value = generatedChanelfromIncomingRow;
+                    row.Cells[6].Value = incomingChanel;
 
                     //Cells from 7 to 11 are for current row
                     row.Cells[7].Value = false;
