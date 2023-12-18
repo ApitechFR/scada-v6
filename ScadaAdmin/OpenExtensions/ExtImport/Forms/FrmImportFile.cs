@@ -1,7 +1,14 @@
-﻿using System.Text.RegularExpressions;
+﻿using System.Reflection;
+using System.Text.RegularExpressions;
+using System.Threading.Channels;
+using System.Windows.Forms;
+using System.Xml;
+using System.Xml.XPath;
 using Scada.Admin.Extensions.ExtImport.Code;
 using Scada.Admin.Project;
 using Scada.Comm.Devices;
+using Scada.Comm.Drivers.DrvModbus.Config;
+using Scada.Comm.Drivers.DrvModbus.Protocol;
 using Scada.Data.Entities;
 
 namespace Scada.Admin.Extensions.ExtImport.Forms
@@ -13,9 +20,11 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
         public List<Cnl> conflictualChanels;
         public List<Cnl> chanelsToCreateAfterMerge;
         public string selectedFileName;
-        public string selectedDeviceName;
         private Device selectedDevice;
         private bool conflictsAreSolved = false;
+        Dictionary<string, int> availablePrefixSuffix = new Dictionary<string, int> { { "TagCode", -1 }, { "Name", 0 }, { "Format", 1 }, { "Comment", 2 } };
+        string selectedPrefix;
+        string selectedSuffix;
 
         private readonly ScadaProject project;
         public FrmImportFile(ScadaProject prj)
@@ -32,6 +41,12 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
 
             cbDevice.Items.Clear();
             project.ConfigDatabase.DeviceTable.AsEnumerable().ToList().ForEach(d => cbDevice.Items.Add(d.Name));
+            cbBoxPrefix.Items.Add("None");
+            cbBoxPrefix.Items.AddRange(availablePrefixSuffix.Keys.ToArray());
+            cbBoxPrefix.SelectedItem = "None";
+            cbBoxSuffix.Items.Add("None");
+            cbBoxSuffix.Items.AddRange(availablePrefixSuffix.Keys.ToArray());
+            cbBoxSuffix.SelectedItem = "None";
         }
 
         /// <summary>
@@ -112,7 +127,7 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
         private Cnl generateChanelFromRow(KeyValuePair<string, List<string>> row)
         {
             Cnl cnl = new Cnl();
-            cnl.Name = row.Value[0] + " (" + row.Value[2] + ")";
+            cnl.Name = row.Value[0];
             cnl.TagCode = row.Key;
             if (ConfigDictionaries.CnlDataType.ContainsKey(row.Value[1]))
             {
@@ -131,7 +146,7 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
         private void refreshFormAccesses()
         {
             //check if device is selected and if file is chosen
-            bool areFileAndDeviceSelected = selectedFileName != "";// && selectedDeviceName != null;
+            bool areFileAndDeviceSelected = selectedFileName != "" && selectedDevice != null;
 
             //enable controls if file and device are selected, disbale otherwise
             cbBoxPrefix.Enabled = areFileAndDeviceSelected;
@@ -148,7 +163,7 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
                 bool hasConflicts = conflictualChanels.Count() > 0 && !conflictsAreSolved;
                 if (!hasConflicts && !conflictsAreSolved)
                 {
-                    chanelsToCreateAfterMerge = importedChanels;
+                    chanelsToCreateAfterMerge = importedChanels.DeepClone();
                 }
                 //hide and display conflicts related labels and button container
                 panel2.Visible = hasConflicts;
@@ -296,6 +311,9 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
                 AddChanelsToProject(nonConflictualChanels);
             }
 
+            //Then, we generate a device configuration according to imported rows
+            ImportDeviceConfiguration();
+
             //Finally, we close the form
             DialogResult = DialogResult.OK;
         }
@@ -320,6 +338,185 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
         {
             selectedDevice = project.ConfigDatabase.DeviceTable.ToList()[cbDevice.SelectedIndex];
             refreshFormAccesses();
+        }
+
+        /// <summary>
+        /// Generates the XML configuration file for the device
+        /// </summary>
+        /// <param name="template"></param>
+        /// <returns></returns>
+        private XmlDocument GenerateXmlConfigurationFile(DeviceTemplate template)
+        {
+            XmlDocument xmlDoc = new XmlDocument();
+            XmlDeclaration xmlDecl = xmlDoc.CreateXmlDeclaration("1.0", "utf-8", null);
+            xmlDoc.AppendChild(xmlDecl);
+            XmlElement rootElem = xmlDoc.CreateElement("DeviceTemplate");
+            xmlDoc.AppendChild(rootElem);
+            DeviceTemplateOptions options = new DeviceTemplateOptions();
+            options.SaveToXml(rootElem.AppendElem("Options"));
+            XmlElement elemGroupsElem = rootElem.AppendElem("ElemGroups");
+            foreach (ElemGroupConfig elemGroupConfig in template.ElemGroups)
+            {
+                elemGroupConfig.SaveToXml(elemGroupsElem.AppendElem("ElemGroup"));
+            }
+            return xmlDoc;
+        }
+
+        /// <summary>
+        /// Creates and replaces the device configuration according to imported rows
+        /// </summary>
+        private void ImportDeviceConfiguration()
+        {
+            DeviceTemplate template = GenerateDeviceTemplate();
+            XmlDocument xmlDoc = GenerateXmlConfigurationFile(template);
+
+            //find current device configuration file
+            SaveFileDialog saveFileDialog1 = new SaveFileDialog();
+            saveFileDialog1.FileName = string.Format("{0}.xml", selectedDevice.Name);
+            saveFileDialog1.InitialDirectory = string.Format("{0}\\Instances\\Default\\ScadaComm\\Config", this.project.ProjectDir);
+            if (saveFileDialog1.ShowDialog() == DialogResult.OK)
+            {
+                using (Stream s = File.Open(saveFileDialog1.FileName, FileMode.Create))
+                using (StreamWriter sw = new StreamWriter(s))
+                {
+                    xmlDoc.Save(sw);
+                }
+            }
+        }
+        /// <summary>
+        /// Generates a device template configuration according to imported rows
+        /// </summary>
+        /// <returns></returns>
+        private DeviceTemplate GenerateDeviceTemplate()
+        {
+
+            DeviceTemplate template = new DeviceTemplate();
+            ElemGroupConfig newElemenGroup = new ElemGroupConfig();
+
+            Dictionary<int, string> dataTypes = project.ConfigDatabase.DataTypeTable.ToDictionary(x => x.DataTypeID, x => x.Name);
+            string previousPrefix = "";
+            ElemType previousType = ElemType.Undefined;
+
+            Dictionary<string, ElemType> elemTypeDico = ConfigDictionaries.ElemTypeDictionary;
+            Dictionary<string, int> cnlDataType = ConfigDictionaries.CnlDataType;
+
+            foreach (KeyValuePair<string, List<string>> row in importedRows)
+            {
+                var prefix = row.Value[3] ?? "";
+
+                ElemConfig newElem = new ElemConfig();
+                string newType = elemTypeDico.Keys.Contains(row.Value[1]) ? row.Value[1] : cnlDataType.FirstOrDefault(t => t.Value == dataTypes.FirstOrDefault(dt => dt.Value == row.Value[1]).Key).Key;
+                newElem.ElemType = elemTypeDico.Keys.Contains(newType) ? elemTypeDico[newType] : ElemType.Undefined;
+                newElem.ByteOrder = newElem.ElemType == ElemType.UShort ? "01" : "0123"; //todo: ajouter byteorder à la main
+                newElem.Name = row.Value[0];
+                newElem.TagCode = row.Key;
+                newElemenGroup.DataBlock = DataBlock.HoldingRegisters;
+                int index = importedRows.Keys.ToList().IndexOf(row.Key);
+                if (index == 0 || prefix != previousPrefix || newElem.ElemType != previousType || (prefix == "%MW" && newElemenGroup.Elems.Count == 125) || (prefix == "%M" && newElemenGroup.Elems.Count == 2000))
+                {
+                    if (index > 0)
+                    {
+                        template.ElemGroups.Add(newElemenGroup);
+                    }
+                    newElemenGroup = new ElemGroupConfig();
+                    newElemenGroup.Address = int.Parse(Regex.Replace(row.Key, @"[^0-9]", ""));
+                }
+                previousPrefix = prefix;
+                previousType = newElem.ElemType;
+                newElemenGroup.Elems.Add(newElem);
+            }
+            template.ElemGroups.Add(newElemenGroup);
+            return template;
+        }
+
+        /// <summary>
+        /// Action triggered on prefix selection change
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        /// <exception cref="ScadaException"></exception>
+        private void cbBoxPrefix_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            if (importedRows.Count() == 0)
+            {
+                return;
+            }
+            string previousPrefix = selectedPrefix;
+            selectedPrefix = cbBoxPrefix.SelectedIndex > 0 ? availablePrefixSuffix.Keys.ElementAt(cbBoxPrefix.SelectedIndex - 1) : null;
+            int? selectedPrefixRowColumnIndex = selectedPrefix != null ? availablePrefixSuffix.Values.ElementAt(cbBoxPrefix.SelectedIndex - 1) : null;
+            int? selectedSuffixRowColumnIndex = cbBoxSuffix.SelectedIndex > 0 ? availablePrefixSuffix.Values.ElementAt(cbBoxSuffix.SelectedIndex - 1) : null;
+
+            string NameWithoutPrefix(int rowIndex)
+            {
+                return selectedSuffixRowColumnIndex != null
+                    ? selectedSuffixRowColumnIndex >= 0
+                        ? string.Join(" - ", importedRows.Values.ElementAt(rowIndex)[0], importedRows.Values.ElementAt(rowIndex)[selectedSuffixRowColumnIndex ?? 0])
+                        : string.Join(" - ", importedRows.Values.ElementAt(rowIndex)[0], importedRows.Keys.ElementAt(rowIndex))
+                    : importedRows.Values.ElementAt(rowIndex)[0];
+            }
+
+            Func<Cnl, int, Cnl> updateChanel = (c, i) =>
+            {
+                c.Name = selectedPrefixRowColumnIndex != null ?
+
+                string.Format("{0} - {1}", selectedPrefixRowColumnIndex >= 0
+                    ? importedRows.Values.ElementAt(i)[selectedPrefixRowColumnIndex ?? 0]
+                    : importedRows.Keys.ElementAt(i), NameWithoutPrefix(i))
+
+                :
+                NameWithoutPrefix(i);
+                return c;
+            };
+
+            importedChanels = importedChanels.Select(updateChanel).ToList();
+            chanelsToCreateAfterMerge = chanelsToCreateAfterMerge != null ? chanelsToCreateAfterMerge.Select(updateChanel).ToList() : importedChanels.DeepClone();
+            label6.Text = importedChanels[0].Name;
+            label7.Text = chanelsToCreateAfterMerge[0].Name;
+        }
+
+
+
+        /// <summary>
+        /// Action triggered on suffix selection change
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        /// <exception cref="ScadaException"></exception>
+        private void cbBoxSuffix_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            if (importedRows.Count() == 0)
+            {
+                return;
+            }
+            string previousSuffix = selectedSuffix;
+            selectedSuffix = cbBoxSuffix.SelectedIndex > 0 ? availablePrefixSuffix.Keys.ElementAt(cbBoxSuffix.SelectedIndex - 1) : null;
+            int? selectedPrefixRowColumnIndex = selectedPrefix != null ? availablePrefixSuffix.Values.ElementAt(cbBoxPrefix.SelectedIndex - 1) : null;
+            int? selectedSuffixRowColumnIndex = cbBoxSuffix.SelectedIndex > 0 ? availablePrefixSuffix.Values.ElementAt(cbBoxSuffix.SelectedIndex - 1) : null;
+
+            string NameWithoutSuffix(int rowIndex)
+            {
+                return selectedPrefixRowColumnIndex != null
+                    ? selectedPrefixRowColumnIndex >= 0
+                        ? string.Join(" - ", importedRows.Values.ElementAt(rowIndex)[selectedPrefixRowColumnIndex ?? 0], importedRows.Values.ElementAt(rowIndex)[0])
+                        : string.Join(" - ", importedRows.Keys.ElementAt(rowIndex), importedRows.Values.ElementAt(rowIndex)[0])
+                    : importedRows.Values.ElementAt(rowIndex)[0];
+            }
+
+            Func<Cnl, int, Cnl> updateChanel = (c, i) =>
+            {
+                c.Name = selectedSuffixRowColumnIndex != null ?
+                c.Name = string.Format("{0} - {1}",
+                    NameWithoutSuffix(i),
+                    selectedSuffixRowColumnIndex >= 0 ? importedRows.Values.ElementAt(i)[selectedSuffixRowColumnIndex ?? 0]
+                    : importedRows.Keys.ElementAt(i))
+                : NameWithoutSuffix(i);
+                return c;
+            };
+
+            importedChanels = importedChanels.Select(updateChanel).ToList();
+            chanelsToCreateAfterMerge = chanelsToCreateAfterMerge != null ? chanelsToCreateAfterMerge.Select(updateChanel).ToList() : importedChanels.DeepClone();
+            label6.Text = importedChanels[0].Name;
+            label7.Text = chanelsToCreateAfterMerge[0].Name;
         }
     }
 }

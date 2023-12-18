@@ -37,7 +37,7 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
             this.project = project ?? throw new ArgumentNullException(nameof(project));
         }
 
-        public FrmCnlsMergeCopy(ScadaProject project, List<Cnl> currentChanels, List<Cnl> incomingChanels, int deviceNum)// Controls.CtrlImport1 ctrlImport1, Controls.CtrlImport2 ctrlImport2, Controls.CtrlImport3 ctrlImport3) : this()
+        public FrmCnlsMergeCopy(ScadaProject project, List<Cnl> currentChanels, List<Cnl> incomingChanels)// Controls.CtrlImport1 ctrlImport1, Controls.CtrlImport2 ctrlImport2, Controls.CtrlImport3 ctrlImport3) : this()
         {
             InitializeComponent();
             dataGridView1.AutoGenerateColumns = false;
@@ -45,7 +45,6 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
             this.project = project;
             this.incomingChanels = incomingChanels;
             this.currentChanels = currentChanels;
-            this.deviceNum = deviceNum;
 
             FillGridView();
         }

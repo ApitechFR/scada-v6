@@ -136,6 +136,7 @@
             cbBoxSuffix.Name = "cbBoxSuffix";
             cbBoxSuffix.Size = new Size(238, 23);
             cbBoxSuffix.TabIndex = 16;
+            cbBoxSuffix.SelectedIndexChanged += cbBoxSuffix_SelectedIndexChanged;
             // 
             // cbBoxPrefix
             // 
@@ -146,6 +147,7 @@
             cbBoxPrefix.Name = "cbBoxPrefix";
             cbBoxPrefix.Size = new Size(238, 23);
             cbBoxPrefix.TabIndex = 15;
+            cbBoxPrefix.SelectedIndexChanged += cbBoxPrefix_SelectedIndexChanged;
             // 
             // button1
             // 
@@ -253,7 +255,7 @@
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(265, 352);
+            ClientSize = new Size(262, 359);
             Controls.Add(panel3);
             Controls.Add(panel2);
             Controls.Add(panel1);
@@ -266,7 +268,6 @@
             Controls.Add(btnSelectFile);
             Margin = new Padding(3, 2, 3, 2);
             Name = "FrmImportFile";
-            Text = "File import";
             ((System.ComponentModel.ISupportInitialize)pbStatus).EndInit();
             ((System.ComponentModel.ISupportInitialize)pictureBox1).EndInit();
             panel1.ResumeLayout(false);
@@ -300,5 +301,7 @@
         private Panel panel1;
         private Panel panel2;
         private Panel panel3;
+        private Label label6;
+        private Label label7;
     }
 }
