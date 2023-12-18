@@ -22,7 +22,7 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
         public string selectedFileName;
         private Device selectedDevice;
         private bool conflictsAreSolved = false;
-        Dictionary<string, int> availablePrefixSuffix = new Dictionary<string, int> { { "TagCode", -1 }, { "Name", 0 }, { "Format", 1 }, { "Comment", 2 } };
+        Dictionary<string, int> availablePrefixSuffix = new Dictionary<string, int> { { "TagCode", -1 }, { "Mnémonique", 0 }, { "Format", 1 }, { "Comment", 2 } };
         string selectedPrefix;
         string selectedSuffix;
 
