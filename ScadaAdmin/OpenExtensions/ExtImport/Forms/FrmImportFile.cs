@@ -431,8 +431,9 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
                 //we create a new configuration element
                 ElemConfig newElem = new ElemConfig();
                 //we set its properties according to imported row
-                string newType = elemTypeDico.Keys.Contains(row.Value[1]) ? row.Value[1] : cnlDataType.FirstOrDefault(t => t.Value == dataTypes.FirstOrDefault(dt => dt.Value == row.Value[1]).Key).Key;
-                newElem.ElemType = elemTypeDico.Keys.Contains(newType) ? elemTypeDico[newType] : ElemType.Undefined;
+                //string newType = elemTypeDico.Keys.Contains(row.Value[1]) ? row.Value[1] : cnlDataType.FirstOrDefault(t => t.Value == dataTypes.FirstOrDefault(dt => dt.Value == row.Value[1]).Key).Key;
+                newElem.ElemType = elemTypeDico.Keys.Contains(row.Value[1]) ? elemTypeDico[row.Value[1]] : ElemType.Undefined;
+                
                 newElem.ByteOrder = newElem.ElemType == ElemType.UShort ? "01" : "0123"; //todo: ajouter byteorder à la main
                 newElem.Name = row.Value[0];
                 newElem.TagCode = row.Key;
@@ -455,6 +456,35 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
 
                 //we add the new element to the current element group
                 newElemenGroup.Elems.Add(newElem);
+
+                //todo: if type is array, add array elements to the template
+                if (row.Value[1].Contains("ARRAY"))
+                {
+                    //here, we assume that row.value[1] is like "ARRAY[0..5] OF BOOL"
+                    try
+                    {
+                        string[] arrayType = row.Value[1].Split(' ');
+                        newElem.ElemType = elemTypeDico.Keys.Contains(arrayType[2]) ? elemTypeDico[arrayType[2]] : ElemType.Undefined;
+                        int arrayLength = int.Parse(arrayType[0].Split("..")[1].Split(']')[0]);
+                        for(int i=0; i<arrayLength; i++)
+                        {
+                            ElemConfig newElemArray = new ElemConfig();
+                            newElemArray.ElemType = newElem.ElemType;
+                            newElemArray.ByteOrder = newElem.ElemType == ElemType.UShort ? "01" : "0123"; //todo: ajouter byteorder à la main
+                            newElemArray.Name = string.Format("{0}[{1}]", row.Value[0], i);
+                            newElemArray.TagCode = string.Format("{0}{1}", row.Key, i);
+                            newElemenGroup.Elems.Add(newElemArray);
+                        }
+                        //template.ElemGroups.Add(newElemenGroup);
+                        //newElemenGroup = new ElemGroupConfig();
+                        //newElemenGroup.DataBlock = DataBlock.HoldingRegisters;
+                        //newElemenGroup.Address = int.Parse(Regex.Replace(row.Key, @"[^0-9]", ""));
+                    }
+                    catch (Exception e)
+                    {
+                        MessageBox.Show("Error reading the file: one of the variables is an ARRAY but does not appear to be in the form 'ARRAY[0..X] OF TYPE'. Details: " + e.Message);
+                    }
+                }
             }
             template.ElemGroups.Add(newElemenGroup);
             return template;
