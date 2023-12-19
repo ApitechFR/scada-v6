@@ -6,6 +6,7 @@ using System.Xml;
 using System.Xml.XPath;
 using Scada.Admin.Extensions.ExtImport.Code;
 using Scada.Admin.Project;
+using Scada.Comm.Config;
 using Scada.Comm.Devices;
 using Scada.Comm.Drivers.DrvModbus.Config;
 using Scada.Comm.Drivers.DrvModbus.Protocol;
@@ -337,6 +338,10 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
         private void cbDevice_SelectedIndexChanged(object sender, EventArgs e)
         {
             selectedDevice = project.ConfigDatabase.DeviceTable.ToList()[cbDevice.SelectedIndex];
+            if(chanelsToCreateAfterMerge != null)
+            {
+                chanelsToCreateAfterMerge = chanelsToCreateAfterMerge.Select(c => { c.DeviceNum = selectedDevice.DeviceNum; return c; }).ToList();
+            }
             refreshFormAccesses();
         }
 
@@ -389,22 +394,43 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
         /// <returns></returns>
         private DeviceTemplate GenerateDeviceTemplate()
         {
-
+            //Initializations
             DeviceTemplate template = new DeviceTemplate();
             ElemGroupConfig newElemenGroup = new ElemGroupConfig();
-
             Dictionary<int, string> dataTypes = project.ConfigDatabase.DataTypeTable.ToDictionary(x => x.DataTypeID, x => x.Name);
             string previousPrefix = "";
             ElemType previousType = ElemType.Undefined;
-
             Dictionary<string, ElemType> elemTypeDico = ConfigDictionaries.ElemTypeDictionary;
             Dictionary<string, int> cnlDataType = ConfigDictionaries.CnlDataType;
 
+            //for each imported row
             foreach (KeyValuePair<string, List<string>> row in importedRows)
             {
                 var prefix = row.Value[3] ?? "";
+                int rowIndex = importedRows.Keys.ToList().IndexOf(row.Key);
+                //if row tagcode contains a non-digit character (except prefix)
+                if (!row.Key.All(char.IsDigit) && rowIndex > 0)
+                {
+                    ////we check if previous row tagcode too contains a non-digit character (except prefix)
+                    //string previousRowKey = importedRows.Keys.ElementAt(rowIndex - 1);
+                    //if (!previousRowKey.All(char.IsDigit))
+                    //{
+                    //    //split previous and current keys by non-digit characters with regex, to keep only the left part
+                    //    string[] previousRowLeftPart = Regex.Split(previousRowKey, @"[^0-9]");
+                    //    string[] currentRowLeftPart = Regex.Split(row.Key, @"[^0-9]");
 
+                    //    //if previous and current keys left parts are the same, we skip the current row
+                    //    if (previousRowLeftPart[0] == currentRowLeftPart[0])
+                    //    {
+                    //        continue;
+                    //    }
+                    //}
+                    continue;
+                }
+
+                //we create a new configuration element
                 ElemConfig newElem = new ElemConfig();
+                //we set its properties according to imported row
                 string newType = elemTypeDico.Keys.Contains(row.Value[1]) ? row.Value[1] : cnlDataType.FirstOrDefault(t => t.Value == dataTypes.FirstOrDefault(dt => dt.Value == row.Value[1]).Key).Key;
                 newElem.ElemType = elemTypeDico.Keys.Contains(newType) ? elemTypeDico[newType] : ElemType.Undefined;
                 newElem.ByteOrder = newElem.ElemType == ElemType.UShort ? "01" : "0123"; //todo: ajouter byteorder à la main
@@ -412,6 +438,8 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
                 newElem.TagCode = row.Key;
                 newElemenGroup.DataBlock = DataBlock.HoldingRegisters;
                 int index = importedRows.Keys.ToList().IndexOf(row.Key);
+
+                //if these conditions are met, we add the current element group to the template and create a new one
                 if (index == 0 || prefix != previousPrefix || newElem.ElemType != previousType || (prefix == "%MW" && newElemenGroup.Elems.Count == 125) || (prefix == "%M" && newElemenGroup.Elems.Count == 2000))
                 {
                     if (index > 0)
@@ -419,10 +447,13 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
                         template.ElemGroups.Add(newElemenGroup);
                     }
                     newElemenGroup = new ElemGroupConfig();
+                    newElemenGroup.DataBlock = DataBlock.HoldingRegisters;
                     newElemenGroup.Address = int.Parse(Regex.Replace(row.Key, @"[^0-9]", ""));
                 }
                 previousPrefix = prefix;
                 previousType = newElem.ElemType;
+
+                //we add the new element to the current element group
                 newElemenGroup.Elems.Add(newElem);
             }
             template.ElemGroups.Add(newElemenGroup);
@@ -470,8 +501,6 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
 
             importedChanels = importedChanels.Select(updateChanel).ToList();
             chanelsToCreateAfterMerge = chanelsToCreateAfterMerge != null ? chanelsToCreateAfterMerge.Select(updateChanel).ToList() : importedChanels.DeepClone();
-            label6.Text = importedChanels[0].Name;
-            label7.Text = chanelsToCreateAfterMerge[0].Name;
         }
 
 
@@ -515,8 +544,6 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
 
             importedChanels = importedChanels.Select(updateChanel).ToList();
             chanelsToCreateAfterMerge = chanelsToCreateAfterMerge != null ? chanelsToCreateAfterMerge.Select(updateChanel).ToList() : importedChanels.DeepClone();
-            label6.Text = importedChanels[0].Name;
-            label7.Text = chanelsToCreateAfterMerge[0].Name;
         }
     }
 }

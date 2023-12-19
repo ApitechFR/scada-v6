@@ -302,7 +302,6 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
         /// </summary>
         private void btnAdd_Click_1(object sender, EventArgs e)
         {
-            //todo: chanelsToDelete ?
             chanelsToCreate = new List<Cnl>();
 
             foreach (DataGridViewRow row in dataGridView1.Rows)
