@@ -28,7 +28,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ExtImport", "ExtImport\ExtI
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ExtSubFolder", "ExtSubFolder\ExtSubFolder.csproj", "{5381C77E-A673-4D56-9EDF-F59953235E1B}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ExtBitReader", "ExtBitReader\ExtBitReader.csproj", "{20F208C2-2DA8-4E53-B925-D28490C9A6E0}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ExtBitReader", "ExtBitReader\ExtBitReader.csproj", "{20F208C2-2DA8-4E53-B925-D28490C9A6E0}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
