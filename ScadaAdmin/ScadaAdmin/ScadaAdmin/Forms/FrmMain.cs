@@ -43,11 +43,13 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Windows.Forms;
 using WinControl;
+using static System.ComponentModel.Design.ObjectSelectorEditor;
 
 namespace Scada.Admin.App.Forms
 {
@@ -326,7 +328,19 @@ namespace Scada.Admin.App.Forms
                         AppUtils.GetExtensionLower(fileItem.Name), out string exePath) && File.Exists(exePath))
                     {
                         // run external editor
-                        ScadaUiUtils.StartProcess(exePath, $"\"{fileItem.Path}\"");
+                        //TODO SI EXTENSION
+                        //ScadaUiUtils.StartProcess(exePath, $"\"{fileItem.Path}\"");
+
+                        //update TreeNode after Process Exited
+                        //TODO SI PAS EXTENSION
+                        ProcessStartInfo startInfo = new ProcessStartInfo();
+                        startInfo.FileName = exePath;
+                        startInfo.Arguments = $"\"{fileItem.Path}\"";
+                        Process process = new Process();
+                        process.StartInfo = startInfo;
+                        process.EnableRaisingEvents = true;
+                        process.Exited += ScheEditorProcess_Exited;
+                        process.Start();
                     }
                     else
                     {
@@ -343,6 +357,44 @@ namespace Scada.Admin.App.Forms
                     wctrlMain.ActivateForm(tag.ExistingForm);
                 }
             }
+        }
+
+        private void ScheEditorProcess_Exited(object sender, EventArgs e)
+        {
+
+            if (tvExplorer.InvokeRequired)
+            {
+                tvExplorer.Invoke(new EventHandler(miDirectoryRefresh_Click));
+            }
+            else
+            {
+                //View node selection
+                TreeNode selectedNode = tvExplorer.Nodes[0].Nodes[1];
+                if (selectedNode.Nodes.Count > 0 && CheckIfItIsViewsNode(selectedNode))
+                {
+
+                    if (TryGetFilePath(selectedNode, out string path))
+                    {
+                        CloseChildForms(selectedNode, true);
+                        explorerBuilder.FillFileNode(selectedNode, path);
+                    }
+                }
+            }
+        }
+
+        private bool CheckIfItIsViewsNode(TreeNode node)
+        {
+            bool hasChildWithName = false;
+            foreach (TreeNode childNode in node.Nodes)
+            {
+                if (childNode.Text == Project.Name)
+                {
+                    hasChildWithName = true;
+                    break;
+                }
+            }
+
+            return hasChildWithName;
         }
 
         /// <summary>
@@ -1648,14 +1700,27 @@ namespace Scada.Admin.App.Forms
 
         private void miDirectoryRefresh_Click(object sender, EventArgs e)
         {
-            // refresh the tree nodes corresponding to the selected directory
-            TreeNode selectedNode = tvExplorer.SelectedNode;
-
-            if (TryGetFilePath(selectedNode, out string path))
+            //TODO if pluging
+            TreeNode selectedNode = tvExplorer.Nodes[0].Nodes[1];
+            if (selectedNode.Nodes.Count > 0 && CheckIfItIsViewsNode(selectedNode))
             {
-                CloseChildForms(selectedNode, true);
-                explorerBuilder.FillFileNode(selectedNode, path);
+
+                if (TryGetFilePath(selectedNode, out string path))
+                {
+                    CloseChildForms(selectedNode, true);
+                    explorerBuilder.FillFileNode(selectedNode, path);
+                }
             }
+
+            //TODO ELSE
+            // refresh the tree nodes corresponding to the selected directory
+            //TreeNode selectedNode = tvExplorer.SelectedNode;
+
+            //if (TryGetFilePath(selectedNode, out string path))
+            //{
+            //    CloseChildForms(selectedNode, true);
+            //    explorerBuilder.FillFileNode(selectedNode, path);
+            //}
         }
 
 
