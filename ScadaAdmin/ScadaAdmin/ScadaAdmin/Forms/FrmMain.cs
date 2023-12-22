@@ -63,6 +63,7 @@ namespace Scada.Admin.App.Forms
         private readonly ExplorerBuilder explorerBuilder; // the object to manipulate the explorer tree
         private FrmStartPage frmStartPage;                // the start page
         private bool preventNodeExpand;                   // prevent a tree node from expanding or collapsing
+        private bool isSchemeEditorProcess = false;
 
 
         /// <summary>
@@ -327,20 +328,26 @@ namespace Scada.Admin.App.Forms
                     if (appData.AppConfig.FileAssociations.TryGetValue(
                         AppUtils.GetExtensionLower(fileItem.Name), out string exePath) && File.Exists(exePath))
                     {
-                        // run external editor
-                        //TODO SI EXTENSION
-                        //ScadaUiUtils.StartProcess(exePath, $"\"{fileItem.Path}\"");
 
                         //update TreeNode after Process Exited
-                        //TODO SI PAS EXTENSION
-                        ProcessStartInfo startInfo = new ProcessStartInfo();
-                        startInfo.FileName = exePath;
-                        startInfo.Arguments = $"\"{fileItem.Path}\"";
-                        Process process = new Process();
-                        process.StartInfo = startInfo;
-                        process.EnableRaisingEvents = true;
-                        process.Exited += ScheEditorProcess_Exited;
-                        process.Start();
+                        if (appData.AppConfig.extAdminEnabled && exePath.Contains("SchemeEditor"))
+                        {
+                            isSchemeEditorProcess = true;
+                            ProcessStartInfo startInfo = new ProcessStartInfo();
+                            startInfo.FileName = exePath;
+                            startInfo.Arguments = $"\"{fileItem.Path}\"";
+                            Process process = new Process();
+                            process.StartInfo = startInfo;
+                            process.EnableRaisingEvents = true;
+                            process.Exited += ScheEditorProcess_Exited;
+                            process.Start();
+                        }
+                        else
+                        {
+                            isSchemeEditorProcess = false;
+                            //run external editor
+                            ScadaUiUtils.StartProcess(exePath, $"\"{fileItem.Path}\"");
+                        }
                     }
                     else
                     {
@@ -1700,10 +1707,23 @@ namespace Scada.Admin.App.Forms
 
         private void miDirectoryRefresh_Click(object sender, EventArgs e)
         {
-            //TODO if pluging
-            TreeNode selectedNode = tvExplorer.Nodes[0].Nodes[1];
-            if (selectedNode.Nodes.Count > 0 && CheckIfItIsViewsNode(selectedNode))
+            if (appData.AppConfig.extAdminEnabled && isSchemeEditorProcess)
             {
+                TreeNode selectedNode = tvExplorer.Nodes[0].Nodes[1];
+                if (selectedNode.Nodes.Count > 0 && CheckIfItIsViewsNode(selectedNode))
+                {
+
+                    if (TryGetFilePath(selectedNode, out string path))
+                    {
+                        CloseChildForms(selectedNode, true);
+                        explorerBuilder.FillFileNode(selectedNode, path);
+                    }
+                }
+            }
+            else
+            {
+                // refresh the tree nodes corresponding to the selected directory
+                TreeNode selectedNode = tvExplorer.SelectedNode;
 
                 if (TryGetFilePath(selectedNode, out string path))
                 {
@@ -1711,16 +1731,6 @@ namespace Scada.Admin.App.Forms
                     explorerBuilder.FillFileNode(selectedNode, path);
                 }
             }
-
-            //TODO ELSE
-            // refresh the tree nodes corresponding to the selected directory
-            //TreeNode selectedNode = tvExplorer.SelectedNode;
-
-            //if (TryGetFilePath(selectedNode, out string path))
-            //{
-            //    CloseChildForms(selectedNode, true);
-            //    explorerBuilder.FillFileNode(selectedNode, path);
-            //}
         }
 
 
