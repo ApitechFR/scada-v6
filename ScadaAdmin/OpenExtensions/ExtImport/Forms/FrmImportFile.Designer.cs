@@ -47,6 +47,8 @@
             panel1 = new Panel();
             panel2 = new Panel();
             panel3 = new Panel();
+            label8 = new Label();
+            textBox1 = new TextBox();
             ((System.ComponentModel.ISupportInitialize)pbStatus).BeginInit();
             ((System.ComponentModel.ISupportInitialize)pictureBox1).BeginInit();
             panel1.SuspendLayout();
@@ -151,7 +153,7 @@
             // 
             // button1
             // 
-            button1.Location = new Point(146, 320);
+            button1.Location = new Point(145, 377);
             button1.Margin = new Padding(3, 2, 3, 2);
             button1.Name = "button1";
             button1.Size = new Size(103, 22);
@@ -162,7 +164,7 @@
             // 
             // button2
             // 
-            button2.Location = new Point(12, 320);
+            button2.Location = new Point(11, 377);
             button2.Margin = new Padding(3, 2, 3, 2);
             button2.Name = "button2";
             button2.Size = new Size(105, 22);
@@ -235,7 +237,7 @@
             panel2.Controls.Add(label4);
             panel2.Controls.Add(button3);
             panel2.Controls.Add(pictureBox1);
-            panel2.Location = new Point(11, 236);
+            panel2.Location = new Point(10, 293);
             panel2.Margin = new Padding(3, 2, 3, 2);
             panel2.Name = "panel2";
             panel2.Size = new Size(237, 48);
@@ -245,17 +247,35 @@
             // 
             panel3.Controls.Add(label5);
             panel3.Controls.Add(pbStatus);
-            panel3.Location = new Point(12, 246);
+            panel3.Location = new Point(11, 303);
             panel3.Margin = new Padding(3, 2, 3, 2);
             panel3.Name = "panel3";
             panel3.Size = new Size(237, 27);
             panel3.TabIndex = 28;
             // 
+            // label8
+            // 
+            label8.AutoSize = true;
+            label8.Location = new Point(10, 236);
+            label8.Name = "label8";
+            label8.Size = new Size(60, 15);
+            label8.TabIndex = 19;
+            label8.Text = "ByteOrder";
+            // 
+            // textBox1
+            // 
+            textBox1.Location = new Point(10, 254);
+            textBox1.Name = "textBox1";
+            textBox1.Size = new Size(238, 23);
+            textBox1.TabIndex = 29;
+            // 
             // FrmImportFile
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(262, 359);
+            ClientSize = new Size(262, 421);
+            Controls.Add(textBox1);
+            Controls.Add(label8);
             Controls.Add(panel3);
             Controls.Add(panel2);
             Controls.Add(panel1);
@@ -303,5 +323,7 @@
         private Panel panel3;
         private Label label6;
         private Label label7;
+        private Label label8;
+        private TextBox textBox1;
     }
 }

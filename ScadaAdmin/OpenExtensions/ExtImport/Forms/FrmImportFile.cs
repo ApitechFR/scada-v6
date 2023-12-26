@@ -39,6 +39,7 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
             panel3.Visible = false;
             importedRows = new Dictionary<string, List<string>>();
             button1.Enabled = false;
+            textBox1.Enabled = false;
 
             cbDevice.Items.Clear();
             project.ConfigDatabase.DeviceTable.AsEnumerable().ToList().ForEach(d => cbDevice.Items.Add(d.Name));
@@ -48,6 +49,8 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
             cbBoxSuffix.Items.Add("None");
             cbBoxSuffix.Items.AddRange(availablePrefixSuffix.Keys.ToArray());
             cbBoxSuffix.SelectedItem = "None";
+
+            textBox1.Text = project.ConfigDatabase.defaultByteOrder ?? "";
         }
 
         /// <summary>
@@ -153,6 +156,7 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
             cbBoxPrefix.Enabled = areFileAndDeviceSelected;
             cbBoxSuffix.Enabled = areFileAndDeviceSelected;
             button1.Enabled = areFileAndDeviceSelected;
+            textBox1.Enabled = areFileAndDeviceSelected;
 
             if (areFileAndDeviceSelected)
             {
@@ -315,6 +319,9 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
             //Then, we generate a device configuration according to imported rows
             ImportDeviceConfiguration();
 
+            //save the default byte order in project config
+            project.ConfigDatabase.defaultByteOrder = textBox1.Text;
+
             //Finally, we close the form
             DialogResult = DialogResult.OK;
         }
@@ -338,7 +345,7 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
         private void cbDevice_SelectedIndexChanged(object sender, EventArgs e)
         {
             selectedDevice = project.ConfigDatabase.DeviceTable.ToList()[cbDevice.SelectedIndex];
-            if(chanelsToCreateAfterMerge != null)
+            if (chanelsToCreateAfterMerge != null)
             {
                 chanelsToCreateAfterMerge = chanelsToCreateAfterMerge.Select(c => { c.DeviceNum = selectedDevice.DeviceNum; return c; }).ToList();
             }
@@ -388,6 +395,7 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
                 }
             }
         }
+
         /// <summary>
         /// Generates a device template configuration according to imported rows
         /// </summary>
@@ -427,14 +435,15 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
                     //}
                     continue;
                 }
+                
 
                 //we create a new configuration element
                 ElemConfig newElem = new ElemConfig();
                 //we set its properties according to imported row
                 //string newType = elemTypeDico.Keys.Contains(row.Value[1]) ? row.Value[1] : cnlDataType.FirstOrDefault(t => t.Value == dataTypes.FirstOrDefault(dt => dt.Value == row.Value[1]).Key).Key;
                 newElem.ElemType = elemTypeDico.Keys.Contains(row.Value[1]) ? elemTypeDico[row.Value[1]] : ElemType.Undefined;
-                
-                newElem.ByteOrder = newElem.ElemType == ElemType.UShort ? "01" : "0123"; //todo: ajouter byteorder à la main
+                //newElem.ByteOrder = (new DeviceTemplateOptions()).GetDefaultByteOrder(ModbusUtils.GetDataLength(newElem.ElemType)).Select(e => e.ToString()).ToList().Aggregate((i, j) => i + j);
+                newElem.ByteOrder = textBox1.Text;
                 newElem.Name = row.Value[0];
                 newElem.TagCode = row.Key;
                 newElemenGroup.DataBlock = DataBlock.HoldingRegisters;
@@ -466,7 +475,7 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
                         string[] arrayType = row.Value[1].Split(' ');
                         newElem.ElemType = elemTypeDico.Keys.Contains(arrayType[2]) ? elemTypeDico[arrayType[2]] : ElemType.Undefined;
                         int arrayLength = int.Parse(arrayType[0].Split("..")[1].Split(']')[0]);
-                        for(int i=0; i<arrayLength; i++)
+                        for (int i = 0; i < arrayLength; i++)
                         {
                             ElemConfig newElemArray = new ElemConfig();
                             newElemArray.ElemType = newElem.ElemType;
