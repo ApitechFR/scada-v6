@@ -36,7 +36,6 @@ namespace Scada.Web.Plugins.PlgSchShapeComp.Code
 			{
 				new CompItem(null,typeof(BasicShape)),
 				new CompItem(null,	typeof(CustomSVG)),
-				new CompItem(null, typeof(BarGraph)),
 			};
 		}
 		protected override CompFactory CreateCompFactory()

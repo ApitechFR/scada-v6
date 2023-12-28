@@ -11,6 +11,7 @@
  * - schemerender.js
  */
 
+<<<<<<< HEAD
 /********** Shape Renderer **********/
 scada.scheme.addInfoTooltipToDiv = function (targetDiv, text) {
 	if (targetDiv instanceof jQuery) {
@@ -38,6 +39,12 @@ scada.scheme.addInfoTooltipToDiv = function (targetDiv, text) {
 
 	targetDiv.style.position = "relative";
 	targetDiv.appendChild(tooltip);
+=======
+/********** Static SVG Shape Renderer **********/
+
+scada.scheme.SvgShapeRenderer = function () {
+	scada.scheme.ComponentRenderer.call(this);
+>>>>>>> parent of b80ce931 (Merge pull request #7 from moukmessie/sr9-scadaweb-compnent)
 };
 
 scada.scheme.handleBlinking = function (divComp, blinking) {
@@ -52,6 +59,7 @@ scada.scheme.handleBlinking = function (divComp, blinking) {
 			divComp.addClass("fast-blink");
 			break;
 	}
+<<<<<<< HEAD
 };
 scada.scheme.updateStyles = function (divComp, cond) {
 	if (cond.color) divComp.css("color", cond.color);
@@ -93,6 +101,42 @@ scada.scheme.updateColors = function (divComp, cnlDataExt, isHovered, props) {
 };
 
 scada.scheme.updateComponentData = function (component, renderContext) {
+=======
+
+	// Set SVG attributes for color and stroke width
+	svgElement.setAttribute('fill', props.backColor);
+	svgElement.setAttribute('stroke', props.borderColor); props.borderColor
+	svgElement.setAttribute('stroke-width', props.borderWidth);
+
+	return svgElement;
+};
+
+scada.scheme.SvgShapeRenderer.prototype.createDom = function (
+	component,
+	renderContext,
+) {
+	var props = component.props;
+	var shapeType = props.shapeType;
+
+	var divComp = $("<div id='comp" + component.id + "'></div>");
+	this.prepareComponent(divComp, component, false, true);
+
+	var svgElement = this.createSvgElement(shapeType, props);
+
+	var svgNamespace = "http://www.w3.org/2000/svg";
+	var svgContainer = document.createElementNS(svgNamespace, "svg");
+	svgContainer.appendChild(svgElement);
+	svgContainer.style.width = "100%";
+	svgContainer.style.height = "100%";
+
+	divComp.append(svgContainer);
+	component.dom = divComp;
+};
+scada.scheme.SvgShapeRenderer.prototype.updateData = function (
+	component,
+	renderContext,
+) {
+>>>>>>> parent of b80ce931 (Merge pull request #7 from moukmessie/sr9-scadaweb-compnent)
 	var props = component.props;
 
 	if (props.inCnlNum <= 0) {
@@ -110,16 +154,183 @@ scada.scheme.updateComponentData = function (component, renderContext) {
 				scada.scheme.updateStyles(divComp, cond);
 				scada.scheme.handleBlinking(divComp, cond.blinking);
 
+<<<<<<< HEAD
 				if (cond.rotation !== -1 && cond.rotation !== props.rotation) {
 					scada.scheme.applyRotation(divComp, cond);
+=======
+		var svgElement = divComp.find("svg > *");
+		svgElement.attr("fill", backColor);
+		svgElement.attr("stroke", borderColor);
+
+		this.setBackColor(divComp, backColor, true, statusColor);
+		this.setBorderColor(divComp, borderColor, true, statusColor);
+
+		if (props.conditions && cnlDataExt.d.stat > 0) {
+			var cnlVal = cnlDataExt.d.val;
+
+			for (var cond of props.conditions) {
+				if (scada.scheme.calc.conditionSatisfied(cond, cnlVal)) {
+					// Set CSS properties based on Condition
+					if (cond.color) {
+						divComp.css("color", cond.color);
+					}
+					if (cond.backgroundColor) {
+						divComp.css("background-color", cond.backgroundColor);
+					}
+					if (cond.textContent) {
+						divComp.text(cond.textContent);
+					}
+					divComp.css("visibility", cond.isVisible ? "visible" : "hidden");
+					divComp.css("width", cond.width);
+					divComp.css("height", cond.height);
+
+					// Handle Blinking
+					if (cond.blinking == 1) {
+						divComp.addClass("slow-blink");
+					} else if (cond.blinking == 2) {
+						divComp.addClass("fast-blink");
+					} else {
+						divComp.removeClass("slow-blink fast-blink");
+					}
+
+					break;
+>>>>>>> parent of b80ce931 (Merge pull request #7 from moukmessie/sr9-scadaweb-compnent)
 				}
 				break;
 			}
 		}
 	}
 };
+<<<<<<< HEAD
 
 
+=======
+
+/******* Polygon shape */
+
+scada.scheme.PolygonRenderer = function () {
+	scada.scheme.ComponentRenderer.call(this);
+};
+
+scada.scheme.PolygonRenderer.prototype = Object.create(
+	scada.scheme.ComponentRenderer.prototype,
+);
+scada.scheme.PolygonRenderer.constructor =
+	scada.scheme.PolygonRenderer;
+
+scada.scheme.PolygonRenderer.prototype.generatePolygonPath = function (
+	numPoints,
+) {
+
+	// Check that numPoints is a valid value
+	var validPoints = [3, 4, 5, 6, 8, 10];
+	if (!validPoints.includes(numPoints)) {
+		return "";
+	}
+
+	// Generate the points of the polygon
+	var path = "";
+	for (var i = 0; i < numPoints; i++) {
+		var angle = (2 * Math.PI * i) / numPoints;
+		var x = 50 + 50 * Math.cos(angle);
+		var y = 50 + 50 * Math.sin(angle);
+		path += x + "% " + y + "%, ";
+	}
+
+	// Remove trailing comma and space
+	path = path.slice(0, -2);
+
+	return "polygon(" + path + ")";
+};
+
+scada.scheme.PolygonRenderer.prototype.createDom = function (
+	component,
+	renderContext,
+) {
+	var props = component.props;
+
+	var divComp = $("<div id='comp" + component.id + "'></div>");
+	this.prepareComponent(divComp, component);
+
+	var polygonPath = this.generatePolygonPath(props.numberOfSides);
+
+	divComp.css({
+		width: "200px",
+		height: "200px",
+		background: props.backColor,
+		"clip-path": this.generatePolygonPath(props.numberOfSides),
+		"border-width": props.borderWidth + "px",
+		"border-color": props.borderColor,
+		"border-radius": props.boundedCorners ? props.bornerRadius + "%" : "0%",
+	});
+
+	component.dom = divComp;
+};
+
+scada.scheme.PolygonRenderer.prototype.updateData = function (
+	component,
+	renderContext,
+) {
+	var props = component.props;
+
+	if (props.inCnlNum > 0) {
+		var divComp = component.dom;
+		var cnlDataExt = renderContext.getCnlDataExt(props.inCnlNum);
+
+		// choose and set colors of the component
+		var statusColor = cnlDataExt.Color;
+		var isHovered = divComp.is(":hover");
+
+		var backColor = this.chooseColor(
+			isHovered,
+			props.backColor,
+			props.backColorOnHover,
+		);
+		var borderColor = this.chooseColor(
+			isHovered,
+			props.borderColor,
+			props.borderColorOnHover,
+		);
+
+		this.setBackColor(divComp, backColor, true, statusColor);
+		this.setBorderColor(divComp, borderColor, true, statusColor);
+
+		// Advanced Conditions
+		if (props.conditions && cnlDataExt.d.stat > 0) {
+			var cnlVal = cnlDataExt.d.val;
+
+			for (var cond of props.conditions) {
+				if (scada.scheme.calc.conditionSatisfied(cond, cnlVal)) {
+					// Set CSS properties based on Condition
+					if (cond.color) {
+						divComp.css("color", cond.color);
+					}
+					if (cond.backgroundColor) {
+						divComp.css("background-color", cond.backgroundColor);
+					}
+					if (cond.textContent) {
+						divComp.text(cond.textContent);
+					}
+					divComp.css("visibility", cond.isVisible ? "visible" : "hidden");
+					divComp.css("width", cond.width);
+					divComp.css("height", cond.height);
+
+					// Handle Blinking
+					if (cond.blinking == 1) {
+						divComp.addClass("slow-blink");
+					} else if (cond.blinking == 2) {
+						divComp.addClass("fast-blink");
+					} else {
+						divComp.removeClass("slow-blink fast-blink");
+					}
+
+					break;
+				}
+			}
+		}
+	}
+};
+>>>>>>> parent of b80ce931 (Merge pull request #7 from moukmessie/sr9-scadaweb-compnent)
 /**************** Custom SVG *********************/
 scada.scheme.CustomSVGRenderer = function () {
 	scada.scheme.ComponentRenderer.call(this);
@@ -141,6 +352,7 @@ scada.scheme.CustomSVGRenderer.prototype.createDom = function (
 	this.prepareComponent(divComp, component, false, true);
 	scada.scheme.applyRotation(divComp, props);
 
+<<<<<<< HEAD
 	if (props.svgCode && props.svgCode.includes("width") || props.svgCode.includes("height")) {
 		props.svgCode = props.svgCode.replace(
 			/<svg[^>]*?(\s+width\s*=\s*["'][^"']*["'])/g,
@@ -152,6 +364,21 @@ scada.scheme.CustomSVGRenderer.prototype.createDom = function (
 		);
 	}
 	divComp.append(props.svgCode);
+=======
+	var svg = this.generateSVG(
+		props.svgCode,
+		props.borderColor,
+		props.backColor,
+		props.borderWidth,
+		props.viewBoxX,
+		props.viewBoxY,
+		props.viewBoxWidth,
+		props.viewBoxHeight,
+		props.width,
+		props.height);
+
+	divComp.append(svg);
+>>>>>>> parent of b80ce931 (Merge pull request #7 from moukmessie/sr9-scadaweb-compnent)
 	component.dom = divComp;
 };
 
@@ -159,6 +386,7 @@ scada.scheme.CustomSVGRenderer.prototype.updateData = function (
 	component,
 	renderContext,
 ) {
+<<<<<<< HEAD
 	scada.scheme.applyRotation(component.dom, component.props);
 	scada.scheme.updateComponentData(component, renderContext);
 };
@@ -341,9 +569,63 @@ scada.scheme.BarGraphRenderer.prototype.updateData = function (component, render
 };
 
 
+=======
+	var props = component.props;
+
+	if (props.inCnlNum > 0) {
+		var divComp = component.dom;
+		var cnlDataExt = renderContext.getCnlDataExt(props.inCnlNum);
+
+		// choose and set colors of the component
+		var statusColor = cnlDataExt.Color;
+		var isHovered = divComp.is(":hover");
+
+		var backColor = this.chooseColor(
+			isHovered,
+			props.backColor,
+			props.backColorOnHover,
+		);
+		var borderColor = this.chooseColor(
+			isHovered,
+			props.borderColor,
+			props.borderColorOnHover,
+		);
+
+		this.setBackColor(divComp, backColor, true, statusColor);
+		this.setBorderColor(divComp, borderColor, true, statusColor);
+
+		divComp.removeClass("no-blink slow-blink fast-blink");
+		if (props.conditions && cnlDataExt.d.stat > 0) {
+			var cnlVal = cnlDataExt.d.val;
+			for (var cond of props.conditions) {
+				if (scada.scheme.calc.conditionSatisfied(cond, cnlVal)) {
+					divComp.css("background-color", cond.color);
+					switch (cond.blinking) {
+						case 0:
+							divComp.addClass("no-blink");
+							break;
+						case 1:
+							divComp.addClass("slow-blink");
+							break;
+						case 2:
+							divComp.addClass("fast-blink");
+							break;
+					}
+					break;
+				}
+			}
+		}
+	}
+};
+
+>>>>>>> parent of b80ce931 (Merge pull request #7 from moukmessie/sr9-scadaweb-compnent)
 /********** Renderer Map **********/
 
 // Add components to the renderer map
 scada.scheme.rendererMap.set("Scada.Web.Plugins.PlgSchShapeComp.Code.BasicShape", new scada.scheme.BasicShapeRenderer);
 scada.scheme.rendererMap.set("Scada.Web.Plugins.PlgSchShapeComp.Code.CustomSVG", new scada.scheme.CustomSVGRenderer);
+<<<<<<< HEAD
 scada.scheme.rendererMap.set("Scada.Web.Plugins.PlgSchShapeComp.Code.BarGraph", new scada.scheme.BarGraphRenderer);
+=======
+scada.scheme.rendererMap.set("Scada.Web.Plugins.PlgSchShapeComp.Code.Polygon", new scada.scheme.PolygonRenderer);
+>>>>>>> parent of b80ce931 (Merge pull request #7 from moukmessie/sr9-scadaweb-compnent)

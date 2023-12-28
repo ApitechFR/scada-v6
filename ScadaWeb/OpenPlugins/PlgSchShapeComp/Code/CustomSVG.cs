@@ -55,11 +55,6 @@ namespace Scada.Web.Plugins.PlgSchShapeComp.Code
 		[DefaultValue(0)]
 		public int InCnlNum { get; set; }
 
-		[DisplayName("Rotation"), Category(Categories.Appearance)]
-		[Description("The rotation angle of the SVG shape in degrees.")]
-		[DefaultValue(0)]
-		public int Rotation { get; set; }
-
 		/// <summary>
 		/// Get or set the input channel number 
 		/// </summary>
@@ -118,7 +113,6 @@ namespace Scada.Web.Plugins.PlgSchShapeComp.Code
 			InCnlNumCustom = xmlNode.GetChildAsString("InCnlNumCustom");
 			CtrlCnlNumCustom = xmlNode.GetChildAsString("CtrlCnlNumCustom");
 			SvgCode = xmlNode.GetChildAsString("SVGCode");
-			Rotation = xmlNode.GetChildAsInt("Rotation");
 
 		}
 
@@ -136,12 +130,15 @@ namespace Scada.Web.Plugins.PlgSchShapeComp.Code
 			}
 
 			xmlElem.AppendElem("SVGCode", SvgCode);
+<<<<<<< HEAD
 			xmlElem.AppendElem("Rotation", Rotation);
 			xmlElem.AppendElem("InCnlNum", InCnlNum);
 			xmlElem.AppendElem("CtrlCnlNum", CtrlCnlNum);
 			xmlElem.AppendElem("Action", Action.ToString());
 			xmlElem.AppendElem("InCnlNumCustom", InCnlNumCustom);
 			xmlElem.AppendElem("CtrlCnlNumCustom", CtrlCnlNumCustom);
+=======
+>>>>>>> parent of b80ce931 (Merge pull request #7 from moukmessie/sr9-scadaweb-compnent)
 
 		}
 		/// <summary>
