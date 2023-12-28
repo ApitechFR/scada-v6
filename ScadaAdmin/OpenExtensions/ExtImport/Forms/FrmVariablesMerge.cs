@@ -41,7 +41,7 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
             dataGridView1.AutoGenerateColumns = false;
             this.elemTypeDico = ConfigDictionaries.ElemTypeDictionary;
         }
-       
+
         public void Init(IAdminContext adminContext, ScadaProject project)
         {
             this.adminContext = adminContext ?? throw new ArgumentNullException(nameof(adminContext));
@@ -49,7 +49,7 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
 
         }
 
-      
+
         public FrmVariablesMerge(ScadaProject project, Controls.CtrlImport1 ctrlImport1, Controls.CtrlImport2 ctrlImport2, Controls.CtrlImport3 ctrlImport3) : this()
         {
 
@@ -58,7 +58,7 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
             this.CtrlImport1 = ctrlImport1;
             this.CtrlImport2 = ctrlImport2;
             this.CtrlImport3 = ctrlImport3;
-          
+
             setDictio(ctrlImport3._dictio);
 
             List<Cnl> listCnl = new List<Cnl>();
@@ -82,7 +82,7 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
 
             }
 
-			gridViewFiller();
+            gridViewFiller();
         }
 
 
@@ -283,9 +283,6 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
             SetCheckboxLocation(_headerCheckBox1, 1);
             SetCheckboxLocation(_headerCheckBox2, 6);
 
-            SetLabelLocation(lblSource, -1, 5);
-            SetLabelLocation(lblDestination, 6, 9);
-
             dataGridView1.Controls.Add(_headerCheckBox1);
             _headerCheckBox1.CheckedChanged += _headerCheckBox1_CheckedChanged;
             dataGridView1.Controls.Add(_headerCheckBox2);
@@ -298,8 +295,6 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
             SetCheckboxLocation(_headerCheckBox1, 1);
             SetCheckboxLocation(_headerCheckBox2, 6);
 
-            SetLabelLocation(lblSource, -1, 5);
-            SetLabelLocation(lblDestination, 6, 9);
         }
 
         private void SetCheckboxLocation(CheckBox ck, int columnIndex)
@@ -311,17 +306,7 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
             ck.Size = new Size(18, 18);
         }
 
-        private void SetLabelLocation(Label lbl, int columnStartIndex, int columnEndIndex)
-        {
-            Rectangle headerCell1Rectangle = this.dataGridView1.GetCellDisplayRectangle(columnStartIndex, -1, true);
-            Rectangle headerCell2Rectangle = this.dataGridView1.GetCellDisplayRectangle(columnEndIndex, -1, true);
 
-            lbl.Location = new Point(headerCell1Rectangle.X + dataGridView1.Location.X, lbl.Location.Y);
-            lbl.Size = new Size((headerCell2Rectangle.X + dataGridView1.Location.X + headerCell2Rectangle.Width) - headerCell1Rectangle.X, 21);
-        }
-
-
-       
         private Dictionary<string, List<string>> generateDictionnary()
         {
             var dico = new Dictionary<string, List<string>>();
@@ -338,7 +323,7 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
             };
                     dico[key] = list;
                 }
-                else if (Convert.ToBoolean(row.Cells[6].Value) == true) 
+                else if (Convert.ToBoolean(row.Cells[6].Value) == true)
                 {
                     var key = row.Cells[0].Value.ToString();
                     var list = new List<string>
@@ -361,9 +346,9 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
             {
                 var list = new List<string>
                 {
-                    kvp.Value[0], 
-                    kvp.Value[1], 
-                    kvp.Value[2]  
+                    kvp.Value[0],
+                    kvp.Value[1],
+                    kvp.Value[2]
                 };
 
                 resultDictionnary[kvp.Key] = list;
@@ -500,11 +485,11 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
 
             foreach (DataGridViewRow row in dgv.Rows)
             {
-                if (Convert.ToBoolean(row.Cells[1].Value)) 
+                if (Convert.ToBoolean(row.Cells[1].Value))
                 {
                     AddRowToDict(row, resultDict, 2, 3, 4, true);
                 }
-                else if (Convert.ToBoolean(row.Cells[6].Value)) 
+                else if (Convert.ToBoolean(row.Cells[6].Value))
                 {
                     AddRowToDict(row, resultDict, 7, 8, 9, false);
                 }
@@ -580,7 +565,7 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
         {
             var dico = generateDictionnary();
 
-            if ( dico.Count != 0)
+            if (dico.Count != 0)
             {
                 DeviceTemplate template = this.generateDeviceTemplateFromDictionnary(dico);
 
@@ -617,10 +602,10 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
             }
             else
             {
-				ScadaUiUtils.ShowWarning(ExtensionPhrases.SelectWarning);
-			}
+                ScadaUiUtils.ShowWarning(ExtensionPhrases.SelectWarning);
+            }
 
-           
+
         }
     }
 }

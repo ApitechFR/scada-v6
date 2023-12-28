@@ -105,6 +105,9 @@
 
 		<Phrase key="btnAdd">Add</Phrase>
 		<Phrase key="btnCancel">Cancel</Phrase>
+
+    <Phrase key="lblsrc">Source</Phrase>
+    <Phrase key="lbldest">Destination</Phrase>
 	</Dictionary>
 
 	<Dictionary key="Scada.Admin.Extensions.ExtImport.Forms.FrmVariablesMerge">
@@ -122,6 +125,8 @@
 		<Phrase key="btnSave">Save</Phrase>
 		<Phrase key="btnCancel">Cancel</Phrase>
 		<Phrase key="selectWarning">No line was selected</Phrase>
+    <Phrase key="lblsrc">Source</Phrase>
+    <Phrase key="lbldest">Destination</Phrase>
 	</Dictionary>
 </ExtImportDictionaries>
 

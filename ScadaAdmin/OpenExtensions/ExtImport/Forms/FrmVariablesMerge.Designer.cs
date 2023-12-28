@@ -44,33 +44,29 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
             Column3 = new DataGridViewTextBoxColumn();
             Column44 = new DataGridViewTextBoxColumn();
             btnCancel = new Button();
-            lblSource = new Label();
-            lblDestination = new Label();
             saveFileDialog1 = new SaveFileDialog();
             button1 = new Button();
-            label1 = new Label();
-            label2 = new Label();
+            lblsrc = new Label();
+            lbldest = new Label();
             ((ISupportInitialize)dataGridView1).BeginInit();
             SuspendLayout();
             // 
             // label3
             // 
             label3.AutoSize = true;
-            label3.Location = new Point(5, 20);
+            label3.Location = new Point(6, 27);
             label3.Name = "label3";
-            label3.Size = new Size(0, 15);
+            label3.Size = new Size(0, 20);
             label3.TabIndex = 17;
             // 
             // checkBox3
             // 
             checkBox3.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
             checkBox3.AutoSize = true;
-            checkBox3.Location = new Point(10, 465);
-            checkBox3.Margin = new Padding(3, 2, 3, 2);
+            checkBox3.Location = new Point(11, 628);
             checkBox3.Name = "checkBox3";
-            checkBox3.Size = new Size(204, 19);
+            checkBox3.Size = new Size(18, 17);
             checkBox3.TabIndex = 18;
-            checkBox3.Text = ExtensionPhrases.ChkBoxMrgDesc;
             checkBox3.UseVisualStyleBackColor = true;
             // 
             // dataGridView1
@@ -80,19 +76,17 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
             dataGridView1.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
             dataGridView1.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             dataGridView1.Columns.AddRange(new DataGridViewColumn[] { Column1Txt, ColumnChk, Column2Txt, Column33, Column4, ColumnVide, Column2Chk, Column2, Column3, Column44 });
-            dataGridView1.Location = new Point(10, 43);
-            dataGridView1.Margin = new Padding(3, 2, 3, 2);
+            dataGridView1.Location = new Point(11, 57);
             dataGridView1.Name = "dataGridView1";
             dataGridView1.RowHeadersWidth = 180;
             dataGridView1.RowTemplate.Height = 29;
-            dataGridView1.Size = new Size(1223, 418);
+            dataGridView1.Size = new Size(1398, 557);
             dataGridView1.TabIndex = 21;
             dataGridView1.CellContentClick += dataGridView1_CellContentClick;
             // 
             // Column1Txt
             // 
             Column1Txt.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
-            Column1Txt.HeaderText = ExtensionPhrases.AdressColName;
             Column1Txt.MinimumWidth = 6;
             Column1Txt.Name = "Column1Txt";
             // 
@@ -107,21 +101,18 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
             // Column2Txt
             // 
             Column2Txt.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
-            Column2Txt.HeaderText = ExtensionPhrases.SrcMneColName;
             Column2Txt.MinimumWidth = 6;
             Column2Txt.Name = "Column2Txt";
             // 
             // Column33
             // 
             Column33.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
-            Column33.HeaderText = ExtensionPhrases.SrcTypeColName;
             Column33.MinimumWidth = 6;
             Column33.Name = "Column33";
             // 
             // Column4
             // 
             Column4.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
-            Column4.HeaderText = ExtensionPhrases.SrcCmentColName;
             Column4.MinimumWidth = 6;
             Column4.Name = "Column4";
             // 
@@ -144,55 +135,28 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
             // Column2
             // 
             Column2.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
-            Column2.HeaderText = ExtensionPhrases.DestMneColName;
             Column2.MinimumWidth = 6;
             Column2.Name = "Column2";
             // 
             // Column3
             // 
             Column3.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
-            Column3.HeaderText = ExtensionPhrases.DestTypeColName;
             Column3.MinimumWidth = 6;
             Column3.Name = "Column3";
             // 
             // Column44
             // 
-            Column44.HeaderText = ExtensionPhrases.DestCmentColName;
             Column44.MinimumWidth = 6;
             Column44.Name = "Column44";
             // 
             // btnCancel
             // 
             btnCancel.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
-            btnCancel.Location = new Point(1162, 465);
-            btnCancel.Margin = new Padding(3, 2, 3, 2);
+            btnCancel.Location = new Point(1328, 620);
             btnCancel.Name = "btnCancel";
-            btnCancel.Size = new Size(72, 26);
+            btnCancel.Size = new Size(82, 35);
             btnCancel.TabIndex = 23;
-            btnCancel.Text = ExtensionPhrases.BtnCancel;
             btnCancel.UseVisualStyleBackColor = true;
-            // 
-            // lblSource
-            // 
-            lblSource.BorderStyle = BorderStyle.FixedSingle;
-            lblSource.Location = new Point(12, 9);
-            lblSource.Name = "lblSource";
-            lblSource.Padding = new Padding(2);
-            lblSource.Size = new Size(120, 21);
-            lblSource.TabIndex = 24;
-            lblSource.Text = ExtensionPhrases.SrcLblName;
-            lblSource.Visible = false;
-            // 
-            // lblDestination
-            // 
-            lblDestination.BorderStyle = BorderStyle.FixedSingle;
-            lblDestination.Location = new Point(610, 15);
-            lblDestination.Name = "lblDestination";
-            lblDestination.Padding = new Padding(2);
-            lblDestination.Size = new Size(121, 21);
-            lblDestination.TabIndex = 25;
-            lblDestination.Text = ExtensionPhrases.DestLblName;
-            lblDestination.Visible = false;
             // 
             // saveFileDialog1
             // 
@@ -202,53 +166,51 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
             // button1
             // 
             button1.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
-            button1.Location = new Point(1068, 465);
+            button1.Location = new Point(1221, 620);
+            button1.Margin = new Padding(3, 4, 3, 4);
             button1.Name = "button1";
-            button1.Size = new Size(88, 26);
+            button1.Size = new Size(101, 35);
             button1.TabIndex = 26;
-            button1.Text = ExtensionPhrases.BtnSave;
             button1.UseVisualStyleBackColor = true;
             button1.Click += button1_Click;
             // 
-            // label1
+            // lblsrc
             // 
-            label1.AutoSize = true;
-            label1.BorderStyle = BorderStyle.FixedSingle;
-            label1.Font = new Font("Segoe UI", 9F, FontStyle.Regular, GraphicsUnit.Point);
-            label1.Location = new Point(397, 15);
-            label1.Name = "label1";
-            label1.Size = new Size(45, 17);
-            label1.TabIndex = 27;
-            label1.Text = ExtensionPhrases.SrcLblName;
+            lblsrc.AutoSize = true;
+            lblsrc.Font = new Font("Segoe UI", 9F, FontStyle.Bold, GraphicsUnit.Point);
+            lblsrc.Location = new Point(12, 27);
+            lblsrc.Name = "lblsrc";
+            lblsrc.Size = new Size(56, 20);
+            lblsrc.TabIndex = 27;
+            lblsrc.Text = "Source";
             // 
-            // label2
+            // lbldest
             // 
-            label2.AutoSize = true;
-            label2.BorderStyle = BorderStyle.FixedSingle;
-            label2.Location = new Point(920, 15);
-            label2.Name = "label2";
-            label2.Size = new Size(69, 17);
-            label2.TabIndex = 28;
-            label2.Text = ExtensionPhrases.DestLblName;
+            lbldest.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+            lbldest.AutoSize = true;
+            lbldest.Font = new Font("Segoe UI", 9F, FontStyle.Bold, GraphicsUnit.Point);
+            lbldest.Location = new Point(1324, 27);
+            lbldest.Name = "lbldest";
+            lbldest.Size = new Size(90, 20);
+            lbldest.TabIndex = 28;
+            lbldest.Text = "Destination";
             // 
-            // FrmVariableMerge
+            // FrmVariablesMerge
             // 
-            AutoScaleDimensions = new SizeF(7F, 15F);
+            AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
             CancelButton = btnCancel;
-            ClientSize = new Size(1246, 502);
-            Controls.Add(label2);
-            Controls.Add(label1);
+            ClientSize = new Size(1424, 669);
+            Controls.Add(lbldest);
+            Controls.Add(lblsrc);
             Controls.Add(button1);
-            Controls.Add(lblDestination);
-            Controls.Add(lblSource);
             Controls.Add(btnCancel);
             Controls.Add(dataGridView1);
             Controls.Add(checkBox3);
             Controls.Add(label3);
-            MinimumSize = new Size(1262, 539);
-            Name = "FrmVariableMerge";
-            Text = ExtensionPhrases.FrmVariablesMergeName;
+            Margin = new Padding(3, 4, 3, 4);
+            MinimumSize = new Size(1440, 703);
+            Name = "FrmVariablesMerge";
             Load += FrmCnlMerge_Load;
             ((ISupportInitialize)dataGridView1).EndInit();
             ResumeLayout(false);
@@ -270,12 +232,10 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
         private DataGridViewTextBoxColumn Column2;
         private DataGridViewTextBoxColumn Column3;
         private DataGridViewTextBoxColumn Column44;
-        private Label lblSource;
-        private Label lblDestination;
         private SaveFileDialog saveFileDialog;
         private SaveFileDialog saveFileDialog1;
         private Button button1;
-        private Label label1;
-        private Label label2;
+        private Label lblsrc;
+        private Label lbldest;
     }
 }
