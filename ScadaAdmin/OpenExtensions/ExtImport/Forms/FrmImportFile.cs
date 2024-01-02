@@ -382,33 +382,25 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
             saveFileDialog1.FileName = string.Format("{0}.xml", selectedDevice.Name);
 
             DeviceConfig currentConfig = null;
-            //start
                
-                foreach (ProjectInstance instance in project.Instances)
+            foreach (ProjectInstance instance in project.Instances)
+            {
+                if (instance.LoadAppConfig(out _) && instance.CommApp.Enabled)
                 {
-                    if (instance.LoadAppConfig(out _) && instance.CommApp.Enabled)
+                    foreach (LineConfig lineConfig in instance.CommApp.AppConfig.Lines)
                     {
-                        foreach (LineConfig lineConfig in instance.CommApp.AppConfig.Lines)
+                        foreach (DeviceConfig deviceConfig in lineConfig.DevicePolling)
                         {
-                            foreach (DeviceConfig deviceConfig in lineConfig.DevicePolling)
+                            if(deviceConfig.DeviceNum == selectedDevice.DeviceNum)
                             {
-                                if(deviceConfig.DeviceNum == selectedDevice.DeviceNum)
-                                {
-                                currentConfig = deviceConfig;
-                                    saveFileDialog1.FileName = deviceConfig.PollingOptions.CmdLine;
-                                    continue;
-                                }
+                            currentConfig = deviceConfig;
+                                saveFileDialog1.FileName = deviceConfig.PollingOptions.CmdLine;
+                                continue;
                             }
                         }
                     }
                 }
-//end
-
-
-
-
-
-
+            }
 
             saveFileDialog1.InitialDirectory = string.Format("{0}\\Instances\\Default\\ScadaComm\\Config", this.project.ProjectDir);
             if (saveFileDialog1.ShowDialog() == DialogResult.OK)
@@ -426,23 +418,6 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
                     project.ConfigDatabase.DeviceTable.Modified = true;
                     currentConfig.PollingOptions.CmdLine = newFilename;
                 }
-                //foreach (ProjectInstance instance in project.Instances)
-                //{
-                //    if (instance.LoadAppConfig(out _) && instance.CommApp.Enabled)
-                //    {
-                //        foreach (LineConfig lineConfig in instance.CommApp.AppConfig.Lines)
-                //        {
-                //            foreach (DeviceConfig deviceConfig in lineConfig.DevicePolling)
-                //            {
-                //                if (deviceConfig.DeviceNum == selectedDevice.DeviceNum)
-                //                {
-                //                    deviceConfig.PollingOptions.CmdLine = newFilename;
-                //                    continue;
-                //                }
-                //            }
-                //        }
-                //    }
-                //}
             }
         }
 
