@@ -25,7 +25,7 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
         private readonly Dictionary<int, string> dataTypeDictionary = ConfigDictionaries.DataTypeDictionary;
 
 
-		private FrmCnlsMerge()
+        private FrmCnlsMerge()
         {
             InitializeComponent();
             dataGridView1.AutoGenerateColumns = false;
@@ -258,9 +258,6 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
             SetCheckboxLocation(_headerCheckBox1, 1);
             SetCheckboxLocation(_headerCheckBox2, 7);
 
-            SetLabelLocation(lblSource, -1, 5);
-            SetLabelLocation(lblDestination, 6, 9);
-
             dataGridView1.Controls.Add(_headerCheckBox1);
             _headerCheckBox1.CheckedChanged += _headerCheckBox1_CheckedChanged;
             dataGridView1.Controls.Add(_headerCheckBox2);
@@ -274,9 +271,6 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
         {
             SetCheckboxLocation(_headerCheckBox1, 1);
             SetCheckboxLocation(_headerCheckBox2, 7);
-
-            SetLabelLocation(lblSource, -1, 5);
-            SetLabelLocation(lblDestination, 6, 9);
         }
 
         private void SetCheckboxLocation(System.Windows.Forms.CheckBox ck, int columnIndex)
@@ -286,15 +280,6 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
             ck.Location = new Point(headerCellRectangle.X + (headerCellRectangle.Width / 2) - 8, headerCellRectangle.Y + 2);
             ck.BackColor = Color.Transparent;
             ck.Size = new Size(18, 18);
-        }
-
-        private void SetLabelLocation(System.Windows.Forms.Label lbl, int columnStartIndex, int columnEndIndex)
-        {
-            Rectangle headerCell1Rectangle = this.dataGridView1.GetCellDisplayRectangle(columnStartIndex, -1, true);
-            Rectangle headerCell2Rectangle = this.dataGridView1.GetCellDisplayRectangle(columnEndIndex, -1, true);
-
-            lbl.Location = new Point(headerCell1Rectangle.X + dataGridView1.Location.X, lbl.Location.Y);
-            lbl.Size = new Size((headerCell2Rectangle.X + dataGridView1.Location.X + headerCell2Rectangle.Width) - headerCell1Rectangle.X, 21);
         }
 
         /// <summary>
@@ -315,6 +300,5 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
 
             DialogResult = DialogResult.OK;
         }
-
     }
 }
