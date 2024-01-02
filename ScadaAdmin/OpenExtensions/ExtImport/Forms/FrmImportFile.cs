@@ -278,7 +278,7 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
             conflictsAreSolved = false;
 
             //We open the merge form
-            FrmCnlsMergeCopy frmCnlsMerge = new(project, conflictualChanels, importedChanels);
+            FrmCnlsMerge frmCnlsMerge = new(project, conflictualChanels, importedChanels);
 
             //If the merge form is closed with OK, we update the chanels to create
             if (frmCnlsMerge.ShowDialog() == DialogResult.OK)

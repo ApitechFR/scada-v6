@@ -226,10 +226,10 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
             label1.Size = new Size(56, 17);
             label1.TabIndex = 28;
             label1.Text = ExtensionPhrases.LblNewCnls;
-			// 
-			// label2
-			// 
-			label2.AutoSize = true;
+            // 
+            // label2
+            // 
+            label2.AutoSize = true;
             label2.BorderStyle = BorderStyle.FixedSingle;
             label2.Font = new Font("Segoe UI", 9F, FontStyle.Regular, GraphicsUnit.Point);
             label2.Location = new Point(1020, 9);
@@ -237,10 +237,10 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
             label2.Size = new Size(98, 17);
             label2.TabIndex = 29;
             label2.Text = ExtensionPhrases.LblEquipCnls;
-			// 
-			// FrmCnlsMerge
-			// 
-			AutoScaleDimensions = new SizeF(7F, 15F);
+            // 
+            // FrmCnlsMerge
+            // 
+            AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             CancelButton = btnCancel;
             ClientSize = new Size(1482, 567);
