@@ -6,6 +6,8 @@ using Scada.Comm.Drivers.DrvModbus.Protocol;
 using Scada.Data.Entities;
 using System.Text.RegularExpressions;
 using System.Xml;
+using Scada.Comm;
+using Scada.Admin.Config;
 
 namespace Scada.Admin.Extensions.ExtImport.Forms
 {
@@ -382,6 +384,7 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
             saveFileDialog1.FileName = string.Format("{0}.xml", selectedDevice.Name);
 
             DeviceConfig currentConfig = null;
+            ProjectInstance currentInstance = null;
                
             foreach (ProjectInstance instance in project.Instances)
             {
@@ -393,7 +396,8 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
                         {
                             if(deviceConfig.DeviceNum == selectedDevice.DeviceNum)
                             {
-                            currentConfig = deviceConfig;
+                                currentInstance = instance;
+                                currentConfig = deviceConfig;
                                 saveFileDialog1.FileName = deviceConfig.PollingOptions.CmdLine;
                                 continue;
                             }
@@ -403,6 +407,7 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
             }
 
             saveFileDialog1.InitialDirectory = string.Format("{0}\\Instances\\Default\\ScadaComm\\Config", this.project.ProjectDir);
+            saveFileDialog1.Filter = "Fichiers XML (*.xml)|*.xml";
             if (saveFileDialog1.ShowDialog() == DialogResult.OK)
             {
                 using (Stream s = File.Open(saveFileDialog1.FileName, FileMode.Create))
@@ -415,8 +420,16 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
                 var newFilename = saveFileDialog1.FileName.Split('\\').Last();
                 if(currentConfig != null)
                 {
-                    project.ConfigDatabase.DeviceTable.Modified = true;
+                    //project.ConfigDatabase.DeviceTable.Modified = true;
                     currentConfig.PollingOptions.CmdLine = newFilename;
+
+                    //get appdata from project
+
+                    string fileName = Path.Combine(currentInstance.CommApp.ConfigDir, CommConfig.DefaultFileName);
+
+                    //currentInstance.CommApp.AppConfig.Save(string.Format("{0}\\Instances\\Default\\ScadaComm\\Config\\ScadaCommConfig1.xml", this.project.ProjectDir), out string errMess);
+                    currentInstance.CommApp.AppConfig.Save(string.Format(fileName, this.project.ProjectDir), out string errMess);
+
                 }
             }
         }
@@ -466,8 +479,15 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
                 ElemConfig newElem = new ElemConfig();
                 //we set its properties according to imported row
                 //string newType = elemTypeDico.Keys.Contains(row.Value[1]) ? row.Value[1] : cnlDataType.FirstOrDefault(t => t.Value == dataTypes.FirstOrDefault(dt => dt.Value == row.Value[1]).Key).Key;
-                newElem.ElemType = elemTypeDico.Keys.Contains(row.Value[1]) ? elemTypeDico[row.Value[1]] : ElemType.Undefined;
-                //newElem.ByteOrder = (new DeviceTemplateOptions()).GetDefaultByteOrder(ModbusUtils.GetDataLength(newElem.ElemType)).Select(e => e.ToString()).ToList().Aggregate((i, j) => i + j);
+                //newElem.ElemType = elemTypeDico.Keys.Contains(row.Value[1]) ? elemTypeDico[row.Value[1]] : ElemType.Undefined;
+                //var a = template.Options;
+                //var aa = newElem.ElemType;
+                //var aaa = ModbusUtils.GetDataLength(aa);
+                //var b = a.GetDefaultByteOrder(aaa);
+                //var c = b.Select(e => e.ToString()).ToList();
+                //var d = c.Aggregate((i, j) => i + j);
+                ////newElem.ByteOrder = (new DeviceTemplateOptions()).GetDefaultByteOrder(ModbusUtils.GetDataLength(newElem.ElemType)).Select(e => e.ToString()).ToList().Aggregate((i, j) => i + j);
+                //newElem.ByteOrder = d;
                 newElem.ByteOrder = textBox1.Text;
                 newElem.Name = row.Value[0];
                 newElem.TagCode = row.Key;
