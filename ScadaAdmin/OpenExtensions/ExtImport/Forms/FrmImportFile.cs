@@ -6,8 +6,7 @@ using Scada.Comm.Drivers.DrvModbus.Protocol;
 using Scada.Data.Entities;
 using System.Text.RegularExpressions;
 using System.Xml;
-using Scada.Comm;
-using Scada.Admin.Config;
+using Scada.Forms;
 
 namespace Scada.Admin.Extensions.ExtImport.Forms
 {
@@ -37,6 +36,8 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
             importedRows = new Dictionary<string, List<string>>();
             button1.Enabled = false;
             textBox1.Enabled = false;
+            textBox2.Enabled = false;
+            textBox3.Enabled = false;
 
             cbDevice.Items.Clear();
             project.ConfigDatabase.DeviceTable.AsEnumerable().ToList().ForEach(d => cbDevice.Items.Add(d.Name));
@@ -47,7 +48,60 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
             cbBoxSuffix.Items.AddRange(availablePrefixSuffix.Keys.ToArray());
             cbBoxSuffix.SelectedItem = "None";
 
-            textBox1.Text = project.ConfigDatabase.defaultByteOrder ?? "";
+            LoadExtImportConfig();
+        }
+        /// <summary>
+        /// Reads extImport config file and loads its content
+        /// </summary>
+        private void LoadExtImportConfig()
+        {
+            string extImportConfigPath = string.Format("{0}\\extImportConfig.xml", project.ProjectDir);
+            if (File.Exists(extImportConfigPath))
+            {
+                XmlDocument xmlDoc = new XmlDocument();
+                xmlDoc.Load(extImportConfigPath);
+                XmlNode rootNode = xmlDoc.SelectSingleNode("extImportConfig");
+                XmlNode default2ByteOrderNode = rootNode.SelectSingleNode("default2ByteOrder");
+                if (default2ByteOrderNode != null)
+                {
+                    textBox1.Text = default2ByteOrderNode.InnerText;
+                }
+                XmlNode default4ByteOrderNode = rootNode.SelectSingleNode("default4ByteOrder");
+                if (default4ByteOrderNode != null)
+                {
+                    textBox2.Text = default4ByteOrderNode.InnerText;
+                }
+                XmlNode default8ByteOrderNode = rootNode.SelectSingleNode("default8ByteOrder");
+                if (default8ByteOrderNode != null)
+                {
+                    textBox3.Text = default8ByteOrderNode.InnerText;
+                }
+            }
+            else
+            {
+                SaveExtImportConfig(string.Format("{0}\\extImportConfig.xml", project.ProjectDir));
+            }
+        }
+
+        private void SaveExtImportConfig(string path)
+        {
+            XmlDocument xmlDoc = new XmlDocument();
+            XmlNode rootNode = xmlDoc.CreateElement("extImportConfig");
+
+            XmlNode default2ByteOrderNode = xmlDoc.CreateElement("default2ByteOrder");
+            default2ByteOrderNode.InnerText = textBox1.Text;
+            rootNode.AppendChild(default2ByteOrderNode);
+
+            XmlNode default4ByteOrderNode = xmlDoc.CreateElement("default4ByteOrder");
+            default4ByteOrderNode.InnerText = textBox2.Text;
+            rootNode.AppendChild(default4ByteOrderNode);
+
+            XmlNode default8ByteOrderNode = xmlDoc.CreateElement("default8ByteOrder");
+            default8ByteOrderNode.InnerText = textBox3.Text;
+            rootNode.AppendChild(default8ByteOrderNode);
+
+            xmlDoc.AppendChild(rootNode);
+            xmlDoc.Save(path);
         }
 
         /// <summary>
@@ -154,6 +208,8 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
             cbBoxSuffix.Enabled = areFileAndDeviceSelected;
             button1.Enabled = areFileAndDeviceSelected;
             textBox1.Enabled = areFileAndDeviceSelected;
+            textBox2.Enabled = areFileAndDeviceSelected;
+            textBox3.Enabled = areFileAndDeviceSelected;
 
             if (areFileAndDeviceSelected)
             {
@@ -317,7 +373,7 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
             ImportDeviceConfiguration();
 
             //save the default byte order in project config
-            project.ConfigDatabase.defaultByteOrder = textBox1.Text;
+            SaveExtImportConfig(string.Format("{0}\\extImportConfig.xml", project.ProjectDir));
 
             //Finally, we close the form
             DialogResult = DialogResult.OK;
@@ -385,7 +441,7 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
 
             DeviceConfig currentConfig = null;
             ProjectInstance currentInstance = null;
-               
+
             foreach (ProjectInstance instance in project.Instances)
             {
                 if (instance.LoadAppConfig(out _) && instance.CommApp.Enabled)
@@ -394,7 +450,7 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
                     {
                         foreach (DeviceConfig deviceConfig in lineConfig.DevicePolling)
                         {
-                            if(deviceConfig.DeviceNum == selectedDevice.DeviceNum)
+                            if (deviceConfig.DeviceNum == selectedDevice.DeviceNum)
                             {
                                 currentInstance = instance;
                                 currentConfig = deviceConfig;
@@ -418,18 +474,14 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
 
                 //replace device configuration file in project
                 var newFilename = saveFileDialog1.FileName.Split('\\').Last();
-                if(currentConfig != null)
+                if (currentConfig != null)
                 {
-                    //project.ConfigDatabase.DeviceTable.Modified = true;
                     currentConfig.PollingOptions.CmdLine = newFilename;
-
-                    //get appdata from project
-
                     string fileName = Path.Combine(currentInstance.CommApp.ConfigDir, CommConfig.DefaultFileName);
-
-                    //currentInstance.CommApp.AppConfig.Save(string.Format("{0}\\Instances\\Default\\ScadaComm\\Config\\ScadaCommConfig1.xml", this.project.ProjectDir), out string errMess);
-                    currentInstance.CommApp.AppConfig.Save(string.Format(fileName, this.project.ProjectDir), out string errMess);
-
+                    if (!currentInstance.CommApp.AppConfig.Save(string.Format(fileName, this.project.ProjectDir), out string errMess))
+                    {
+                        ScadaUiUtils.ShowError(errMess);
+                    }
                 }
             }
         }
@@ -478,11 +530,28 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
                 //we create a new configuration element
                 ElemConfig newElem = new ElemConfig();
                 //we set its properties according to imported row
-                //string newType = elemTypeDico.Keys.Contains(row.Value[1]) ? row.Value[1] : cnlDataType.FirstOrDefault(t => t.Value == dataTypes.FirstOrDefault(dt => dt.Value == row.Value[1]).Key).Key;
-                //newElem.ElemType = elemTypeDico.Keys.Contains(row.Value[1]) ? elemTypeDico[row.Value[1]] : ElemType.Undefined;
+                string newType = elemTypeDico.Keys.Contains(row.Value[1]) ? row.Value[1] : cnlDataType.FirstOrDefault(t => t.Value == dataTypes.FirstOrDefault(dt => dt.Value == row.Value[1]).Key).Key;
+                newElem.ElemType = elemTypeDico.Keys.Contains(row.Value[1]) ? elemTypeDico[row.Value[1]] : ElemType.Undefined;
                 //var a = template.Options;
                 //var aa = newElem.ElemType;
                 //var aaa = ModbusUtils.GetDataLength(aa);
+
+                switch (ModbusUtils.GetDataLength(newElem.ElemType))
+                {
+                    case 2:
+                        newElem.ByteOrder = textBox1.Text;
+                        break;
+                    case 4:
+                        newElem.ByteOrder = textBox2.Text;
+                        break;
+                    case 8:
+                        newElem.ByteOrder = textBox3.Text;
+                        break;
+                    default:
+                        newElem.ByteOrder = "0123";
+                        break;
+                }
+
                 //var b = a.GetDefaultByteOrder(aaa);
                 //var c = b.Select(e => e.ToString()).ToList();
                 //var d = c.Aggregate((i, j) => i + j);
