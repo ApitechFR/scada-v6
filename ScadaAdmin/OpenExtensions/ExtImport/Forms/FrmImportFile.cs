@@ -55,8 +55,13 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
         /// </summary>
         private void LoadExtImportConfig()
         {
-            string extImportConfigPath = string.Format("{0}\\extImportConfig.xml", project.ProjectDir);
-            if (File.Exists(extImportConfigPath))
+            string extImportConfigFolder = string.Format("{0}\\Instances\\Default\\ExtImport", project.ProjectDir);
+            string extImportConfigPath = string.Format("{0}\\extImportConfig.xml", extImportConfigFolder);
+            if (!Directory.Exists(extImportConfigFolder))
+            {
+                Directory.CreateDirectory(extImportConfigFolder);
+            }
+            if ( File.Exists(extImportConfigPath))
             {
                 XmlDocument xmlDoc = new XmlDocument();
                 xmlDoc.Load(extImportConfigPath);
@@ -79,7 +84,7 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
             }
             else
             {
-                SaveExtImportConfig(string.Format("{0}\\extImportConfig.xml", project.ProjectDir));
+                SaveExtImportConfig(extImportConfigPath);
             }
         }
 
@@ -373,7 +378,9 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
             ImportDeviceConfiguration();
 
             //save the default byte order in project config
-            SaveExtImportConfig(string.Format("{0}\\extImportConfig.xml", project.ProjectDir));
+
+            string extImportConfigPath = string.Format("{0}\\Instances\\Default\\ExtImport\\extImportConfig.xml", project.ProjectDir);
+            SaveExtImportConfig(extImportConfigPath);
 
             //Finally, we close the form
             DialogResult = DialogResult.OK;
