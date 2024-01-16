@@ -61,7 +61,7 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
             {
                 Directory.CreateDirectory(extImportConfigFolder);
             }
-            if ( File.Exists(extImportConfigPath))
+            if (File.Exists(extImportConfigPath))
             {
                 XmlDocument xmlDoc = new XmlDocument();
                 xmlDoc.Load(extImportConfigPath);
@@ -378,7 +378,6 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
             ImportDeviceConfiguration();
 
             //save the default byte order in project config
-
             string extImportConfigPath = string.Format("{0}\\Instances\\Default\\ExtImport\\extImportConfig.xml", project.ProjectDir);
             SaveExtImportConfig(extImportConfigPath);
 
@@ -516,6 +515,9 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
                 //if row tagcode contains a non-digit character (except prefix)
                 if (!row.Key.All(char.IsDigit) && rowIndex > 0)
                 {
+                    /* This code allows to detect if a row is a continuation of the previous one.
+                     * It is kept here in case it could be useful in the future.
+                    */
                     ////we check if previous row tagcode too contains a non-digit character (except prefix)
                     //string previousRowKey = importedRows.Keys.ElementAt(rowIndex - 1);
                     //if (!previousRowKey.All(char.IsDigit))
@@ -564,7 +566,6 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
                 //var d = c.Aggregate((i, j) => i + j);
                 ////newElem.ByteOrder = (new DeviceTemplateOptions()).GetDefaultByteOrder(ModbusUtils.GetDataLength(newElem.ElemType)).Select(e => e.ToString()).ToList().Aggregate((i, j) => i + j);
                 //newElem.ByteOrder = d;
-                newElem.ByteOrder = textBox1.Text;
                 newElem.Name = row.Value[0];
                 newElem.TagCode = row.Key;
                 newElemenGroup.DataBlock = DataBlock.HoldingRegisters;
@@ -587,7 +588,6 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
                 //we add the new element to the current element group
                 newElemenGroup.Elems.Add(newElem);
 
-                //todo: if type is array, add array elements to the template
                 if (row.Value[1].Contains("ARRAY"))
                 {
                     //here, we assume that row.value[1] is like "ARRAY[0..5] OF BOOL"
@@ -600,10 +600,25 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
                         {
                             ElemConfig newElemArray = new ElemConfig();
                             newElemArray.ElemType = newElem.ElemType;
-                            newElemArray.ByteOrder = newElem.ElemType == ElemType.UShort ? "01" : "0123"; //todo: ajouter byteorder à la main
+                            switch (ModbusUtils.GetDataLength(newElem.ElemType))
+                            {
+                                case 2:
+                                    newElemArray.ByteOrder = textBox1.Text;
+                                    break;
+                                case 4:
+                                    newElemArray.ByteOrder = textBox2.Text;
+                                    break;
+                                case 8:
+                                    newElemArray.ByteOrder = textBox3.Text;
+                                    break;
+                                default:
+                                    newElemArray.ByteOrder = "0123";
+                                    break;
+                            }
                             newElemArray.Name = string.Format("{0}[{1}]", row.Value[0], i);
                             newElemArray.TagCode = string.Format("{0}{1}", row.Key, i);
                             newElemenGroup.Elems.Add(newElemArray);
+
                         }
                         //template.ElemGroups.Add(newElemenGroup);
                         //newElemenGroup = new ElemGroupConfig();

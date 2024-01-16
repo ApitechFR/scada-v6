@@ -67,11 +67,11 @@
             // 
             txtPathFile.Enabled = false;
             txtPathFile.Font = new Font("Segoe UI", 9F, FontStyle.Regular, GraphicsUnit.Point);
-            txtPathFile.Location = new Point(12, 26);
-            txtPathFile.Margin = new Padding(4, 4, 3, 2);
+            txtPathFile.Location = new Point(14, 35);
+            txtPathFile.Margin = new Padding(5, 5, 3, 3);
             txtPathFile.Name = "txtPathFile";
             txtPathFile.ReadOnly = true;
-            txtPathFile.Size = new Size(196, 23);
+            txtPathFile.Size = new Size(223, 27);
             txtPathFile.TabIndex = 10;
             txtPathFile.TabStop = false;
             // 
@@ -80,9 +80,10 @@
             btnSelectFile.Font = new Font("Segoe UI", 10.2F, FontStyle.Regular, GraphicsUnit.Point);
             btnSelectFile.ForeColor = SystemColors.ActiveCaptionText;
             btnSelectFile.ImageAlign = ContentAlignment.TopCenter;
-            btnSelectFile.Location = new Point(218, 25);
+            btnSelectFile.Location = new Point(249, 33);
+            btnSelectFile.Margin = new Padding(3, 4, 3, 4);
             btnSelectFile.Name = "btnSelectFile";
-            btnSelectFile.Size = new Size(32, 24);
+            btnSelectFile.Size = new Size(37, 32);
             btnSelectFile.TabIndex = 9;
             btnSelectFile.Text = "...";
             btnSelectFile.UseVisualStyleBackColor = true;
@@ -91,9 +92,9 @@
             // lblDevice
             // 
             lblDevice.AutoSize = true;
-            lblDevice.Location = new Point(12, 7);
+            lblDevice.Location = new Point(14, 9);
             lblDevice.Name = "lblDevice";
-            lblDevice.Size = new Size(25, 15);
+            lblDevice.Size = new Size(32, 20);
             lblDevice.TabIndex = 11;
             lblDevice.Text = "File";
             // 
@@ -102,9 +103,10 @@
             cbDevice.DisplayMember = "Name";
             cbDevice.DropDownStyle = ComboBoxStyle.DropDownList;
             cbDevice.FormattingEnabled = true;
-            cbDevice.Location = new Point(12, 71);
+            cbDevice.Location = new Point(14, 95);
+            cbDevice.Margin = new Padding(3, 4, 3, 4);
             cbDevice.Name = "cbDevice";
-            cbDevice.Size = new Size(238, 23);
+            cbDevice.Size = new Size(271, 28);
             cbDevice.TabIndex = 13;
             cbDevice.ValueMember = "DeviceNum";
             cbDevice.SelectedIndexChanged += cbDevice_SelectedIndexChanged;
@@ -112,27 +114,27 @@
             // label1
             // 
             label1.AutoSize = true;
-            label1.Location = new Point(10, 53);
+            label1.Location = new Point(11, 71);
             label1.Name = "label1";
-            label1.Size = new Size(42, 15);
+            label1.Size = new Size(54, 20);
             label1.TabIndex = 12;
             label1.Text = "Device";
             // 
             // label3
             // 
             label3.AutoSize = true;
-            label3.Location = new Point(0, 3);
+            label3.Location = new Point(0, 4);
             label3.Name = "label3";
-            label3.Size = new Size(40, 15);
+            label3.Size = new Size(50, 20);
             label3.TabIndex = 18;
             label3.Text = "Prefix ";
             // 
             // label2
             // 
             label2.AutoSize = true;
-            label2.Location = new Point(216, 2);
+            label2.Location = new Point(247, 3);
             label2.Name = "label2";
-            label2.Size = new Size(37, 15);
+            label2.Size = new Size(46, 20);
             label2.TabIndex = 17;
             label2.Text = "Suffix";
             // 
@@ -140,10 +142,9 @@
             // 
             cbBoxSuffix.DropDownStyle = ComboBoxStyle.DropDownList;
             cbBoxSuffix.FormattingEnabled = true;
-            cbBoxSuffix.Location = new Point(218, 20);
-            cbBoxSuffix.Margin = new Padding(3, 2, 3, 2);
+            cbBoxSuffix.Location = new Point(249, 27);
             cbBoxSuffix.Name = "cbBoxSuffix";
-            cbBoxSuffix.Size = new Size(197, 23);
+            cbBoxSuffix.Size = new Size(225, 28);
             cbBoxSuffix.TabIndex = 16;
             cbBoxSuffix.SelectedIndexChanged += cbBoxSuffix_SelectedIndexChanged;
             // 
@@ -151,19 +152,17 @@
             // 
             cbBoxPrefix.DropDownStyle = ComboBoxStyle.DropDownList;
             cbBoxPrefix.FormattingEnabled = true;
-            cbBoxPrefix.Location = new Point(0, 20);
-            cbBoxPrefix.Margin = new Padding(3, 2, 3, 2);
+            cbBoxPrefix.Location = new Point(0, 27);
             cbBoxPrefix.Name = "cbBoxPrefix";
-            cbBoxPrefix.Size = new Size(195, 23);
+            cbBoxPrefix.Size = new Size(222, 28);
             cbBoxPrefix.TabIndex = 15;
             cbBoxPrefix.SelectedIndexChanged += cbBoxPrefix_SelectedIndexChanged;
             // 
             // button1
             // 
-            button1.Location = new Point(341, 258);
-            button1.Margin = new Padding(3, 2, 3, 2);
+            button1.Location = new Point(390, 344);
             button1.Name = "button1";
-            button1.Size = new Size(103, 22);
+            button1.Size = new Size(118, 29);
             button1.TabIndex = 19;
             button1.Text = "OK";
             button1.UseVisualStyleBackColor = true;
@@ -171,10 +170,9 @@
             // 
             // button2
             // 
-            button2.Location = new Point(219, 258);
-            button2.Margin = new Padding(3, 2, 3, 2);
+            button2.Location = new Point(250, 344);
             button2.Name = "button2";
-            button2.Size = new Size(105, 22);
+            button2.Size = new Size(120, 29);
             button2.TabIndex = 20;
             button2.Text = "Cancel";
             button2.UseVisualStyleBackColor = true;
@@ -182,10 +180,9 @@
             // 
             // button3
             // 
-            button3.Location = new Point(-1, 26);
-            button3.Margin = new Padding(3, 2, 3, 2);
+            button3.Location = new Point(-1, 35);
             button3.Name = "button3";
-            button3.Size = new Size(237, 22);
+            button3.Size = new Size(271, 29);
             button3.TabIndex = 21;
             button3.Text = "Solve conflicts";
             button3.UseVisualStyleBackColor = true;
@@ -194,36 +191,38 @@
             // label4
             // 
             label4.AutoSize = true;
-            label4.Location = new Point(21, 4);
+            label4.Location = new Point(24, 5);
             label4.Name = "label4";
-            label4.Size = new Size(190, 15);
+            label4.Size = new Size(240, 20);
             label4.TabIndex = 22;
             label4.Text = "Some conflicts have to be resolved";
             // 
             // pbStatus
             // 
             pbStatus.Image = Properties.Resources.success;
-            pbStatus.Location = new Point(0, 4);
+            pbStatus.Location = new Point(0, 5);
+            pbStatus.Margin = new Padding(3, 4, 3, 4);
             pbStatus.Name = "pbStatus";
-            pbStatus.Size = new Size(16, 16);
+            pbStatus.Size = new Size(18, 21);
             pbStatus.TabIndex = 23;
             pbStatus.TabStop = false;
             // 
             // label5
             // 
             label5.AutoSize = true;
-            label5.Location = new Point(21, 4);
+            label5.Location = new Point(24, 5);
             label5.Name = "label5";
-            label5.Size = new Size(66, 15);
+            label5.Size = new Size(82, 20);
             label5.TabIndex = 24;
             label5.Text = "No conflict";
             // 
             // pictureBox1
             // 
             pictureBox1.Image = Properties.Resources.warning;
-            pictureBox1.Location = new Point(0, 4);
+            pictureBox1.Location = new Point(0, 5);
+            pictureBox1.Margin = new Padding(3, 4, 3, 4);
             pictureBox1.Name = "pictureBox1";
-            pictureBox1.Size = new Size(16, 16);
+            pictureBox1.Size = new Size(18, 21);
             pictureBox1.TabIndex = 25;
             pictureBox1.TabStop = false;
             // 
@@ -233,10 +232,9 @@
             panel1.Controls.Add(cbBoxPrefix);
             panel1.Controls.Add(cbBoxSuffix);
             panel1.Controls.Add(label2);
-            panel1.Location = new Point(13, 180);
-            panel1.Margin = new Padding(3, 2, 3, 2);
+            panel1.Location = new Point(15, 240);
             panel1.Name = "panel1";
-            panel1.Size = new Size(431, 57);
+            panel1.Size = new Size(493, 76);
             panel1.TabIndex = 26;
             // 
             // panel2
@@ -244,67 +242,68 @@
             panel2.Controls.Add(label4);
             panel2.Controls.Add(pictureBox1);
             panel2.Controls.Add(button3);
-            panel2.Location = new Point(13, 113);
-            panel2.Margin = new Padding(3, 2, 3, 2);
+            panel2.Location = new Point(15, 151);
             panel2.Name = "panel2";
-            panel2.Size = new Size(237, 48);
+            panel2.Size = new Size(271, 64);
             panel2.TabIndex = 27;
             // 
             // panel3
             // 
             panel3.Controls.Add(label5);
             panel3.Controls.Add(pbStatus);
-            panel3.Location = new Point(76, 126);
-            panel3.Margin = new Padding(3, 2, 3, 2);
+            panel3.Location = new Point(87, 168);
             panel3.Name = "panel3";
-            panel3.Size = new Size(109, 73);
+            panel3.Size = new Size(125, 66);
             panel3.TabIndex = 28;
             // 
             // label8
             // 
             label8.AutoSize = true;
-            label8.Location = new Point(273, 8);
+            label8.Location = new Point(312, 11);
             label8.Name = "label8";
-            label8.Size = new Size(60, 15);
+            label8.Size = new Size(76, 20);
             label8.TabIndex = 19;
             label8.Text = "ByteOrder";
             // 
             // textBox1
             // 
-            textBox1.Location = new Point(59, 18);
+            textBox1.Location = new Point(67, 24);
+            textBox1.Margin = new Padding(3, 4, 3, 4);
             textBox1.Name = "textBox1";
-            textBox1.Size = new Size(96, 23);
+            textBox1.Size = new Size(109, 27);
             textBox1.TabIndex = 29;
             // 
             // textBox2
             // 
-            textBox2.Location = new Point(59, 56);
+            textBox2.Location = new Point(67, 75);
+            textBox2.Margin = new Padding(3, 4, 3, 4);
             textBox2.Name = "textBox2";
-            textBox2.Size = new Size(96, 23);
+            textBox2.Size = new Size(109, 27);
             textBox2.TabIndex = 31;
             // 
             // label9
             // 
             label9.AutoSize = true;
-            label9.Location = new Point(9, 21);
+            label9.Location = new Point(10, 28);
             label9.Name = "label9";
-            label9.Size = new Size(44, 15);
+            label9.Size = new Size(56, 20);
             label9.TabIndex = 30;
             label9.Text = "2 Bytes";
             // 
             // textBox3
             // 
-            textBox3.Location = new Point(59, 95);
+            textBox3.Location = new Point(67, 127);
+            textBox3.Margin = new Padding(3, 4, 3, 4);
             textBox3.Name = "textBox3";
-            textBox3.Size = new Size(96, 23);
+            textBox3.Size = new Size(109, 27);
             textBox3.TabIndex = 33;
             // 
             // label10
             // 
             label10.AutoSize = true;
-            label10.Location = new Point(9, 59);
+            label10.Location = new Point(10, 79);
             label10.Name = "label10";
-            label10.Size = new Size(44, 15);
+            label10.Size = new Size(56, 20);
             label10.TabIndex = 32;
             label10.Text = "4 Bytes";
             // 
@@ -318,25 +317,26 @@
             panel4.Controls.Add(label10);
             panel4.Controls.Add(textBox2);
             panel4.Controls.Add(label9);
-            panel4.Location = new Point(273, 26);
+            panel4.Location = new Point(312, 35);
+            panel4.Margin = new Padding(3, 4, 3, 4);
             panel4.Name = "panel4";
-            panel4.Size = new Size(171, 135);
+            panel4.Size = new Size(195, 179);
             panel4.TabIndex = 34;
             // 
             // label6
             // 
             label6.AutoSize = true;
-            label6.Location = new Point(9, 99);
+            label6.Location = new Point(10, 132);
             label6.Name = "label6";
-            label6.Size = new Size(44, 15);
+            label6.Size = new Size(56, 20);
             label6.TabIndex = 35;
             label6.Text = "8 Bytes";
             // 
             // FrmImportFile
             // 
-            AutoScaleDimensions = new SizeF(7F, 15F);
+            AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(459, 291);
+            ClientSize = new Size(525, 388);
             Controls.Add(panel4);
             Controls.Add(panel3);
             Controls.Add(label8);
@@ -349,7 +349,6 @@
             Controls.Add(lblDevice);
             Controls.Add(txtPathFile);
             Controls.Add(btnSelectFile);
-            Margin = new Padding(3, 2, 3, 2);
             Name = "FrmImportFile";
             ((System.ComponentModel.ISupportInitialize)pbStatus).EndInit();
             ((System.ComponentModel.ISupportInitialize)pictureBox1).EndInit();
