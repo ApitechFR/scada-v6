@@ -377,14 +377,11 @@ namespace Scada.Admin.App.Forms
             {
                 //View node selection
                 TreeNode selectedNode = tvExplorer.Nodes[0].Nodes[1];
-                if (selectedNode.Nodes.Count > 0 && CheckIfItIsViewsNode(selectedNode))
-                {
 
-                    if (TryGetFilePath(selectedNode, out string path))
-                    {
-                        CloseChildForms(selectedNode, true);
-                        explorerBuilder.FillFileNode(selectedNode, path);
-                    }
+                if (TryGetFilePath(selectedNode, out string path))
+                {
+                    CloseChildForms(selectedNode, true);
+                    explorerBuilder.FillFileNode(selectedNode, path);
                 }
             }
         }
@@ -1209,14 +1206,14 @@ namespace Scada.Admin.App.Forms
 
 
 
-                // enable or disable the Save menu item
+            // enable or disable the Save menu item
             miFileSave.Enabled = btnFileSave.Enabled =
                 wctrlMain.ActiveForm is IChildForm childForm && childForm.ChildFormTag.Modified;
             if (sender is WinControl.WinControl ctrl)
                 if (ctrl.ActiveForm is FrmBaseTable table)
-                    if (table.ItemType.Name == "Cnl") 
+                    if (table.ItemType.Name == "Cnl")
                         table.RefreshData();
-                        
+
 
         }
 
@@ -1710,15 +1707,11 @@ namespace Scada.Admin.App.Forms
             if (appData.AppConfig.extAdminEnabled && isSchemeEditorProcess)
             {
                 TreeNode selectedNode = tvExplorer.Nodes[0].Nodes[1];
-                if (selectedNode.Nodes.Count > 0 && CheckIfItIsViewsNode(selectedNode))
-                {
-
                     if (TryGetFilePath(selectedNode, out string path))
                     {
                         CloseChildForms(selectedNode, true);
                         explorerBuilder.FillFileNode(selectedNode, path);
                     }
-                }
             }
             else
             {
