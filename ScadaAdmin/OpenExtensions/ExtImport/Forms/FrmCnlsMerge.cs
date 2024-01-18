@@ -12,9 +12,9 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
     public partial class FrmCnlsMerge : Form
     {
 
-        private List<Cnl> currentChanels;
-        public List<Cnl> chanelsToCreate;
-        private List<Cnl> incomingChanels;
+        private List<Cnl> currentChannels;
+        public List<Cnl> channelsToCreate;
+        private List<Cnl> incomingChannels;
         private int deviceNum;
         private IAdminContext adminContext; // the Administrator context
         private ScadaProject project;       // the project under development
@@ -37,14 +37,14 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
             this.project = project ?? throw new ArgumentNullException(nameof(project));
         }
 
-        public FrmCnlsMerge(ScadaProject project, List<Cnl> currentChanels, List<Cnl> incomingChanels)// Controls.CtrlImport1 ctrlImport1, Controls.CtrlImport2 ctrlImport2, Controls.CtrlImport3 ctrlImport3) : this()
+        public FrmCnlsMerge(ScadaProject project, List<Cnl> currentChannels, List<Cnl> incomingChannels)// Controls.CtrlImport1 ctrlImport1, Controls.CtrlImport2 ctrlImport2, Controls.CtrlImport3 ctrlImport3) : this()
         {
             InitializeComponent();
             dataGridView1.AutoGenerateColumns = false;
 
             this.project = project;
-            this.incomingChanels = incomingChanels;
-            this.currentChanels = currentChanels;
+            this.incomingChannels = incomingChannels;
+            this.currentChannels = currentChannels;
 
             FillGridView();
         }
@@ -53,27 +53,27 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
         {
             dataGridView1.Rows.Clear();
 
-            foreach(var incomingChanel in incomingChanels)
+            foreach(var incomingChannel in incomingChannels)
             {
-                var sameCodeCurrentChanels = currentChanels.Where(cnl => cnl.TagCode == incomingChanel.TagCode).ToList();
+                var sameCodeCurrentChannels = currentChannels.Where(cnl => cnl.TagCode == incomingChannel.TagCode).ToList();
 
-                foreach (var cnl in sameCodeCurrentChanels)
+                foreach (var cnl in sameCodeCurrentChannels)
                 {
                     int rowIndex = dataGridView1.Rows.Add();
                     DataGridViewRow row = dataGridView1.Rows[rowIndex];
-                    incomingChanel.CnlNum = cnl.CnlNum;
-                    //incomingChanel.DeviceNum = null;
+                    incomingChannel.CnlNum = cnl.CnlNum;
+                    //incomingChannel.DeviceNum = null;
 
                     //Cells from 0 to 5 are for incoming row
                     row.Cells[0].Value = cnl.CnlNum;
                     row.Cells[1].Value = false;
-                    row.Cells[2].Value = incomingChanel.Name;
-                    row.Cells[3].Value = (incomingChanel.DataTypeID.HasValue) ? dataTypeDictionary[incomingChanel.DataTypeID.Value] : "";
-                    row.Cells[4].Value = cnlTypeDictionary[incomingChanel.CnlTypeID];
-                    row.Cells[5].Value = incomingChanel.TagCode;
+                    row.Cells[2].Value = incomingChannel.Name;
+                    row.Cells[3].Value = (incomingChannel.DataTypeID.HasValue) ? dataTypeDictionary[incomingChannel.DataTypeID.Value] : "";
+                    row.Cells[4].Value = cnlTypeDictionary[incomingChannel.CnlTypeID];
+                    row.Cells[5].Value = incomingChannel.TagCode;
 
-                    //Cell 6 contains incomingRow as a chanel
-                    row.Cells[6].Value = incomingChanel;
+                    //Cell 6 contains incomingRow as a channel
+                    row.Cells[6].Value = incomingChannel;
 
                     //Cells from 7 to 11 are for current row
                     row.Cells[7].Value = false;
@@ -287,14 +287,14 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
         /// </summary>
         private void btnAdd_Click_1(object sender, EventArgs e)
         {
-            chanelsToCreate = new List<Cnl>();
+            channelsToCreate = new List<Cnl>();
 
             foreach (DataGridViewRow row in dataGridView1.Rows)
             {
                 if (Convert.ToBoolean(row.Cells[1].Value) == true)
                 {
                     Cnl cnl = (Cnl)row.Cells[6].Value;
-                    chanelsToCreate.Add(cnl);
+                    channelsToCreate.Add(cnl);
                 }
             }
 

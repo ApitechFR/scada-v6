@@ -13,15 +13,17 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
     public partial class FrmImportFile : Form
     {
         public Dictionary<string, List<string>> importedRows;
-        public List<Cnl> importedChanels;
-        public List<Cnl> conflictualChanels;
-        public List<Cnl> chanelsToCreateAfterMerge;
+        public List<Cnl> importedChannels;
+        public List<Cnl> conflictualChannels;
+        public List<Cnl> channelsToCreateAfterMerge;
         public string selectedFileName;
         private Device selectedDevice;
         private bool conflictsAreSolved = false;
         Dictionary<string, int> availablePrefixSuffix = new Dictionary<string, int> { { "TagCode", -1 }, { "Mnémonique", 0 }, { "Format", 1 }, { "Comment", 2 } };
         string selectedPrefix;
         string selectedSuffix;
+        //splittedChannels contains the channels that are waitinf for a formula, and keys are parents channels
+        Dictionary<string, List<Cnl>> splittedChannels; 
 
         private readonly ScadaProject project;
         public FrmImportFile(ScadaProject prj)
@@ -34,6 +36,7 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
             panel2.Visible = false;
             panel3.Visible = false;
             importedRows = new Dictionary<string, List<string>>();
+            splittedChannels = new Dictionary<string, List<Cnl>>();
             button1.Enabled = false;
             textBox1.Enabled = false;
             textBox2.Enabled = false;
@@ -179,13 +182,14 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
         }
 
         /// <summary>
-        /// Create a chanel object, filled with data from a row of the imported file
+        /// Create a channel object, filled with data from a row of the imported file
         /// </summary>
         /// <param name="rowKey"></param>
         /// <param name="rowValue"></param>
         /// <returns></returns>
-        private Cnl generateChanelFromRow(KeyValuePair<string, List<string>> row)
+        private Cnl generateChannelFromRow(KeyValuePair<string, List<string>> row)
         {
+            List<Cnl> bitChannels = new List<Cnl>();
             Cnl cnl = new Cnl();
             cnl.Name = row.Value[0];
             cnl.TagCode = row.Key;
@@ -193,9 +197,33 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
             {
                 cnl.DataTypeID = ConfigDictionaries.CnlDataType[row.Value[1]];
             }
+            else if (row.Value[1].Contains("ARRAY"))
+            {
+                if (ConfigDictionaries.CnlDataType.ContainsKey(row.Value[1].Split(' ')[2]))
+                {
+                    cnl.DataTypeID = ConfigDictionaries.CnlDataType[row.Value[1].Split(' ')[2]];
+                }
+                int arrayLength = int.Parse(row.Value[1].Split(' ')[0].Split("..")[1].Split(']')[0])+1;
+                for(int i=0; i < arrayLength; i++)
+                {
+                    Cnl cnlArray = new Cnl();
+                    cnlArray.Name = string.Format("{0}[{1}]", row.Value[0], i);
+                    cnlArray.TagCode = string.Format("{0}.{1}", row.Key, i);
+                    if (ConfigDictionaries.CnlDataType.ContainsKey(row.Value[1].Split(' ')[2]))
+                    {
+                        cnlArray.DataTypeID = ConfigDictionaries.CnlDataType[row.Value[1].Split(' ')[2]];
+                    }
+                    if(!splittedChannels.ContainsKey(cnl.TagCode))
+                    {
+                        splittedChannels.Add(cnl.TagCode, new List<Cnl>());
+                    }
+                    splittedChannels[cnl.TagCode].Add(cnlArray);
+                }
+            }
             //default Type is input/output
             cnl.CnlTypeID = 2;
             cnl.DeviceNum = selectedDevice.DeviceNum;
+
 
             return cnl;
         }
@@ -218,15 +246,18 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
 
             if (areFileAndDeviceSelected)
             {
+                splittedChannels =  new Dictionary<string, List<Cnl>>();
                 //update generated channels list
-                importedChanels = importedRows.Select(importedRow => generateChanelFromRow(importedRow)).ToList();
+                importedChannels = new List<Cnl>();
+
+                importedChannels = importedRows.Select(generateChannelFromRow).ToList();
                 //detect conflicts
                 DetectConflicts();
                 //We consider that there is a conflict if there are conflictual channels and if user has not already solved conflicts
-                bool hasConflicts = conflictualChanels.Count() > 0 && !conflictsAreSolved;
+                bool hasConflicts = conflictualChannels.Count() > 0 && !conflictsAreSolved;
                 if (!hasConflicts && !conflictsAreSolved)
                 {
-                    chanelsToCreateAfterMerge = importedChanels.DeepClone();
+                    channelsToCreateAfterMerge = importedChannels.DeepClone();
                 }
                 //hide and display conflicts related labels and button container
                 panel2.Visible = hasConflicts;
@@ -240,7 +271,7 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
         /// </summary>
         private void DetectConflicts()
         {
-            conflictualChanels = project.ConfigDatabase.CnlTable.Where(chanel => importedChanels.Any(c => c.TagCode == chanel.TagCode)).ToList();
+            conflictualChannels = project.ConfigDatabase.CnlTable.Where(channel => importedChannels.Any(c => c.TagCode == channel.TagCode)).ToList();
         }
 
 
@@ -317,7 +348,7 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
         /// We add created channels to the project
         /// </summary>
         /// <param name="cnls"></param>
-        private void AddChanelsToProject(List<Cnl> cnls)
+        private void AddChannelsToProject(List<Cnl> cnls)
         {
             foreach (var cnl in cnls)
             {
@@ -327,6 +358,16 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
                     cnl.CnlNum = project.ConfigDatabase.CnlTable.Count() > 0 ? project.ConfigDatabase.CnlTable.OrderBy(cnl => cnl.CnlNum).Last().CnlNum + 1 : 1;
                 }
                 project.ConfigDatabase.CnlTable.AddItem(cnl);
+                if(splittedChannels != null && splittedChannels.ContainsKey(cnl.TagCode))
+                {
+                    foreach(Cnl child in splittedChannels[cnl.TagCode])
+                    {
+                        child.FormulaEnabled = true;
+                        int bitIndex = splittedChannels[cnl.TagCode].FindIndex(c => c.TagCode == child.TagCode);
+                        child.InFormula = $"Getbit(Val({cnl.CnlNum}),{bitIndex})";
+                        project.ConfigDatabase.CnlTable.AddItem(child);
+                    }
+                }
             }
             project.ConfigDatabase.CnlTable.Modified = true;
         }
@@ -341,12 +382,12 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
             conflictsAreSolved = false;
 
             //We open the merge form
-            FrmCnlsMerge frmCnlsMerge = new(project, conflictualChanels, importedChanels);
+            FrmCnlsMerge frmCnlsMerge = new(project, conflictualChannels, importedChannels);
 
-            //If the merge form is closed with OK, we update the chanels to create
+            //If the merge form is closed with OK, we update the channels to create
             if (frmCnlsMerge.ShowDialog() == DialogResult.OK)
             {
-                chanelsToCreateAfterMerge = frmCnlsMerge.chanelsToCreate;
+                channelsToCreateAfterMerge = frmCnlsMerge.channelsToCreate;
                 conflictsAreSolved = true;
 
                 //We refresh the display of the form
@@ -355,23 +396,23 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
         }
 
         /// <summary>
-        /// On click on OK button, create chanels in project according to merge form result
+        /// On click on OK button, create channels in project according to merge form result
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
         private void button1_Click(object sender, EventArgs e)
         {
             //First, we add channels chosen in merge form to the project's channels
-            AddChanelsToProject(chanelsToCreateAfterMerge);
+            AddChannelsToProject(channelsToCreateAfterMerge);
 
-            //If not all imported rows were in conflict, we create chanels for all other rows and add them to the project's chanels
-            //Warning : there can be multiple conflictual chanels for one imported chanel
-            if (importedChanels.Count() != importedChanels.Where(ic => conflictualChanels.Any(c => c.TagCode == ic.TagCode)).Count() && conflictualChanels.Count() > 0)
+            //If not all imported rows were in conflict, we create channels for all other rows and add them to the project's channels
+            //Warning : there can be multiple conflictual channels for one imported channel
+            if (importedChannels.Count() != importedChannels.Where(ic => conflictualChannels.Any(c => c.TagCode == ic.TagCode)).Count() && conflictualChannels.Count() > 0)
             {
                 // we create channels for all other rows, which were not in conflict
-                List<Cnl> nonConflictualChanels = importedChanels.Where(ic => !conflictualChanels.Any(c => c.TagCode == ic.TagCode)).ToList();
-                //we add them to the project's chanels
-                AddChanelsToProject(nonConflictualChanels);
+                List<Cnl> nonConflictualChannels = importedChannels.Where(ic => !conflictualChannels.Any(c => c.TagCode == ic.TagCode)).ToList();
+                //we add them to the project's channels
+                AddChannelsToProject(nonConflictualChannels);
             }
 
             //Then, we generate a device configuration according to imported rows
@@ -404,9 +445,9 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
         private void cbDevice_SelectedIndexChanged(object sender, EventArgs e)
         {
             selectedDevice = project.ConfigDatabase.DeviceTable.ToList()[cbDevice.SelectedIndex];
-            if (chanelsToCreateAfterMerge != null)
+            if (channelsToCreateAfterMerge != null)
             {
-                chanelsToCreateAfterMerge = chanelsToCreateAfterMerge.Select(c => { c.DeviceNum = selectedDevice.DeviceNum; return c; }).ToList();
+                channelsToCreateAfterMerge = channelsToCreateAfterMerge.Select(c => { c.DeviceNum = selectedDevice.DeviceNum; return c; }).ToList();
             }
             refreshFormAccesses();
         }
@@ -595,7 +636,7 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
                     {
                         string[] arrayType = row.Value[1].Split(' ');
                         newElem.ElemType = elemTypeDico.Keys.Contains(arrayType[2]) ? elemTypeDico[arrayType[2]] : ElemType.Undefined;
-                        int arrayLength = int.Parse(arrayType[0].Split("..")[1].Split(']')[0]);
+                        int arrayLength = int.Parse(arrayType[0].Split("..")[1].Split(']')[0])+1;
                         for (int i = 0; i < arrayLength; i++)
                         {
                             ElemConfig newElemArray = new ElemConfig();
@@ -616,7 +657,7 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
                                     break;
                             }
                             newElemArray.Name = string.Format("{0}[{1}]", row.Value[0], i);
-                            newElemArray.TagCode = string.Format("{0}{1}", row.Key, i);
+                            newElemArray.TagCode = string.Format("{0}.{1}", row.Key, i);
                             newElemenGroup.Elems.Add(newElemArray);
 
                         }
@@ -661,7 +702,7 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
                     : importedRows.Values.ElementAt(rowIndex)[0];
             }
 
-            Func<Cnl, int, Cnl> updateChanel = (c, i) =>
+            Func<Cnl, int, Cnl> updateChannel = (c, i) =>
             {
                 c.Name = selectedPrefixRowColumnIndex != null ?
 
@@ -674,8 +715,8 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
                 return c;
             };
 
-            importedChanels = importedChanels.Select(updateChanel).ToList();
-            chanelsToCreateAfterMerge = chanelsToCreateAfterMerge != null ? chanelsToCreateAfterMerge.Select(updateChanel).ToList() : importedChanels.DeepClone();
+            importedChannels = importedChannels.Select(updateChannel).ToList();
+            channelsToCreateAfterMerge = channelsToCreateAfterMerge != null ? channelsToCreateAfterMerge.Select(updateChannel).ToList() : importedChannels.DeepClone();
         }
 
 
@@ -706,7 +747,7 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
                     : importedRows.Values.ElementAt(rowIndex)[0];
             }
 
-            Func<Cnl, int, Cnl> updateChanel = (c, i) =>
+            Func<Cnl, int, Cnl> updateChannel = (c, i) =>
             {
                 c.Name = selectedSuffixRowColumnIndex != null ?
                 c.Name = string.Format("{0} - {1}",
@@ -717,8 +758,8 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
                 return c;
             };
 
-            importedChanels = importedChanels.Select(updateChanel).ToList();
-            chanelsToCreateAfterMerge = chanelsToCreateAfterMerge != null ? chanelsToCreateAfterMerge.Select(updateChanel).ToList() : importedChanels.DeepClone();
+            importedChannels = importedChannels.Select(updateChannel).ToList();
+            channelsToCreateAfterMerge = channelsToCreateAfterMerge != null ? channelsToCreateAfterMerge.Select(updateChannel).ToList() : importedChannels.DeepClone();
         }
     }
 }
