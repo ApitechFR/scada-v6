@@ -377,15 +377,12 @@ namespace Scada.Admin.App.Forms
             {
                 //View node selection
                 TreeNode selectedNode = tvExplorer.Nodes[0].Nodes[1];
-                //if (selectedNode.Nodes.Count > 0 && CheckIfItIsViewsNode(selectedNode))
-                //{
 
-                    if (TryGetFilePath(selectedNode, out string path))
-                    {
-                        CloseChildForms(selectedNode, true);
-                        explorerBuilder.FillFileNode(selectedNode, path);
-                    }
-                //}
+                if (TryGetFilePath(selectedNode, out string path))
+                {
+                    CloseChildForms(selectedNode, true);
+                    explorerBuilder.FillFileNode(selectedNode, path);
+                }
             }
         }
 
@@ -1710,15 +1707,11 @@ namespace Scada.Admin.App.Forms
             if (appData.AppConfig.extAdminEnabled && isSchemeEditorProcess)
             {
                 TreeNode selectedNode = tvExplorer.Nodes[0].Nodes[1];
-                if (selectedNode.Nodes.Count > 0 && CheckIfItIsViewsNode(selectedNode))
-                {
-
                     if (TryGetFilePath(selectedNode, out string path))
                     {
                         CloseChildForms(selectedNode, true);
                         explorerBuilder.FillFileNode(selectedNode, path);
                     }
-                }
             }
             else
             {
