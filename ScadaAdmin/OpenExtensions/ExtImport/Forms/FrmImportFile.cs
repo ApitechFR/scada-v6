@@ -365,6 +365,11 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
                         child.FormulaEnabled = true;
                         int bitIndex = splittedChannels[cnl.TagCode].FindIndex(c => c.TagCode == child.TagCode);
                         child.InFormula = $"Getbit(Val({cnl.CnlNum}),{bitIndex})";
+                        if(child.CnlNum == 0)
+                            child.CnlNum = project.ConfigDatabase.CnlTable.Count() > 0 ? project.ConfigDatabase.CnlTable.OrderBy(cnl => cnl.CnlNum).Last().CnlNum + 1 : 1;
+                        //input/output by default
+                        child.CnlTypeID = 2;
+                        child.DeviceNum = selectedDevice.DeviceNum;
                         project.ConfigDatabase.CnlTable.AddItem(child);
                     }
                 }
