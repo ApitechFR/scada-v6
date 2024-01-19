@@ -43,11 +43,13 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Windows.Forms;
 using WinControl;
+using static System.ComponentModel.Design.ObjectSelectorEditor;
 
 namespace Scada.Admin.App.Forms
 {
@@ -61,6 +63,7 @@ namespace Scada.Admin.App.Forms
         private readonly ExplorerBuilder explorerBuilder; // the object to manipulate the explorer tree
         private FrmStartPage frmStartPage;                // the start page
         private bool preventNodeExpand;                   // prevent a tree node from expanding or collapsing
+        private bool isSchemeEditorProcess = false;
 
 
         /// <summary>
@@ -325,8 +328,26 @@ namespace Scada.Admin.App.Forms
                     if (appData.AppConfig.FileAssociations.TryGetValue(
                         AppUtils.GetExtensionLower(fileItem.Name), out string exePath) && File.Exists(exePath))
                     {
-                        // run external editor
-                        ScadaUiUtils.StartProcess(exePath, $"\"{fileItem.Path}\"");
+
+                        //update TreeNode after Process Exited
+                        if (appData.AppConfig.extAdminEnabled && exePath.Contains("SchemeEditor"))
+                        {
+                            isSchemeEditorProcess = true;
+                            ProcessStartInfo startInfo = new ProcessStartInfo();
+                            startInfo.FileName = exePath;
+                            startInfo.Arguments = $"\"{fileItem.Path}\"";
+                            Process process = new Process();
+                            process.StartInfo = startInfo;
+                            process.EnableRaisingEvents = true;
+                            process.Exited += ScheEditorProcess_Exited;
+                            process.Start();
+                        }
+                        else
+                        {
+                            isSchemeEditorProcess = false;
+                            //run external editor
+                            ScadaUiUtils.StartProcess(exePath, $"\"{fileItem.Path}\"");
+                        }
                     }
                     else
                     {
@@ -343,6 +364,41 @@ namespace Scada.Admin.App.Forms
                     wctrlMain.ActivateForm(tag.ExistingForm);
                 }
             }
+        }
+
+        private void ScheEditorProcess_Exited(object sender, EventArgs e)
+        {
+
+            if (tvExplorer.InvokeRequired)
+            {
+                tvExplorer.Invoke(new EventHandler(miDirectoryRefresh_Click));
+            }
+            else
+            {
+                //View node selection
+                TreeNode selectedNode = tvExplorer.Nodes[0].Nodes[1];
+
+                if (TryGetFilePath(selectedNode, out string path))
+                {
+                    CloseChildForms(selectedNode, true);
+                    explorerBuilder.FillFileNode(selectedNode, path);
+                }
+            }
+        }
+
+        private bool CheckIfItIsViewsNode(TreeNode node)
+        {
+            bool hasChildWithName = false;
+            foreach (TreeNode childNode in node.Nodes)
+            {
+                if (childNode.Text == Project.Name)
+                {
+                    hasChildWithName = true;
+                    break;
+                }
+            }
+
+            return hasChildWithName;
         }
 
         /// <summary>
@@ -1150,14 +1206,14 @@ namespace Scada.Admin.App.Forms
 
 
 
-                // enable or disable the Save menu item
+            // enable or disable the Save menu item
             miFileSave.Enabled = btnFileSave.Enabled =
                 wctrlMain.ActiveForm is IChildForm childForm && childForm.ChildFormTag.Modified;
             if (sender is WinControl.WinControl ctrl)
                 if (ctrl.ActiveForm is FrmBaseTable table)
-                    if (table.ItemType.Name == "Cnl") 
+                    if (table.ItemType.Name == "Cnl")
                         table.RefreshData();
-                        
+
 
         }
 
@@ -1648,13 +1704,25 @@ namespace Scada.Admin.App.Forms
 
         private void miDirectoryRefresh_Click(object sender, EventArgs e)
         {
-            // refresh the tree nodes corresponding to the selected directory
-            TreeNode selectedNode = tvExplorer.SelectedNode;
-
-            if (TryGetFilePath(selectedNode, out string path))
+            if (appData.AppConfig.extAdminEnabled && isSchemeEditorProcess)
             {
-                CloseChildForms(selectedNode, true);
-                explorerBuilder.FillFileNode(selectedNode, path);
+                TreeNode selectedNode = tvExplorer.Nodes[0].Nodes[1];
+                    if (TryGetFilePath(selectedNode, out string path))
+                    {
+                        CloseChildForms(selectedNode, true);
+                        explorerBuilder.FillFileNode(selectedNode, path);
+                    }
+            }
+            else
+            {
+                // refresh the tree nodes corresponding to the selected directory
+                TreeNode selectedNode = tvExplorer.SelectedNode;
+
+                if (TryGetFilePath(selectedNode, out string path))
+                {
+                    CloseChildForms(selectedNode, true);
+                    explorerBuilder.FillFileNode(selectedNode, path);
+                }
             }
         }
 
