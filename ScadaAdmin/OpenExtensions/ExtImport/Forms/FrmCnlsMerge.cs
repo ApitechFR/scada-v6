@@ -37,7 +37,7 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
             this.project = project ?? throw new ArgumentNullException(nameof(project));
         }
 
-        public FrmCnlsMerge(ScadaProject project, List<Cnl> currentChannels, List<Cnl> incomingChannels)// Controls.CtrlImport1 ctrlImport1, Controls.CtrlImport2 ctrlImport2, Controls.CtrlImport3 ctrlImport3) : this()
+        public FrmCnlsMerge(ScadaProject project, List<Cnl> currentChannels, List<Cnl> incomingChannels)
         {
             InitializeComponent();
             dataGridView1.AutoGenerateColumns = false;
@@ -62,7 +62,6 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
                     int rowIndex = dataGridView1.Rows.Add();
                     DataGridViewRow row = dataGridView1.Rows[rowIndex];
                     incomingChannel.CnlNum = cnl.CnlNum;
-                    //incomingChannel.DeviceNum = null;
 
                     //Cells from 0 to 5 are for incoming row
                     row.Cells[0].Value = cnl.CnlNum;
