@@ -46,20 +46,18 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
             tagCode = new DataGridViewTextBoxColumn();
             btnCancel = new Button();
             btnAdd = new Button();
-            lblSource = new Label();
-            lblDestination = new Label();
             saveFileDialog1 = new SaveFileDialog();
-            label1 = new Label();
-            label2 = new Label();
+            lblsrc = new Label();
+            lbldest = new Label();
             ((ISupportInitialize)dataGridView1).BeginInit();
             SuspendLayout();
             // 
             // label3
             // 
             label3.AutoSize = true;
-            label3.Location = new Point(5, 20);
+            label3.Location = new Point(6, 27);
             label3.Name = "label3";
-            label3.Size = new Size(0, 15);
+            label3.Size = new Size(0, 20);
             label3.TabIndex = 17;
             // 
             // dataGridView1
@@ -69,19 +67,17 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
             dataGridView1.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
             dataGridView1.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             dataGridView1.Columns.AddRange(new DataGridViewColumn[] { Column1Txt, ColumnChk, fcnlName, fdataType, fcnlType, fTagCode, ColumnVide, Column2Chk, cnlName, dataType, cnlType, tagCode });
-            dataGridView1.Location = new Point(10, 33);
-            dataGridView1.Margin = new Padding(3, 2, 3, 2);
+            dataGridView1.Location = new Point(11, 44);
             dataGridView1.Name = "dataGridView1";
             dataGridView1.RowHeadersWidth = 180;
             dataGridView1.RowTemplate.Height = 29;
-            dataGridView1.Size = new Size(1462, 498);
+            dataGridView1.Size = new Size(1671, 664);
             dataGridView1.TabIndex = 21;
             dataGridView1.CellContentClick += dataGridView1_CellContentClick;
             // 
             // Column1Txt
             // 
             Column1Txt.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
-            Column1Txt.HeaderText = ExtensionPhrases.NumCol;
             Column1Txt.MinimumWidth = 6;
             Column1Txt.Name = "Column1Txt";
             // 
@@ -96,28 +92,24 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
             // fcnlName
             // 
             fcnlName.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
-            fcnlName.HeaderText = ExtensionPhrases.NewCnlsNameCol;
             fcnlName.MinimumWidth = 6;
             fcnlName.Name = "fcnlName";
             // 
             // fdataType
             // 
             fdataType.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
-            fdataType.HeaderText = ExtensionPhrases.NewTypeCol;
             fdataType.MinimumWidth = 6;
             fdataType.Name = "fdataType";
             // 
             // fcnlType
             // 
             fcnlType.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
-            fcnlType.HeaderText = ExtensionPhrases.NewCnlsTypeCol;
             fcnlType.MinimumWidth = 6;
             fcnlType.Name = "fcnlType";
             // 
             // fTagCode
             // 
             fTagCode.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
-            fTagCode.HeaderText = ExtensionPhrases.NewTagCodeCol;
             fTagCode.MinimumWidth = 6;
             fTagCode.Name = "fTagCode";
             // 
@@ -140,37 +132,32 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
             // cnlName
             // 
             cnlName.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
-            cnlName.HeaderText = ExtensionPhrases.EquipCnlsNameCol;
             cnlName.MinimumWidth = 6;
             cnlName.Name = "cnlName";
             // 
             // dataType
             // 
             dataType.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
-            dataType.HeaderText = ExtensionPhrases.EquipTypeCol;
             dataType.MinimumWidth = 6;
             dataType.Name = "dataType";
             // 
             // cnlType
             // 
-            cnlType.HeaderText = ExtensionPhrases.EquipCnlsTypeCol;
             cnlType.MinimumWidth = 6;
             cnlType.Name = "cnlType";
             // 
             // tagCode
             // 
             tagCode.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
-            tagCode.HeaderText = ExtensionPhrases.EquipTagCodeCol;
             tagCode.MinimumWidth = 6;
             tagCode.Name = "tagCode";
             // 
             // btnCancel
             // 
             btnCancel.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
-            btnCancel.Location = new Point(1354, 536);
-            btnCancel.Margin = new Padding(3, 2, 3, 2);
+            btnCancel.Location = new Point(1547, 715);
             btnCancel.Name = "btnCancel";
-            btnCancel.Size = new Size(104, 26);
+            btnCancel.Size = new Size(119, 35);
             btnCancel.TabIndex = 23;
             btnCancel.Text = "Cancel";
             btnCancel.UseVisualStyleBackColor = true;
@@ -178,83 +165,55 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
             // btnAdd
             // 
             btnAdd.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
-            btnAdd.Location = new Point(1232, 536);
-            btnAdd.Margin = new Padding(3, 2, 3, 2);
+            btnAdd.Location = new Point(1408, 715);
             btnAdd.Name = "btnAdd";
-            btnAdd.Size = new Size(95, 26);
+            btnAdd.Size = new Size(109, 35);
             btnAdd.TabIndex = 22;
             btnAdd.Text = "Add";
             btnAdd.UseVisualStyleBackColor = true;
             btnAdd.Click += btnAdd_Click_1;
-            // 
-            // lblSource
-            // 
-            lblSource.BorderStyle = BorderStyle.FixedSingle;
-            lblSource.Font = new Font("Segoe UI", 10.8F, FontStyle.Regular, GraphicsUnit.Point);
-            lblSource.Location = new Point(12, 5);
-            lblSource.Name = "lblSource";
-            lblSource.Padding = new Padding(2);
-            lblSource.Size = new Size(125, 26);
-            lblSource.TabIndex = 24;
-            lblSource.Text = ExtensionPhrases.LblNewCnls;
-            lblSource.Visible = false;
-            // 
-            // lblDestination
-            // 
-            lblDestination.BorderStyle = BorderStyle.FixedSingle;
-            lblDestination.Font = new Font("Segoe UI", 10.8F, FontStyle.Regular, GraphicsUnit.Point);
-            lblDestination.Location = new Point(1172, 5);
-            lblDestination.Name = "lblDestination";
-            lblDestination.Padding = new Padding(2);
-            lblDestination.Size = new Size(155, 26);
-            lblDestination.TabIndex = 25;
-            lblDestination.Text = ExtensionPhrases.LblEquipCnls;
-            lblDestination.Visible = false;
             // 
             // saveFileDialog1
             // 
             saveFileDialog1.Filter = "Fichiers XML (*.xml)|*.xml";
             saveFileDialog1.RestoreDirectory = true;
             // 
-            // label1
+            // lblsrc
             // 
-            label1.AutoSize = true;
-            label1.BorderStyle = BorderStyle.FixedSingle;
-            label1.Font = new Font("Segoe UI", 9F, FontStyle.Regular, GraphicsUnit.Point);
-            label1.Location = new Point(399, 9);
-            label1.Name = "label1";
-            label1.Size = new Size(56, 17);
-            label1.TabIndex = 28;
-            label1.Text = ExtensionPhrases.LblNewCnls;
-			// 
-			// label2
-			// 
-			label2.AutoSize = true;
-            label2.BorderStyle = BorderStyle.FixedSingle;
-            label2.Font = new Font("Segoe UI", 9F, FontStyle.Regular, GraphicsUnit.Point);
-            label2.Location = new Point(1020, 9);
-            label2.Name = "label2";
-            label2.Size = new Size(98, 17);
-            label2.TabIndex = 29;
-            label2.Text = ExtensionPhrases.LblEquipCnls;
-			// 
-			// FrmCnlsMerge
-			// 
-			AutoScaleDimensions = new SizeF(7F, 15F);
+            lblsrc.AutoSize = true;
+            lblsrc.Font = new Font("Segoe UI", 9F, FontStyle.Bold, GraphicsUnit.Point);
+            lblsrc.Location = new Point(11, 9);
+            lblsrc.Name = "lblsrc";
+            lblsrc.Size = new Size(56, 20);
+            lblsrc.TabIndex = 24;
+            lblsrc.Text = "Source";
+            // 
+            // lbldest
+            // 
+            lbldest.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+            lbldest.AutoSize = true;
+            lbldest.Font = new Font("Segoe UI", 9F, FontStyle.Bold, GraphicsUnit.Point);
+            lbldest.Location = new Point(1592, 9);
+            lbldest.Name = "lbldest";
+            lbldest.Size = new Size(90, 20);
+            lbldest.TabIndex = 25;
+            lbldest.Text = "Destination";
+            // 
+            // FrmCnlsMerge
+            // 
+            AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
             CancelButton = btnCancel;
-            ClientSize = new Size(1482, 567);
-            Controls.Add(label2);
-            Controls.Add(label1);
-            Controls.Add(lblDestination);
-            Controls.Add(lblSource);
+            ClientSize = new Size(1694, 756);
+            Controls.Add(lbldest);
+            Controls.Add(lblsrc);
             Controls.Add(btnCancel);
             Controls.Add(btnAdd);
             Controls.Add(dataGridView1);
             Controls.Add(label3);
-            MinimumSize = new Size(1262, 539);
+            Margin = new Padding(3, 4, 3, 4);
+            MinimumSize = new Size(1440, 703);
             Name = "FrmCnlsMerge";
-            Text = ExtensionPhrases.FrmCnlsName;
             Load += FrmCnlMerge_Load;
             ((ISupportInitialize)dataGridView1).EndInit();
             ResumeLayout(false);
@@ -266,8 +225,6 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
         private DataGridView dataGridView1;
         private Button btnCancel;
         private Button btnAdd;
-        private Label lblSource;
-        private Label lblDestination;
         private SaveFileDialog saveFileDialog;
         private SaveFileDialog saveFileDialog1;
         private DataGridViewTextBoxColumn Column1Txt;
@@ -282,7 +239,7 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
         private DataGridViewTextBoxColumn dataType;
         private DataGridViewTextBoxColumn cnlType;
         private DataGridViewTextBoxColumn tagCode;
-        private Label label1;
-        private Label label2;
+        private Label lblsrc;
+        private Label lbldest;
     }
 }

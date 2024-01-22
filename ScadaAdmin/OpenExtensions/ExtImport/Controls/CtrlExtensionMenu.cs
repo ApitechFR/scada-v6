@@ -151,9 +151,9 @@ namespace Scada.Admin.Extensions.ExtImport.Controls
 		{
 			if (adminContext.CurrentProject != null)
 			{
-				FrmImport frmCnlImport = new(adminContext, adminContext.CurrentProject, recentSelection);
-				if (frmCnlImport.ShowDialog() == DialogResult.OK)
-					adminContext.MainForm.RefreshBaseTables(typeof(Cnl), true);
+
+				FrmImportFile frmImportFile = new(adminContext.CurrentProject);
+				frmImportFile.ShowDialog();
 
 			}
 		}

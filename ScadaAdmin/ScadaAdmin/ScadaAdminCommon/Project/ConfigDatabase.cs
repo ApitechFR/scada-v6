@@ -57,6 +57,10 @@ namespace Scada.Admin.Project
         /// </summary>
         public const int MaxBit = 30;
 
+        /// <summary>
+        /// The default byte order on import.
+        /// </summary>
+        public string defaultByteOrder { get; set; }
 
         /// <summary>
         /// Initializes a new instance of the class.

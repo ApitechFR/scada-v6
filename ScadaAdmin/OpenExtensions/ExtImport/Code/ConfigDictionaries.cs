@@ -21,21 +21,6 @@ namespace Scada.Admin.Extensions.ExtImport.Code
 			{"WORD", 1 },
 		};
 
-		public static Dictionary<int, string> CnlDataTypeDictionary { get; } = new Dictionary<int, string>
-		{
-			{1, "BOOL"},
-			{2, "EBOOL"},
-			{3, "REAL"},
-			{4, "FLOAT"},
-			{5, "INT"},
-			{6, "LONG"},
-			{7, "SHORT"},
-			{8, "DWORD"},
-			{9, "QWORD"},
-			{10, "UNDEFINED"},
-			{11, "WORD"}
-		};
-
 		public static Dictionary<int, string> CnlTypeDictionary { get; } = new Dictionary<int, string>
 		{
 			{1, "Input"},
@@ -59,14 +44,15 @@ namespace Scada.Admin.Extensions.ExtImport.Code
 				{"EBOOL", ElemType.Bool },
 				{"REAL", ElemType.Double },
 				{"FLOAT", ElemType.Float },
-				{"INT", ElemType.Int },
+				{"INT", ElemType.Short },
 				{"LONG", ElemType.Long },
 				{"SHORT", ElemType.Short },
 				{"DWORD", ElemType.UInt },
 				{"QWORD", ElemType.ULong },
 				{"UNDEFINED", ElemType.Undefined },
 				{"WORD", ElemType.UShort },
-		};
+				{"DINT", ElemType.Double },
+        };
 
 		public static List<Obj> prefixesAndSuffixes { get; } = new List<Obj>
 		{
