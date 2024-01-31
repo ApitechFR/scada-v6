@@ -16,7 +16,6 @@ namespace Scada.Web.Plugins.PlgSchShapeComp.Code
 		public BarGraph()
 		{
 			BarColor = "blue";
-			Value = 10;
 			Conditions = new List<BarGraphConditions>();
 			InCnlNum = 0;
 			CtrlCnlNum = 0;
@@ -24,22 +23,36 @@ namespace Scada.Web.Plugins.PlgSchShapeComp.Code
 			CtrlCnlNumCustom = "NA (0)";
 			BorderWidth = 1;
 			BorderColor = "black";
+			Rotation = 0;
 		}
 
+		/// <summary>
+		/// Get or set the border width
+		/// </summary>
 		[DisplayName("Conditions"), Category(Categories.Behavior)]
 		[Description("The conditions for Bar Graph output depending on the value of the input channel.")]
 		[DefaultValue(null), TypeConverter(typeof(CollectionConverter))]
-		
 		public List<BarGraphConditions> Conditions { get; protected set; }
 
+		/// <summary>
+		/// Get or set the border width
+		/// </summary>
 		[DisplayName("Bar Color"), Category(Categories.Appearance)]
 		[Description("The color of the Bar Graph.")]
 		public string BarColor { get; set; }
+		
+		/// <summary>
+		/// Get or set the max value
+		/// </summary>
+		[DisplayName("Bar Max Value"), Category(Categories.Appearance)]
+		[Description("The max value of the Bar Graph.")]
+		public double? MaxValue { get; set; }
 
-		[DisplayName("Bar Value"), Category(Categories.Appearance)]
-		[Description("The minimum value represented by the Bar Graph.")]
-		public double Value { get; set; }
-
+		//add min value property for bar graph
+		[DisplayName("Bar Min Value"), Category(Categories.Appearance)]
+		[Description("The min value of the Bar Graph.")]
+		[DefaultValue(0)]
+		public double? MinValue { get; set; }
 
 		/// <summary>
 		/// Get or set the action
@@ -49,10 +62,15 @@ namespace Scada.Web.Plugins.PlgSchShapeComp.Code
 		[DefaultValue(Actions.None)]
 		public Actions Action { get; set; }
 
+		[DisplayName("Rotation"), Category(Categories.Appearance)]
+		[Description("The rotation of the component.")]
+		[DefaultValue(0)]
+		public int Rotation { get; set; }
+
+
 		/// <summary>
 		/// Get or set the input channel number
 		/// </summary>
-
 		[DisplayName("Input channel"), Category(Categories.Data)]
 		[Description("The input channel number associated with the component.")]
 		public int InCnlNum { get; set; }
@@ -67,12 +85,9 @@ namespace Scada.Web.Plugins.PlgSchShapeComp.Code
 		/// <summary>
 		/// Get or set the control channel number
 		/// </summary>
-
 		[DisplayName("Output channel"), Category(Categories.Data)]
 		[Description("The output channel number associated with the component.")]
 		public int CtrlCnlNum { get; set; }
-
-
 
 		/// <summary>
 		/// Get or set the control channel number custom
@@ -84,13 +99,15 @@ namespace Scada.Web.Plugins.PlgSchShapeComp.Code
 		public override void LoadFromXml(XmlNode xmlNode)
 		{
 			base.LoadFromXml(xmlNode);
-			Value = xmlNode.GetChildAsDouble("Value");
 			BarColor = xmlNode.GetChildAsString("BarColor");
 			Action = xmlNode.GetChildAsEnum<Actions>("Action");
 			InCnlNum = xmlNode.GetChildAsInt("InCnlNum");
 			CtrlCnlNum = xmlNode.GetChildAsInt("CtrlCnlNum");
 			InCnlNumCustom = xmlNode.GetChildAsString("InCnlNumCustom");
 			CtrlCnlNumCustom = xmlNode.GetChildAsString("CtrlCnlNumCustom");
+			MaxValue = xmlNode.GetChildAsDouble("MaxValue");
+			MinValue = xmlNode.GetChildAsDouble("MinValue");
+			Rotation = xmlNode.GetChildAsInt("Rotation");
 			XmlNode conditionsNode = xmlNode.SelectSingleNode("Conditions");
 
 			if (conditionsNode != null)
@@ -110,7 +127,7 @@ namespace Scada.Web.Plugins.PlgSchShapeComp.Code
 		{
 			base.SaveToXml(xmlElem);
 
-			xmlElem.AppendElem("Value", Value);
+			xmlElem.AppendElem("Rotation", Rotation);
 			XmlElement conditionsElem = xmlElem.AppendElem("Conditions");
 			foreach (BarGraphConditions condition in Conditions)
 			{
@@ -122,6 +139,8 @@ namespace Scada.Web.Plugins.PlgSchShapeComp.Code
 			xmlElem.AppendElem("CtrlCnlNum", CtrlCnlNum);
 			xmlElem.AppendElem("InCnlNumCustom", InCnlNumCustom);
 			xmlElem.AppendElem("CtrlCnlNumCustom", CtrlCnlNumCustom);
+			xmlElem.AppendElem("MaxValue", MaxValue);
+			xmlElem.AppendElem("MinValue", MinValue);
 			xmlElem.AppendElem("Action", Action.ToString());
 		}
 
