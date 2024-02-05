@@ -7,8 +7,10 @@ on:
     branches: [ develop ]
 
 jobs:
-  build-and-upload-artifacts:
+  setup-and-restore:
     runs-on: windows-latest
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
 
     steps:
     - name: Checkout Repository
@@ -34,87 +36,90 @@ jobs:
         dotnet restore ScadaServer/OpenModules/OpenModules.sln
         dotnet restore ScadaWeb/OpenPlugins/OpenPlugins.sln
         dotnet restore ScadaAdmin/OpenExtensions/OpenExtensions.sln
-        
+
+  build:
+    needs: setup-and-restore
+    runs-on: windows-latest
+    strategy:
+      matrix:
+        project: [ScadaCommon, ScadaAgent, ScadaComm, ScadaServer, ScadaWeb, ScadaAdmin, ScadaReport, OpenDrivers, OpenDrivers2, OpenModules, OpenPlugins]
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v2
+
+    - name: Setup .NET Core
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: '6.0'
 
     # Construisez chaque projet dans l'ordre spécifié
-    - name: Build ScadaCommon
+    - name: Build ${{ matrix.project }}
       run: dotnet build --no-restore --configuration Release ScadaCommon/ScadaCommon.sln
       
-    - name: Build ScadaAgent
+    - name: Build ${{ matrix.project }}
       run: dotnet build --no-restore --configuration Release ScadaAgent/ScadaAgent/ScadaAgent.sln
       
-    - name: Build ScadaComm
+    - name: Build${{ matrix.project }}
       run: dotnet build --no-restore --configuration Release ScadaComm/ScadaComm/ScadaComm.sln
 
-    - name: Build ScadaServer
+    - name: Build ${{ matrix.project }}
       run: dotnet build --no-restore --configuration Release ScadaServer/ScadaServer/ScadaServer.sln
 
-    - name: Build ScadaWeb
+    - name: Build ${{ matrix.project }}
       run: dotnet build --no-restore --configuration Release ScadaWeb/ScadaWeb/ScadaWeb.sln
 
-    - name: Build ScadaAdmin
+    - name: Build ${{ matrix.project }}
       run: dotnet build --no-restore --configuration Release ScadaAdmin/ScadaAdmin/ScadaAdmin.sln
 
-    - name: Build ScadaReport
+    - name: Build ${{ matrix.project }}
       run: dotnet build --no-restore --configuration Release ScadaReport/ScadaReport.sln
 
-    - name: Build OpenDrivers
+    - name: Build ${{ matrix.project }}
       run: dotnet build --no-restore --configuration Release ScadaComm/OpenDrivers/OpenDrivers.sln
 
-    - name: Build OpenDrivers2
+    - name: Build ${{ matrix.project }}
       run: dotnet build --no-restore --configuration Release ScadaComm/OpenDrivers2/OpenDrivers2.sln
 
-    - name: Build OpenModules
+    - name: Build ${{ matrix.project }}
       run: dotnet build --no-restore --configuration Release ScadaServer/OpenModules/OpenModules.sln
 
-    - name: Build OpenPlugins
+    - name: Build ${{ matrix.project }}
       run: dotnet build --no-restore --configuration Release ScadaWeb/OpenPlugins/OpenPlugins.sln
 
-   # - name: Build OpenExtensions
-    #  run: dotnet build --no-restore --configuration Release ScadaAdmin/OpenExtensions/OpenExtensions.sln
 
-    # Ajoutez des étapes similaires pour les autres projets ici, en respectant l'ordre
+  publish:
+    needs: build
+    runs-on: windows-latest
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v2
 
+    - name: Setup .NET Core
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: '6.0'
+        
     - name: Publish ScadaCommon
-      run: dotnet publish ScadaCommon/ScadaCommon.sln --no-restore --configuration Release --output ./publish/ScadaCommon
-
-    - name: Publish ScadaAgent
-      run: dotnet publish ScadaAgent/ScadaAgent/ScadaAgent.sln --no-restore --configuration Release --output ./publish/ScadaAgent
-
-    - name: Publish ScadaComm
-      run: dotnet publish ScadaComm/ScadaComm/ScadaComm.sln --no-restore --configuration Release --output ./publish/ScadaComm
-
-    - name: Publish ScadaServer
-      run: dotnet publish ScadaServer/ScadaServer/ScadaServer.sln --no-restore --configuration Release --output ./publish/ScadaServer
-
-    - name: Publish ScadaWeb
-      run: dotnet publish ScadaWeb/ScadaWeb/ScadaWeb.sln --no-restore --configuration Release --output ./publish/ScadaWeb
-
-    - name: Publish ScadaAdmin
-      run: dotnet publish ScadaAdmin/ScadaAdmin/ScadaAdmin.sln --no-restore --configuration Release --output ./publish/ScadaAdmin
-
-    - name: Publish ScadaReport
-      run: dotnet publish ScadaReport/ScadaReport.sln --no-restore --configuration Release --output ./publish/ScadaReport
-
-    - name: Publish OpenDrivers
-      run: dotnet publish ScadaComm/OpenDrivers/OpenDrivers.sln --no-restore --configuration Release --output ./publish/OpenDrivers
-
-    - name: Publish OpenDrivers2
-      run: dotnet publish ScadaComm/OpenDrivers2/OpenDrivers2.sln --no-restore --configuration Release --output ./publish/OpenDrivers2
-
-    - name: Publish OpenModules
-      run: dotnet publish ScadaServer/OpenModules/OpenModules.sln --no-restore --configuration Release --output ./publish/OpenModules
-
-    - name: Publish OpenPlugins
-      run: dotnet publish ScadaWeb/OpenPlugins/OpenPlugins.sln --no-restore --configuration Release --output ./publish/OpenPlugins
+      run: |
+        dotnet publish ScadaCommon/ScadaCommon.sln --no-restore --configuration Release --output ./publish/ScadaCommon
+        dotnet publish ScadaAgent/ScadaAgent/ScadaAgent.sln --no-restore --configuration Release --output ./publish/ScadaAgent
+        dotnet publish ScadaComm/ScadaComm/ScadaComm.sln --no-restore --configuration Release --output ./publish/ScadaComm
+        dotnet publish ScadaServer/ScadaServer/ScadaServer.sln --no-restore --configuration Release --output ./publish/ScadaServer
+        dotnet publish ScadaWeb/ScadaWeb/ScadaWeb.sln --no-restore --configuration Release --output ./publish/ScadaWeb
+        dotnet publish ScadaAdmin/ScadaAdmin/ScadaAdmin.sln --no-restore --configuration Release --output ./publish/ScadaAdmin
+        dotnet publish ScadaReport/ScadaReport.sln --no-restore --configuration Release --output ./publish/ScadaReport
+        dotnet publish ScadaComm/OpenDrivers/OpenDrivers.sln --no-restore --configuration Release --output ./publish/OpenDrivers
+        dotnet publish ScadaComm/OpenDrivers2/OpenDrivers2.sln --no-restore --configuration Release --output ./publish/OpenDrivers2
+        dotnet publish ScadaServer/OpenModules/OpenModules.sln --no-restore --configuration Release --output ./publish/OpenModules
+        dotnet publish ScadaWeb/OpenPlugins/OpenPlugins.sln --no-restore --configuration Release --output ./publish/OpenPlugins
 
    # - name: Publish OpenExtensions
     #  run: dotnet publish ScadaAdmin/OpenExtensions/OpenExtensions.sln --no-restore --configuration Release --output ./publish/OpenExtensions
 
-        
-
-
-    # Téléchargez les artefacts pour tous les projets nécessaires ici
+  upload-artifacts:
+    needs: publish
+    runs-on: windows-latest
+    steps:
     - name: Upload ScadaWebV6 DLL
       uses: actions/upload-artifact@v2
       with:
