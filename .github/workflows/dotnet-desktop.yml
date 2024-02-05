@@ -120,8 +120,8 @@ jobs:
       with:
         name: scadaweb-artifact
         path: |
+          ./publish/ScadaWeb/OpenPlugins/PlgSchShapeComp/bin/Release/net6.0/PlgSchShapeComp.dll
           ./publish/ScadaWeb/OpenPlugins/PlgSchShapeComp/wwwroot/SchShapeComp/js/*.js
-          ./publish/ScadaWeb/OpenPlugins/PlgSchShapeComp/bin/Release/net6.0/**/*.dll
           ./publish/ScadaWeb/ScadaWeb/bin/Release/net6.0/ScadaWeb.exe
           ./publish/ScadaWeb/ScadaWeb/bin/Release/net6.0/ScadaWeb.dll
           ./publish/ScadaWeb/ScadaWeb/bin/Release/net6.0/ScadaWebCommon.dll
