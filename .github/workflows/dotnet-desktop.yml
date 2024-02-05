@@ -115,28 +115,13 @@ jobs:
 
 
     # Téléchargez les artefacts pour tous les projets nécessaires ici
-    - name: Upload ScadaWeb Artefact
+    - name: Upload ScadaWebV6 DLL
       uses: actions/upload-artifact@v2
       with:
         name: scadaweb-artifact
-        path: ./publish/**/*
-
-    - name: Upload JavaScript files
-      uses: actions/upload-artifact@v2
-      with:
-        name: javascript-files
-        path: ./publish/ScadaWeb/OpenPlugins/PlgSchShapeComp/wwwroot/SchShapeComp/js/*.js
-    - name: Upload PlgSchShapeComp Release Artefact
-      uses: actions/upload-artifact@v2
-      with:
-        name: plg-sch-shape-comp-release
-        path: ./publish/ScadaWeb/OpenPlugins/PlgSchShapeComp/bin/Release/net6.0/**
-
-    - name: Upload ScadaWeb Artefacts
-      uses: actions/upload-artifact@v2
-      with:
-        name: scadaweb-release-artifacts
         path: |
+          ./publish/ScadaWeb/OpenPlugins/PlgSchShapeComp/wwwroot/SchShapeComp/js/*.js
+          ./publish/ScadaWeb/OpenPlugins/PlgSchShapeComp/bin/Release/net6.0/**/*.dll
           ./publish/ScadaWeb/ScadaWeb/bin/Release/net6.0/ScadaWeb.exe
           ./publish/ScadaWeb/ScadaWeb/bin/Release/net6.0/ScadaWeb.dll
           ./publish/ScadaWeb/ScadaWeb/bin/Release/net6.0/ScadaWebCommon.dll
