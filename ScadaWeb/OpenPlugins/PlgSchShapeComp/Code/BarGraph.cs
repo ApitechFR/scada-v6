@@ -15,14 +15,14 @@ namespace Scada.Web.Plugins.PlgSchShapeComp.Code
 	{
 		public BarGraph()
 		{
-			BarColor = "blue";
+			FillColor = "Blue";
 			Conditions = new List<BarGraphConditions>();
 			InCnlNum = 0;
 			CtrlCnlNum = 0;
 			InCnlNumCustom = "NA (0)";
 			CtrlCnlNumCustom = "NA (0)";
 			BorderWidth = 1;
-			BorderColor = "black";
+			BorderColor = "Black";
 			Rotation = 0;
 		}
 
@@ -39,20 +39,22 @@ namespace Scada.Web.Plugins.PlgSchShapeComp.Code
 		/// </summary>
 		[DisplayName("Bar Color"), Category(Categories.Appearance)]
 		[Description("The color of the Bar Graph.")]
-		public string BarColor { get; set; }
+		[DefaultValue("Blue")]
+		public string FillColor { get; set; }
 		
 		/// <summary>
 		/// Get or set the max value
 		/// </summary>
 		[DisplayName("Bar Max Value"), Category(Categories.Appearance)]
 		[Description("The max value of the Bar Graph.")]
-		public double? MaxValue { get; set; }
+		[DefaultValue(100)]
+		public double MaxValue { get; set; }
 
 		//add min value property for bar graph
 		[DisplayName("Bar Min Value"), Category(Categories.Appearance)]
 		[Description("The min value of the Bar Graph.")]
 		[DefaultValue(0)]
-		public double? MinValue { get; set; }
+		public double MinValue { get; set; }
 
 		/// <summary>
 		/// Get or set the action
@@ -99,7 +101,7 @@ namespace Scada.Web.Plugins.PlgSchShapeComp.Code
 		public override void LoadFromXml(XmlNode xmlNode)
 		{
 			base.LoadFromXml(xmlNode);
-			BarColor = xmlNode.GetChildAsString("BarColor");
+			FillColor = xmlNode.GetChildAsString("FillColor");
 			Action = xmlNode.GetChildAsEnum<Actions>("Action");
 			InCnlNum = xmlNode.GetChildAsInt("InCnlNum");
 			CtrlCnlNum = xmlNode.GetChildAsInt("CtrlCnlNum");
@@ -134,7 +136,7 @@ namespace Scada.Web.Plugins.PlgSchShapeComp.Code
 				XmlElement conditionElem = conditionsElem.AppendElem("Condition");
 				condition.SaveToXml(conditionElem);
 			}
-			xmlElem.AppendElem("BarColor", BarColor);
+			xmlElem.AppendElem("FillColor", FillColor);
 			xmlElem.AppendElem("InCnlNum", InCnlNum);
 			xmlElem.AppendElem("CtrlCnlNum", CtrlCnlNum);
 			xmlElem.AppendElem("InCnlNumCustom", InCnlNumCustom);

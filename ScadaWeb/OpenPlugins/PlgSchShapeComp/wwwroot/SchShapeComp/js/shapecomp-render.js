@@ -243,6 +243,9 @@ scada.scheme.BarGraphRenderer.prototype.calculateFillingRate = function (
 	cnlDataExt,
 ) {
 	let valueToUse;
+	if (props.maxValue < props.minValue) {
+		return -1;
+	}
 
 	if (cnlDataExt !== null) {
 		valueToUse = cnlDataExt.d.val;
@@ -251,7 +254,7 @@ scada.scheme.BarGraphRenderer.prototype.calculateFillingRate = function (
 	} else if (props.inCnlNum !== 0) {
 		valueToUse = props.inCnlNum;
 	} else {
-		return 0;
+		return -1;
 	}
 
 	if (valueToUse < props.minValue) {
@@ -277,9 +280,9 @@ scada.scheme.BarGraphRenderer.prototype.createDom = function (
 
 	var divComp = $("<div id='comp" + component.id + "'></div>");
 
-	if (this.calculateFillingRate(props, null) === 0) {
+	if (this.calculateFillingRate(props, null) === -1) {
 		var disabledBar = $(
-			"<div class='bar disabled' style='height: 71%; background-color: #5f5f81; filter: blur(1.5px);'>" +
+			"<div class='bar disabled' title='Erreur de configuration : MaxValue < MinValue ou absence de données valides' style='height: 71%; background-color: #5f5f81; filter: blur(1.5px);'>" +
 				"<span class='error-cross' style='position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 35px; color: red;'>X</span>" +
 				"</div>",
 		);
@@ -290,7 +293,7 @@ scada.scheme.BarGraphRenderer.prototype.createDom = function (
 				this.calculateFillingRate(props, null) +
 				"%" +
 				";background-color:" +
-				props.barColor +
+				props.fillColor +
 				"' data-value='" +
 				this.calculateFillingRate(props, null) +
 				"'></div>",
@@ -321,7 +324,6 @@ scada.scheme.BarGraphRenderer.prototype.setDynamicFillingRate = function (
 	);
 	bar.css({
 		height: fillingRate + "%",
-		color: props.fillColor,
 	});
 	bar.attr("data-value", parseInt(fillingRate));
 };
@@ -335,11 +337,6 @@ scada.scheme.BarGraphRenderer.prototype.updateData = function (
 		var divComp = component.dom;
 		var cnlDataExt = renderContext.getCnlDataExt(props.inCnlNum);
 
-		divComp.css({
-			border: props.borderWidth + "px solid " + props.borderColor,
-			"background-color": props.backColor,
-		});
-
 		//set dynamic filling rate
 		this.setDynamicFillingRate(divComp, props, cnlDataExt);
 	}
@@ -349,19 +346,11 @@ scada.scheme.BarGraphRenderer.prototype.updateData = function (
 
 		for (var condition of props.conditions) {
 			if (scada.scheme.calc.conditionSatisfied(condition, cnlVal)) {
-				if (scada.scheme.calc.conditionSatisfied(condition, cnlVal)) {
-					var barStyles = {};
+				var barStyles = {};
 
-					if (condition.fillColor) {
-						barStyles["background-color"] = condition.fillColor;
-					}
-
+				if (condition.fillColor) {
+					barStyles["background-color"] = condition.fillColor;
 					divComp.find(".bar").css(barStyles);
-
-					// Set other CSS properties based on Condition
-					if (condition.color) {
-						divComp.css("color", condition.color);
-					}
 				}
 			}
 		}
