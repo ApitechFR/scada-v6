@@ -301,16 +301,18 @@ scada.scheme.BarGraphRenderer.prototype.createDom = function (
 		divComp.append(bar);
 	}
 
-	this.prepareComponent(divComp, component);
+	this.prepareComponent(divComp, component, false, true);
 
 	divComp.css({
 		border: props.borderWidth + "px solid " + props.borderColor,
 		display: "flex",
 		"align-items": "flex-end",
 		"justify-content": "center",
+		"background-color": props.backColor,
 	});
 
 	component.dom = divComp;
+	scada.scheme.applyRotation(divComp, props);
 };
 //create prototype for set dynamic filling rate for bar graph renderer
 scada.scheme.BarGraphRenderer.prototype.setDynamicFillingRate = function (
@@ -322,10 +324,12 @@ scada.scheme.BarGraphRenderer.prototype.setDynamicFillingRate = function (
 	var fillingRate = parseFloat(
 		this.calculateFillingRate(props, cnlDataExt).toFixed(2),
 	);
-	bar.css({
-		height: fillingRate + "%",
-	});
-	bar.attr("data-value", parseInt(fillingRate));
+	if (fillingRate > -1) {
+		bar.css({
+			height: fillingRate + "%",
+		});
+		bar.attr("data-value", parseInt(fillingRate));
+	}
 };
 
 scada.scheme.BarGraphRenderer.prototype.updateData = function (
@@ -345,13 +349,15 @@ scada.scheme.BarGraphRenderer.prototype.updateData = function (
 		var cnlVal = cnlDataExt.d.val;
 
 		for (var condition of props.conditions) {
+			var barStyles = {};
 			if (scada.scheme.calc.conditionSatisfied(condition, cnlVal)) {
-				var barStyles = {};
-
 				if (condition.fillColor) {
 					barStyles["background-color"] = condition.fillColor;
 					divComp.find(".bar").css(barStyles);
 				}
+			} else {
+				barStyles["background-color"] = props.fillColor;
+				divComp.find(".bar").css(barStyles);
 			}
 		}
 	}
