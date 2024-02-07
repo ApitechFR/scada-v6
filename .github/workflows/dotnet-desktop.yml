@@ -67,14 +67,25 @@ jobs:
           dotnet publish --no-restore --configuration Release --output ./publish/OpenPlugins ScadaWeb/OpenPlugins/OpenPlugins.sln
         # dotnet publish --no-restore --configuration Release --output ./publish/OpenExtensions ScadaAdmin/OpenExtensions/OpenExtensions.sln
 
-      # Prepare Artifacts Directory
-      - name: Prepare Artifacts Directory
+    # Prepare Artifacts Directory and check if paths exist before moving
+      - name: Prepare Artifacts Directory and Check Paths
+        shell: pwsh
         run: |
           mkdir ./publish/artifacts
-          mv ./publish/ScadaWeb/OpenPlugins/PlgSchShapeComp/wwwroot/SchShapeComp/js/*.js ./publish/artifacts/
-          mv ./publish/ScadaWeb/OpenPlugins/PlgSchShapeComp/bin/Release/net6.0/** ./publish/artifacts/
-          mv ./publish/ScadaWeb/ScadaWeb/bin/Release/net6.0/*.dll ./publish/artifacts/
-          mv ./publish/ScadaWeb/ScadaWeb/bin/Release/net6.0/ScadaWeb.exe ./publish/artifacts/
+          $sourcePaths = @(
+            "./publish/ScadaWeb/OpenPlugins/PlgSchShapeComp/wwwroot/SchShapeComp/js/*.js",
+            "./publish/ScadaWeb/OpenPlugins/PlgSchShapeComp/bin/Release/net6.0/**",
+            "./publish/ScadaWeb/ScadaWeb/bin/Release/net6.0/*.dll",
+            "./publish/ScadaWeb/ScadaWeb/bin/Release/net6.0/ScadaWeb.exe"
+          )
+          foreach ($path in $sourcePaths) {
+            if (Test-Path $path) {
+              Copy-Item -Path $path -Destination ./publish/artifacts -Recurse -Force
+            } else {
+              Write-Host "Path not found: $path"
+            }
+          }
+
 
       # Upload Artifacts
       - name: Upload Artifacts
