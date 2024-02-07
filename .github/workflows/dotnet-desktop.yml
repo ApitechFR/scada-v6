@@ -49,7 +49,7 @@ jobs:
           dotnet build --no-restore --configuration Release ScadaComm/OpenDrivers2/OpenDrivers2.sln
           dotnet build --no-restore --configuration Release ScadaServer/OpenModules/OpenModules.sln
           dotnet build --no-restore --configuration Release ScadaWeb/OpenPlugins/OpenPlugins.sln
-          dotnet build --no-restore --configuration Release ScadaAdmin/OpenExtensions/OpenExtensions.sln
+        # dotnet build --no-restore --configuration Release ScadaAdmin/OpenExtensions/OpenExtensions.sln
 
       # Publish each project
       - name: Publish Projects
@@ -65,7 +65,7 @@ jobs:
           dotnet publish --no-restore --configuration Release --output ./publish/OpenDrivers2 ScadaComm/OpenDrivers2/OpenDrivers2.sln
           dotnet publish --no-restore --configuration Release --output ./publish/OpenModules ScadaServer/OpenModules/OpenModules.sln
           dotnet publish --no-restore --configuration Release --output ./publish/OpenPlugins ScadaWeb/OpenPlugins/OpenPlugins.sln
-      # dotnet publish --no-restore --configuration Release --output ./publish/OpenExtensions ScadaAdmin/OpenExtensions/OpenExtensions.sln
+        # dotnet publish --no-restore --configuration Release --output ./publish/OpenExtensions ScadaAdmin/OpenExtensions/OpenExtensions.sln
 
       # Prepare Artifacts Directory
       - name: Prepare Artifacts Directory
