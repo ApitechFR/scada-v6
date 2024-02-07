@@ -56,16 +56,16 @@ jobs:
         run: |
           dotnet publish --no-restore --configuration Release --output ./publish/ScadaCommon ScadaCommon/ScadaCommon.sln
           dotnet publish --no-restore --configuration Release --output ./publish/ScadaAgent ScadaAgent/ScadaAgent/ScadaAgent.sln
-          dotnet publish ScadaComm/ScadaComm/ScadaComm.sln --no-restore --configuration Release --output ./publish/ScadaComm
-          dotnet publish ScadaServer/ScadaServer/ScadaServer.sln --no-restore --configuration Release --output ./publish/ScadaServer
-          dotnet publish ScadaWeb/ScadaWeb/ScadaWeb.sln --no-restore --configuration Release --output ./publish/ScadaWeb
-          dotnet publish ScadaAdmin/ScadaAdmin/ScadaAdmin.sln --no-restore --configuration Release --output ./publish/ScadaAdmin
-          dotnet publish ScadaReport/ScadaReport.sln --no-restore --configuration Release --output ./publish/ScadaReport
-          dotnet publish ScadaComm/OpenDrivers/OpenDrivers.sln --no-restore --configuration Release --output ./publish/OpenDrivers
-          dotnet publish ScadaComm/OpenDrivers2/OpenDrivers2.sln --no-restore --configuration Release --output ./publish/OpenDrivers2
-          dotnet publish ScadaServer/OpenModules/OpenModules.sln --no-restore --configuration Release --output ./publish/OpenModules
-          dotnet publish ScadaWeb/OpenPlugins/OpenPlugins.sln --no-restore --configuration Release --output ./publish/OpenPlugins
-          dotnet publish ScadaAdmin/OpenExtensions/OpenExtensions.sln --no-restore --configuration Release --output ./publish/OpenExtensions
+          dotnet publish --no-restore --configuration Release --output ./publish/ScadaComm  ScadaComm/ScadaComm/ScadaComm.sln
+          dotnet publish --no-restore --configuration Release --output ./publish/ScadaServer ScadaServer/ScadaServer/ScadaServer.sln
+          dotnet publish --no-restore --configuration Release --output ./publish/ScadaWeb ScadaWeb/ScadaWeb/ScadaWeb.sln
+          dotnet publish --no-restore --configuration Release --output ./publish/ScadaAdmin ScadaAdmin/ScadaAdmin/ScadaAdmin.sln
+          dotnet publish --no-restore --configuration Release --output ./publish/ScadaReport ScadaReport/ScadaReport.sln
+          dotnet publish --no-restore --configuration Release --output ./publish/OpenDrivers ScadaComm/OpenDrivers/OpenDrivers.sln
+          dotnet publish --no-restore --configuration Release --output ./publish/OpenDrivers2 ScadaComm/OpenDrivers2/OpenDrivers2.sln
+          dotnet publish --no-restore --configuration Release --output ./publish/OpenModules ScadaServer/OpenModules/OpenModules.sln
+          dotnet publish --no-restore --configuration Release --output ./publish/OpenPlugins ScadaWeb/OpenPlugins/OpenPlugins.sln
+          dotnet publish --no-restore --configuration Release --output ./publish/OpenExtensions ScadaAdmin/OpenExtensions/OpenExtensions.sln
 
       # Prepare Artifacts Directory
       - name: Prepare Artifacts Directory
