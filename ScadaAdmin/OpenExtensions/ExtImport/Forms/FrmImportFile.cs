@@ -626,7 +626,7 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
                     }
                     newElemenGroup = new ElemGroupConfig();
                     newElemenGroup.DataBlock = DataBlock.HoldingRegisters;
-                    newElemenGroup.Address = int.Parse(Regex.Replace(row.Key, @"[^0-9]", ""));
+                    newElemenGroup.Address = int.Parse(Regex.Replace(row.Key, @"[^0-9]", "")) - 1;
                 }
                 previousPrefix = prefix;
                 previousType = newElem.ElemType;
