@@ -343,26 +343,28 @@ scada.scheme.BarGraphRenderer.prototype.updateData = function (
 
 		//set dynamic filling rate
 		this.setDynamicFillingRate(divComp, props, cnlDataExt);
-	}
 
-	if (props.conditions && cnlDataExt.d.stat > 0) {
-		var cnlVal = cnlDataExt.d.val;
+		if (this.calculateFillingRate(props, cnlDataExt) !== -1) {
+			if (props.conditions && cnlDataExt.d.stat > 0) {
+				var cnlVal = cnlDataExt.d.val;
 
-		for (var condition of props.conditions) {
-			var barStyles = {};
-			if (scada.scheme.calc.conditionSatisfied(condition, cnlVal)) {
-				if (condition.fillColor) {
-					barStyles["background-color"] = condition.fillColor;
-					divComp.find(".bar").css(barStyles);
+				for (var condition of props.conditions) {
+					var barStyles = {};
+					if (scada.scheme.calc.conditionSatisfied(condition, cnlVal)) {
+						if (condition.fillColor) {
+							barStyles["background-color"] = condition.fillColor;
+							divComp.find(".bar").css(barStyles);
+						}
+					} else {
+						barStyles["background-color"] = props.fillColor;
+						divComp.find(".bar").css(barStyles);
+					}
 				}
-			} else {
-				barStyles["background-color"] = props.fillColor;
-				divComp.find(".bar").css(barStyles);
 			}
+
+			scada.scheme.updateComponentData(component, renderContext);
 		}
 	}
-
-	scada.scheme.updateComponentData(component, renderContext);
 };
 
 /********** Dynamic Text Renderer **********/
