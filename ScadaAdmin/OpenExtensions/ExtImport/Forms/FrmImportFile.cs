@@ -7,6 +7,13 @@ using Scada.Data.Entities;
 using System.Text.RegularExpressions;
 using System.Xml;
 using Scada.Forms;
+using Scada.Comm.Devices;
+using Scada.Data.Const;
+using Scada.Data.Models;
+using static System.Runtime.CompilerServices.RuntimeHelpers;
+using static System.Windows.Forms.DataFormats;
+using System.Data;
+using System;
 
 namespace Scada.Admin.Extensions.ExtImport.Forms
 {
@@ -223,7 +230,18 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
             //default Type is input/output
             cnl.CnlTypeID = 2;
             cnl.DeviceNum = selectedDevice.DeviceNum;
+            //cnl.ObjNum = selectedDevice.;
+            cnl.Active = true;
 
+                    //DataLen = cnlPrototype.DataLen,
+                    //CnlTypeID = cnlPrototype.CnlTypeID,
+                    //TagNum = cnlPrototype.TagNum,
+                    //FormatID = project.ConfigDatabase.GetFormatByCode(cnlPrototype.FormatCode)?.FormatID,
+                    //QuantityID = project.ConfigDatabase.GetQuantityByCode(cnlPrototype.QuantityCode)?.QuantityID,
+                    //UnitID = project.ConfigDatabase.GetUnitByCode(cnlPrototype.UnitCode)?.UnitID,
+                    //LimID = null,
+                    //ArchiveMask = cnlPrototype.ArchiveMask,
+                    //EventMask = cnlPrototype.EventMask
 
             return cnl;
         }
@@ -357,6 +375,11 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
                 {
                     cnl.CnlNum = project.ConfigDatabase.CnlTable.Count() > 0 ? project.ConfigDatabase.CnlTable.OrderBy(cnl => cnl.CnlNum).Last().CnlNum + 1 : 1;
                 }
+                //DEBUT test
+                //cnl.DataTypeID = null;
+                cnl.EventMask = 81;
+                //cnl.ObjNum = 1;
+                //FIN test
                 project.ConfigDatabase.CnlTable.AddItem(cnl);
                 if(splittedChannels != null && splittedChannels.ContainsKey(cnl.TagCode))
                 {
@@ -536,6 +559,7 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
                     }
                 }
             }
+
         }
 
         /// <summary>
@@ -587,9 +611,6 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
                 //we set its properties according to imported row
                 string newType = elemTypeDico.Keys.Contains(row.Value[1]) ? row.Value[1] : cnlDataType.FirstOrDefault(t => t.Value == dataTypes.FirstOrDefault(dt => dt.Value == row.Value[1]).Key).Key;
                 newElem.ElemType = elemTypeDico.Keys.Contains(row.Value[1]) ? elemTypeDico[row.Value[1]] : ElemType.Undefined;
-                //var a = template.Options;
-                //var aa = newElem.ElemType;
-                //var aaa = ModbusUtils.GetDataLength(aa);
 
                 switch (ModbusUtils.GetDataLength(newElem.ElemType))
                 {
@@ -678,6 +699,26 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
                 }
             }
             template.ElemGroups.Add(newElemenGroup);
+            for(int i=0; i<template.ElemGroups.Count; i++)
+            {
+                template.ElemGroups[i].Elems.Sort((x, y) => int.Parse(x.TagCode.Split('.')[0]) - int.Parse(y.TagCode.Split('.')[0]));
+                template.ElemGroups[i].Address = int.Parse(Regex.Replace(template.ElemGroups[i].Elems[0].TagCode, @"[^0-9]", "")) - 1;
+                //for(int j = 1; j < template.ElemGroups[i].Elems.Count; j++)
+                //{
+                //    if (new List<ElemType> {ElemType.UShort, ElemType.Short}.Contains(template.ElemGroups[i].Elems[j].ElemType))
+                //    {
+                //        template.ElemGroups[i].Elems.Insert(j+1, new ElemConfig
+                //        {
+                //            Name = "Vide",
+                //            TagCode = string.Format("Vide-{0}.{1}", i, j),
+                //            ElemType = ElemType.Short,
+                //        });
+                //        i++;
+                //    }
+                //}
+
+            }
+
             return template;
         }
 
