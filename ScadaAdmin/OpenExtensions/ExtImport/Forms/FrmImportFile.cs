@@ -7,13 +7,7 @@ using Scada.Data.Entities;
 using System.Text.RegularExpressions;
 using System.Xml;
 using Scada.Forms;
-using Scada.Comm.Devices;
-using Scada.Data.Const;
-using Scada.Data.Models;
-using static System.Runtime.CompilerServices.RuntimeHelpers;
-using static System.Windows.Forms.DataFormats;
 using System.Data;
-using System;
 
 namespace Scada.Admin.Extensions.ExtImport.Forms
 {
@@ -230,18 +224,8 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
             //default Type is input/output
             cnl.CnlTypeID = 2;
             cnl.DeviceNum = selectedDevice.DeviceNum;
-            //cnl.ObjNum = selectedDevice.;
             cnl.Active = true;
-
-                    //DataLen = cnlPrototype.DataLen,
-                    //CnlTypeID = cnlPrototype.CnlTypeID,
-                    //TagNum = cnlPrototype.TagNum,
-                    //FormatID = project.ConfigDatabase.GetFormatByCode(cnlPrototype.FormatCode)?.FormatID,
-                    //QuantityID = project.ConfigDatabase.GetQuantityByCode(cnlPrototype.QuantityCode)?.QuantityID,
-                    //UnitID = project.ConfigDatabase.GetUnitByCode(cnlPrototype.UnitCode)?.UnitID,
-                    //LimID = null,
-                    //ArchiveMask = cnlPrototype.ArchiveMask,
-                    //EventMask = cnlPrototype.EventMask
+            cnl.EventMask = 81;
 
             return cnl;
         }
@@ -375,11 +359,6 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
                 {
                     cnl.CnlNum = project.ConfigDatabase.CnlTable.Count() > 0 ? project.ConfigDatabase.CnlTable.OrderBy(cnl => cnl.CnlNum).Last().CnlNum + 1 : 1;
                 }
-                //DEBUT test
-                //cnl.DataTypeID = null;
-                cnl.EventMask = 81;
-                //cnl.ObjNum = 1;
-                //FIN test
                 project.ConfigDatabase.CnlTable.AddItem(cnl);
                 if(splittedChannels != null && splittedChannels.ContainsKey(cnl.TagCode))
                 {
@@ -559,7 +538,6 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
                     }
                 }
             }
-
         }
 
         /// <summary>
