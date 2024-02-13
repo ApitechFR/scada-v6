@@ -32,6 +32,11 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
         {
             label3 = new Label();
             dataGridView1 = new DataGridView();
+            btnCancel = new Button();
+            btnAdd = new Button();
+            saveFileDialog1 = new SaveFileDialog();
+            lblsrc = new Label();
+            lbldest = new Label();
             Column1Txt = new DataGridViewTextBoxColumn();
             ColumnChk = new DataGridViewCheckBoxColumn();
             fcnlName = new DataGridViewTextBoxColumn();
@@ -44,11 +49,7 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
             dataType = new DataGridViewTextBoxColumn();
             cnlType = new DataGridViewTextBoxColumn();
             tagCode = new DataGridViewTextBoxColumn();
-            btnCancel = new Button();
-            btnAdd = new Button();
-            saveFileDialog1 = new SaveFileDialog();
-            lblsrc = new Label();
-            lbldest = new Label();
+            ColumnvIDE2 = new DataGridViewTextBoxColumn();
             ((ISupportInitialize)dataGridView1).BeginInit();
             SuspendLayout();
             // 
@@ -66,7 +67,7 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
             dataGridView1.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
             dataGridView1.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
             dataGridView1.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            dataGridView1.Columns.AddRange(new DataGridViewColumn[] { Column1Txt, ColumnChk, fcnlName, fdataType, fcnlType, fTagCode, ColumnVide, Column2Chk, cnlName, dataType, cnlType, tagCode });
+            dataGridView1.Columns.AddRange(new DataGridViewColumn[] { Column1Txt, ColumnChk, fcnlName, fdataType, fcnlType, fTagCode, ColumnVide, Column2Chk, cnlName, dataType, cnlType, tagCode, ColumnvIDE2 });
             dataGridView1.Location = new Point(11, 44);
             dataGridView1.Name = "dataGridView1";
             dataGridView1.RowHeadersWidth = 180;
@@ -74,83 +75,6 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
             dataGridView1.Size = new Size(1671, 664);
             dataGridView1.TabIndex = 21;
             dataGridView1.CellContentClick += dataGridView1_CellContentClick;
-            // 
-            // Column1Txt
-            // 
-            Column1Txt.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
-            Column1Txt.MinimumWidth = 6;
-            Column1Txt.Name = "Column1Txt";
-            // 
-            // ColumnChk
-            // 
-            ColumnChk.HeaderText = "";
-            ColumnChk.MinimumWidth = 6;
-            ColumnChk.Name = "ColumnChk";
-            ColumnChk.Resizable = DataGridViewTriState.True;
-            ColumnChk.SortMode = DataGridViewColumnSortMode.Automatic;
-            // 
-            // fcnlName
-            // 
-            fcnlName.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
-            fcnlName.MinimumWidth = 6;
-            fcnlName.Name = "fcnlName";
-            // 
-            // fdataType
-            // 
-            fdataType.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
-            fdataType.MinimumWidth = 6;
-            fdataType.Name = "fdataType";
-            // 
-            // fcnlType
-            // 
-            fcnlType.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
-            fcnlType.MinimumWidth = 6;
-            fcnlType.Name = "fcnlType";
-            // 
-            // fTagCode
-            // 
-            fTagCode.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
-            fTagCode.MinimumWidth = 6;
-            fTagCode.Name = "fTagCode";
-            // 
-            // ColumnVide
-            // 
-            ColumnVide.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
-            ColumnVide.HeaderText = "";
-            ColumnVide.MinimumWidth = 6;
-            ColumnVide.Name = "ColumnVide";
-            // 
-            // Column2Chk
-            // 
-            Column2Chk.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
-            Column2Chk.HeaderText = "";
-            Column2Chk.MinimumWidth = 6;
-            Column2Chk.Name = "Column2Chk";
-            Column2Chk.Resizable = DataGridViewTriState.True;
-            Column2Chk.SortMode = DataGridViewColumnSortMode.Automatic;
-            // 
-            // cnlName
-            // 
-            cnlName.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
-            cnlName.MinimumWidth = 6;
-            cnlName.Name = "cnlName";
-            // 
-            // dataType
-            // 
-            dataType.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
-            dataType.MinimumWidth = 6;
-            dataType.Name = "dataType";
-            // 
-            // cnlType
-            // 
-            cnlType.MinimumWidth = 6;
-            cnlType.Name = "cnlType";
-            // 
-            // tagCode
-            // 
-            tagCode.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
-            tagCode.MinimumWidth = 6;
-            tagCode.Name = "tagCode";
             // 
             // btnCancel
             // 
@@ -199,6 +123,98 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
             lbldest.TabIndex = 25;
             lbldest.Text = "Destination";
             // 
+            // Column1Txt
+            // 
+            Column1Txt.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
+            Column1Txt.HeaderText = "Column1Txt";
+            Column1Txt.MinimumWidth = 6;
+            Column1Txt.Name = "Column1Txt";
+            // 
+            // ColumnChk
+            // 
+            ColumnChk.HeaderText = "";
+            ColumnChk.MinimumWidth = 6;
+            ColumnChk.Name = "ColumnChk";
+            ColumnChk.Resizable = DataGridViewTriState.True;
+            ColumnChk.SortMode = DataGridViewColumnSortMode.Automatic;
+            // 
+            // fcnlName
+            // 
+            fcnlName.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
+            fcnlName.HeaderText = "fcnlName";
+            fcnlName.MinimumWidth = 6;
+            fcnlName.Name = "fcnlName";
+            // 
+            // fdataType
+            // 
+            fdataType.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
+            fdataType.HeaderText = "fdataType";
+            fdataType.MinimumWidth = 6;
+            fdataType.Name = "fdataType";
+            // 
+            // fcnlType
+            // 
+            fcnlType.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
+            fcnlType.HeaderText = "fcnlType";
+            fcnlType.MinimumWidth = 6;
+            fcnlType.Name = "fcnlType";
+            // 
+            // fTagCode
+            // 
+            fTagCode.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
+            fTagCode.HeaderText = "fTagCode";
+            fTagCode.MinimumWidth = 6;
+            fTagCode.Name = "fTagCode";
+            // 
+            // ColumnVide
+            // 
+            ColumnVide.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
+            ColumnVide.HeaderText = "";
+            ColumnVide.MinimumWidth = 6;
+            ColumnVide.Name = "ColumnVide";
+            // 
+            // Column2Chk
+            // 
+            Column2Chk.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
+            Column2Chk.HeaderText = "";
+            Column2Chk.MinimumWidth = 6;
+            Column2Chk.Name = "Column2Chk";
+            Column2Chk.Resizable = DataGridViewTriState.True;
+            Column2Chk.SortMode = DataGridViewColumnSortMode.Automatic;
+            // 
+            // cnlName
+            // 
+            cnlName.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
+            cnlName.HeaderText = "cnlName";
+            cnlName.MinimumWidth = 6;
+            cnlName.Name = "cnlName";
+            // 
+            // dataType
+            // 
+            dataType.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
+            dataType.HeaderText = "dataType";
+            dataType.MinimumWidth = 6;
+            dataType.Name = "dataType";
+            // 
+            // cnlType
+            // 
+            cnlType.HeaderText = "cnlType";
+            cnlType.MinimumWidth = 6;
+            cnlType.Name = "cnlType";
+            // 
+            // tagCode
+            // 
+            tagCode.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
+            tagCode.HeaderText = "tagCode";
+            tagCode.MinimumWidth = 6;
+            tagCode.Name = "tagCode";
+            // 
+            // ColumnvIDE2
+            // 
+            ColumnvIDE2.HeaderText = "";
+            ColumnvIDE2.MinimumWidth = 6;
+            ColumnvIDE2.Name = "ColumnvIDE2";
+            // 
             // FrmCnlsMerge
             // 
             AutoScaleDimensions = new SizeF(8F, 20F);
@@ -227,6 +243,8 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
         private Button btnAdd;
         private SaveFileDialog saveFileDialog;
         private SaveFileDialog saveFileDialog1;
+        private Label lblsrc;
+        private Label lbldest;
         private DataGridViewTextBoxColumn Column1Txt;
         private DataGridViewCheckBoxColumn ColumnChk;
         private DataGridViewTextBoxColumn fcnlName;
@@ -239,7 +257,6 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
         private DataGridViewTextBoxColumn dataType;
         private DataGridViewTextBoxColumn cnlType;
         private DataGridViewTextBoxColumn tagCode;
-        private Label lblsrc;
-        private Label lbldest;
+        private DataGridViewTextBoxColumn ColumnvIDE2;
     }
 }

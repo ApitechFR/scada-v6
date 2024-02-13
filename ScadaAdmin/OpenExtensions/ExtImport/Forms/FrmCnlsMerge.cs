@@ -81,6 +81,8 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
                     row.Cells[10].Value = cnlTypeDictionary[cnl.CnlTypeID];
                     row.Cells[11].Value = cnl.TagCode;
 
+                    //Cell 12 contains cnl as a channel
+                    row.Cells[12].Value = cnl;
                 }
             }
             dataGridView1.Columns[6].Visible = false;
@@ -293,6 +295,11 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
                 if (Convert.ToBoolean(row.Cells[1].Value) == true)
                 {
                     Cnl cnl = (Cnl)row.Cells[6].Value;
+                    channelsToCreate.Add(cnl);
+                }
+                else if (Convert.ToBoolean(row.Cells[7].Value) == true)
+                {
+                    Cnl cnl = (Cnl)row.Cells[12].Value;
                     channelsToCreate.Add(cnl);
                 }
             }
