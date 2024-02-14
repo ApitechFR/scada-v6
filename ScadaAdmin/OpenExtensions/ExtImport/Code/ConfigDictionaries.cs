@@ -51,7 +51,7 @@ namespace Scada.Admin.Extensions.ExtImport.Code
 				{"QWORD", ElemType.ULong },
 				{"UNDEFINED", ElemType.Undefined },
 				{"WORD", ElemType.UShort },
-				{"DINT", ElemType.Double },
+				{"DINT", ElemType.Int },
         };
 
 		public static List<Obj> prefixesAndSuffixes { get; } = new List<Obj>
