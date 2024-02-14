@@ -415,28 +415,19 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
         /// <param name="e"></param>
         private void button1_Click(object sender, EventArgs e)
         {
-            //First, we add channels chosen in merge form to the project's channels
-            AddChannelsToProject(channelsToCreateAfterMerge);
-
-            //If not all imported rows were in conflict, we create channels for all other rows and add them to the project's channels
-            //Warning : there can be multiple conflictual channels for one imported channel
-            if (importedChannels.Count() != importedChannels.Where(ic => conflictualChannels.Any(c => c.TagCode == ic.TagCode)).Count() && conflictualChannels.Count() > 0)
-            {
-                // we create channels for all other rows, which were not in conflict
-                List<Cnl> nonConflictualChannels = importedChannels.Where(ic => !conflictualChannels.Any(c => c.TagCode == ic.TagCode)).ToList();
-                //we add them to the project's channels
-                AddChannelsToProject(nonConflictualChannels);
-            }
 
             //Then, we generate a device configuration according to imported rows
-            ImportDeviceConfiguration();
+            bool doNext  = ImportDeviceConfiguration();
 
-            //save the default byte order in project config
-            string extImportConfigPath = string.Format("{0}\\Instances\\Default\\ExtImport\\extImportConfig.xml", project.ProjectDir);
-            SaveExtImportConfig(extImportConfigPath);
+            if (doNext)
+            {
+                //save the default byte order in project config
+                string extImportConfigPath = string.Format("{0}\\Instances\\Default\\ExtImport\\extImportConfig.xml", project.ProjectDir);
+                SaveExtImportConfig(extImportConfigPath);
 
-            //Finally, we close the form
-            DialogResult = DialogResult.OK;
+                //Finally, we close the form
+                DialogResult = DialogResult.OK;
+            }
         }
 
         /// <summary>
@@ -490,8 +481,9 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
         /// <summary>
         /// Creates and replaces the device configuration according to imported rows
         /// </summary>
-        private void ImportDeviceConfiguration()
+        private bool ImportDeviceConfiguration()
         {
+            bool doNext = false;
             DeviceTemplate template = GenerateDeviceTemplate();
             XmlDocument xmlDoc = GenerateXmlConfigurationFile(template);
 
@@ -526,6 +518,18 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
             saveFileDialog1.Filter = "Fichiers XML (*.xml)|*.xml";
             if (saveFileDialog1.ShowDialog() == DialogResult.OK)
             {
+                //First, we add channels chosen in merge form to the project's channels
+                AddChannelsToProject(channelsToCreateAfterMerge);
+
+                //If not all imported rows were in conflict, we create channels for all other rows and add them to the project's channels
+                //Warning : there can be multiple conflictual channels for one imported channel
+                if (importedChannels.Count() != importedChannels.Where(ic => conflictualChannels.Any(c => c.TagCode == ic.TagCode)).Count() && conflictualChannels.Count() > 0)
+                {
+                    // we create channels for all other rows, which were not in conflict
+                    List<Cnl> nonConflictualChannels = importedChannels.Where(ic => !conflictualChannels.Any(c => c.TagCode == ic.TagCode)).ToList();
+                    //we add them to the project's channels
+                    AddChannelsToProject(nonConflictualChannels);
+                }
                 using (Stream s = File.Open(saveFileDialog1.FileName, FileMode.Create))
                 using (StreamWriter sw = new StreamWriter(s))
                 {
@@ -543,8 +547,9 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
                         ScadaUiUtils.ShowError(errMess);
                     }
                 }
+                doNext = true;
             }
-
+            return doNext;
         }
 
         /// <summary>
@@ -570,23 +575,6 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
                 //if row tagcode contains a non-digit character (except prefix)
                 if (!row.Key.All(char.IsDigit) && rowIndex > 0)
                 {
-                    /* This code allows to detect if a row is a continuation of the previous one.
-                     * It is kept here in case it could be useful in the future.
-                    */
-                    ////we check if previous row tagcode too contains a non-digit character (except prefix)
-                    //string previousRowKey = importedRows.Keys.ElementAt(rowIndex - 1);
-                    //if (!previousRowKey.All(char.IsDigit))
-                    //{
-                    //    //split previous and current keys by non-digit characters with regex, to keep only the left part
-                    //    string[] previousRowLeftPart = Regex.Split(previousRowKey, @"[^0-9]");
-                    //    string[] currentRowLeftPart = Regex.Split(row.Key, @"[^0-9]");
-
-                    //    //if previous and current keys left parts are the same, we skip the current row
-                    //    if (previousRowLeftPart[0] == currentRowLeftPart[0])
-                    //    {
-                    //        continue;
-                    //    }
-                    //}
                     continue;
                 }
 
@@ -613,11 +601,6 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
                         break;
                 }
 
-                //var b = a.GetDefaultByteOrder(aaa);
-                //var c = b.Select(e => e.ToString()).ToList();
-                //var d = c.Aggregate((i, j) => i + j);
-                ////newElem.ByteOrder = (new DeviceTemplateOptions()).GetDefaultByteOrder(ModbusUtils.GetDataLength(newElem.ElemType)).Select(e => e.ToString()).ToList().Aggregate((i, j) => i + j);
-                //newElem.ByteOrder = d;
                 newElem.Name = row.Value[0];
                 newElem.TagCode = row.Key;
                 newElemenGroup.DataBlock = DataBlock.HoldingRegisters;
@@ -672,10 +655,6 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
                             newElemenGroup.Elems.Add(newElemArray);
 
                         }
-                        //template.ElemGroups.Add(newElemenGroup);
-                        //newElemenGroup = new ElemGroupConfig();
-                        //newElemenGroup.DataBlock = DataBlock.HoldingRegisters;
-                        //newElemenGroup.Address = int.Parse(Regex.Replace(row.Key, @"[^0-9]", ""));
                     }
                     catch (Exception e)
                     {
