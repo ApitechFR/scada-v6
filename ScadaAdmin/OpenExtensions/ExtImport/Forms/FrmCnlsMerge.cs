@@ -90,7 +90,6 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
             dataGridView1.Columns[6].Visible = false;
             dataGridView1.Columns[12].Visible = false;
 
-            // Ajoutez des données pour chaque ligne de la GridView (à faire lors de la création de la GridView)
             for (int i = 0; i < dataGridView1.RowCount; i++)
             {
                 rowDataList.Add(new RowData());
@@ -144,7 +143,6 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
             dataGridView1.ClearSelection();
         }
 
-        // Méthode pour mettre à jour les couleurs des cellules en fonction de l'état des cases à cocher
         private void UpdateCellColors(int rowIndex)
         {
             RowData rowData = rowDataList[rowIndex];
@@ -152,22 +150,19 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
 
             if (rowData.CheckBox1Value && !rowData.CheckBox2Value)
             {
-                // Case à cocher 1 cochée, case à cocher 2 non cochée
                 UpdateRowColors(row, Color.LightGreen, Color.PaleVioletRed);
             }
             else if (!rowData.CheckBox1Value && rowData.CheckBox2Value)
             {
-                // Case à cocher 1 non cochée, case à cocher 2 cochée
                 UpdateRowColors(row, Color.PaleVioletRed, Color.LightGreen);
             }
             else
             {
-                // Aucune case à cocher cochée
+                // 0 cell checked
                 UpdateRowColors(row, Color.White, Color.White);
             }
         }
 
-        // Méthode pour mettre à jour les couleurs des cellules dans une ligne
         private void UpdateRowColors(DataGridViewRow row, Color color1, Color color2)
         {
             row.Cells[1].Style.BackColor = color1;
