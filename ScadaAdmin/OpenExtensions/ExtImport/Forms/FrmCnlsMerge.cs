@@ -5,6 +5,7 @@ using Scada.Admin.Extensions.ExtImport.Code;
 using Scada.Comm.Devices;
 using System.Xml.Linq;
 using Scada.Forms;
+using static Scada.Admin.Extensions.ExtImport.Forms.FrmCnlsMerge;
 
 
 namespace Scada.Admin.Extensions.ExtImport.Forms
@@ -24,6 +25,7 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
         private readonly Dictionary<int, string> cnlTypeDictionary = ConfigDictionaries.CnlTypeDictionary;
         private readonly Dictionary<int, string> dataTypeDictionary = ConfigDictionaries.DataTypeDictionary;
 
+        List<RowData> rowDataList = new List<RowData>();
 
         private FrmCnlsMerge()
         {
@@ -53,7 +55,7 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
         {
             dataGridView1.Rows.Clear();
 
-            foreach(var incomingChannel in incomingChannels)
+            foreach (var incomingChannel in incomingChannels)
             {
                 var sameCodeCurrentChannels = currentChannels.Where(cnl => cnl.TagCode == incomingChannel.TagCode).ToList();
 
@@ -86,73 +88,100 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
                 }
             }
             dataGridView1.Columns[6].Visible = false;
-        }
+            dataGridView1.Columns[12].Visible = false;
 
-		private void dataGridView1_CellContentClick(object sender, DataGridViewCellEventArgs e)
-        {
-            if (dataGridView1.Columns[e.ColumnIndex] is DataGridViewCheckBoxColumn && e.RowIndex >= 0)
+            // Ajoutez des données pour chaque ligne de la GridView (à faire lors de la création de la GridView)
+            for (int i = 0; i < dataGridView1.RowCount; i++)
             {
-                DataGridViewCheckBoxCell currentCheckbox = (DataGridViewCheckBoxCell)dataGridView1.Rows[e.RowIndex].Cells[e.ColumnIndex];
-                DataGridViewCheckBoxCell otherCheckbox = (DataGridViewCheckBoxCell)dataGridView1.Rows[e.RowIndex].Cells[e.ColumnIndex == 1 ? 7 : 1];
-
-                if ((bool)currentCheckbox.Value == true && (bool)otherCheckbox.Value == false)
-                {
-                    currentCheckbox.Value = false;
-
-                    otherCheckbox.Style.BackColor = Color.White;
-                    dataGridView1.Rows[e.RowIndex].Cells[e.ColumnIndex + 1].Style.BackColor = Color.White;
-                    dataGridView1.Rows[e.RowIndex].Cells[e.ColumnIndex + 2].Style.BackColor = Color.White;
-                    dataGridView1.Rows[e.RowIndex].Cells[e.ColumnIndex + 3].Style.BackColor = Color.White;
-                    dataGridView1.Rows[e.RowIndex].Cells[e.ColumnIndex + 4].Style.BackColor = Color.White;
-                    dataGridView1.Rows[e.RowIndex].Cells[e.ColumnIndex + 5].Style.BackColor = Color.White;
-                    currentCheckbox.Style.BackColor = Color.White;
-                    dataGridView1.Rows[e.RowIndex].Cells[e.ColumnIndex == 1 ? 8 : 2].Style.BackColor = Color.White;
-                    dataGridView1.Rows[e.RowIndex].Cells[e.ColumnIndex == 1 ? 9 : 3].Style.BackColor = Color.White;
-                    dataGridView1.Rows[e.RowIndex].Cells[e.ColumnIndex == 1 ? 10 : 4].Style.BackColor = Color.White;
-                    dataGridView1.Rows[e.RowIndex].Cells[e.ColumnIndex == 1 ? 11 : 5].Style.BackColor = Color.White;
-                }
-                else
-                {
-                    if ((bool)currentCheckbox.Value == true)
-                    {
-                        otherCheckbox.Value = true;
-                        currentCheckbox.Value = false;
-
-                        otherCheckbox.Style.BackColor = Color.LightGreen;
-                        dataGridView1.Rows[e.RowIndex].Cells[e.ColumnIndex + 1].Style.BackColor = Color.LightGreen;
-                        dataGridView1.Rows[e.RowIndex].Cells[e.ColumnIndex + 2].Style.BackColor = Color.LightGreen;
-                        dataGridView1.Rows[e.RowIndex].Cells[e.ColumnIndex + 3].Style.BackColor = Color.LightGreen;
-                        dataGridView1.Rows[e.RowIndex].Cells[e.ColumnIndex + 4].Style.BackColor = Color.LightGreen;
-
-                        currentCheckbox.Style.BackColor = Color.PaleVioletRed;
-                        dataGridView1.Rows[e.RowIndex].Cells[e.ColumnIndex == 0 ? 8 : 2].Style.BackColor = Color.PaleVioletRed;
-                        dataGridView1.Rows[e.RowIndex].Cells[e.ColumnIndex == 0 ? 9 : 3].Style.BackColor = Color.PaleVioletRed;
-                        dataGridView1.Rows[e.RowIndex].Cells[e.ColumnIndex == 0 ? 10 : 4].Style.BackColor = Color.PaleVioletRed;
-                        dataGridView1.Rows[e.RowIndex].Cells[e.ColumnIndex == 0 ? 11 : 5].Style.BackColor = Color.PaleVioletRed;
-                    }
-                    else
-                    {
-                        otherCheckbox.Value = false;
-                        currentCheckbox.Value = true;
-
-                        otherCheckbox.Style.BackColor = Color.PaleVioletRed;
-                        dataGridView1.Rows[e.RowIndex].Cells[e.ColumnIndex == 1 ? 8 : 2].Style.BackColor = Color.PaleVioletRed;
-                        dataGridView1.Rows[e.RowIndex].Cells[e.ColumnIndex == 1 ? 9 : 3].Style.BackColor = Color.PaleVioletRed;
-                        dataGridView1.Rows[e.RowIndex].Cells[e.ColumnIndex == 1 ? 10 : 4].Style.BackColor = Color.PaleVioletRed;
-                        dataGridView1.Rows[e.RowIndex].Cells[e.ColumnIndex == 1 ? 11 : 5].Style.BackColor = Color.PaleVioletRed;
-
-                        currentCheckbox.Style.BackColor = Color.LightGreen;
-                        dataGridView1.Rows[e.RowIndex].Cells[e.ColumnIndex + 1].Style.BackColor = Color.LightGreen;
-                        dataGridView1.Rows[e.RowIndex].Cells[e.ColumnIndex + 2].Style.BackColor = Color.LightGreen;
-                        dataGridView1.Rows[e.RowIndex].Cells[e.ColumnIndex + 3].Style.BackColor = Color.LightGreen;
-                        dataGridView1.Rows[e.RowIndex].Cells[e.ColumnIndex + 4].Style.BackColor = Color.LightGreen;
-
-                    }
-                }
-
+                rowDataList.Add(new RowData());
             }
         }
 
+        public class RowData
+        {
+            public bool CheckBox1Value { get; set; }
+            public bool CheckBox2Value { get; set; }
+
+            public RowData()
+            {
+                CheckBox1Value = false;
+                CheckBox2Value = false;
+            }
+        }
+
+        private void dataGridView1_CellContentClick(object sender, DataGridViewCellEventArgs e)
+        {
+            if (e.RowIndex >= 0 && e.ColumnIndex >= 0)
+            {
+                RowData rowData = rowDataList[e.RowIndex];
+
+                if (dataGridView1.Columns[e.ColumnIndex] is DataGridViewCheckBoxColumn)
+                {
+                    if (e.ColumnIndex == 1)
+                    {
+                        rowData.CheckBox1Value = !rowData.CheckBox1Value;
+
+                        if (rowData.CheckBox1Value)
+                        {
+                            rowData.CheckBox2Value = !rowData.CheckBox1Value;
+                            dataGridView1[7, e.RowIndex].Value = false;
+                        }
+                    }
+                    else if (e.ColumnIndex == 7)
+                    {
+                        rowData.CheckBox2Value = !rowData.CheckBox2Value;
+
+                        if (rowData.CheckBox2Value)
+                        {
+                            rowData.CheckBox1Value = !rowData.CheckBox2Value;
+                            dataGridView1[1, e.RowIndex].Value = false;
+                        }
+                    }
+
+                    UpdateCellColors(e.RowIndex);
+                }
+            }
+            dataGridView1.ClearSelection();
+        }
+
+        // Méthode pour mettre à jour les couleurs des cellules en fonction de l'état des cases à cocher
+        private void UpdateCellColors(int rowIndex)
+        {
+            RowData rowData = rowDataList[rowIndex];
+            DataGridViewRow row = dataGridView1.Rows[rowIndex];
+
+            if (rowData.CheckBox1Value && !rowData.CheckBox2Value)
+            {
+                // Case à cocher 1 cochée, case à cocher 2 non cochée
+                UpdateRowColors(row, Color.LightGreen, Color.PaleVioletRed);
+            }
+            else if (!rowData.CheckBox1Value && rowData.CheckBox2Value)
+            {
+                // Case à cocher 1 non cochée, case à cocher 2 cochée
+                UpdateRowColors(row, Color.PaleVioletRed, Color.LightGreen);
+            }
+            else
+            {
+                // Aucune case à cocher cochée
+                UpdateRowColors(row, Color.White, Color.White);
+            }
+        }
+
+        // Méthode pour mettre à jour les couleurs des cellules dans une ligne
+        private void UpdateRowColors(DataGridViewRow row, Color color1, Color color2)
+        {
+            row.Cells[1].Style.BackColor = color1;
+            row.Cells[2].Style.BackColor = color1;
+            row.Cells[3].Style.BackColor = color1;
+            row.Cells[4].Style.BackColor = color1;
+            row.Cells[5].Style.BackColor = color1;
+
+            row.Cells[7].Style.BackColor = color2;
+            row.Cells[8].Style.BackColor = color2;
+            row.Cells[9].Style.BackColor = color2;
+            row.Cells[10].Style.BackColor = color2;
+            row.Cells[11].Style.BackColor = color2;
+        }
 
         private void _headerCheckBox1_CheckedChanged(object sender, EventArgs e)
         {
@@ -160,48 +189,26 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
             {
                 _headerCheckBox2.Checked = false;
 
-                foreach (DataGridViewRow row in dataGridView1.Rows)
+                foreach (RowData row in rowDataList)
                 {
-                    if (!row.Cells[1].ReadOnly)
-                    {
-                        row.Cells[1].Value = true;
-
-                        row.Cells[1].Style.BackColor = Color.LightGreen;
-                        row.Cells[2].Style.BackColor = Color.LightGreen;
-                        row.Cells[3].Style.BackColor = Color.LightGreen;
-                        row.Cells[4].Style.BackColor = Color.LightGreen;
-                        row.Cells[5].Style.BackColor = Color.LightGreen;
-
-                        row.Cells[7].Style.BackColor = Color.PaleVioletRed;
-                        row.Cells[8].Style.BackColor = Color.PaleVioletRed;
-                        row.Cells[9].Style.BackColor = Color.PaleVioletRed;
-                        row.Cells[10].Style.BackColor = Color.PaleVioletRed;
-                        row.Cells[11].Style.BackColor = Color.PaleVioletRed;
-                    }
+                    dataGridView1[1, rowDataList.IndexOf(row)].Value = true;
+                    row.CheckBox1Value = true;
+                    row.CheckBox2Value = false;
+                    UpdateCellColors(rowDataList.IndexOf(row));
                 }
             }
             else
             {
-                foreach (DataGridViewRow row in dataGridView1.Rows)
+                foreach (RowData row in rowDataList)
                 {
-                    if (!row.Cells[1].ReadOnly)
-                    {
-                        row.Cells[1].Value = false;
-
-                        row.Cells[1].Style.BackColor = Color.White;
-                        row.Cells[2].Style.BackColor = Color.White;
-                        row.Cells[3].Style.BackColor = Color.White;
-                        row.Cells[4].Style.BackColor = Color.White;
-                        row.Cells[5].Style.BackColor = Color.White;
-
-                        row.Cells[7].Style.BackColor = Color.White;
-                        row.Cells[8].Style.BackColor = Color.White;
-                        row.Cells[9].Style.BackColor = Color.White;
-                        row.Cells[10].Style.BackColor = Color.White;
-                        row.Cells[11].Style.BackColor = Color.White;
-                    }
+                    dataGridView1[1, rowDataList.IndexOf(row)].Value = false;
+                    row.CheckBox1Value = false;
+                    row.CheckBox2Value = false;
+                    UpdateCellColors(rowDataList.IndexOf(row));
                 }
             }
+
+            dataGridView1.EndEdit();
         }
 
         private void _headerCheckBox2_CheckedChanged(object sender, EventArgs e)
@@ -210,48 +217,25 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
             {
                 _headerCheckBox1.Checked = false;
 
-                foreach (DataGridViewRow row in dataGridView1.Rows)
+                foreach (RowData row in rowDataList)
                 {
-                    if (!row.Cells[7].ReadOnly)
-                    {
-                        row.Cells[7].Value = true;
-
-                        row.Cells[1].Style.BackColor = Color.PaleVioletRed;
-                        row.Cells[2].Style.BackColor = Color.PaleVioletRed;
-                        row.Cells[3].Style.BackColor = Color.PaleVioletRed;
-                        row.Cells[4].Style.BackColor = Color.PaleVioletRed;
-                        row.Cells[5].Style.BackColor = Color.PaleVioletRed;
-
-                        row.Cells[7].Style.BackColor = Color.LightGreen;
-                        row.Cells[8].Style.BackColor = Color.LightGreen;
-                        row.Cells[9].Style.BackColor = Color.LightGreen;
-                        row.Cells[10].Style.BackColor = Color.LightGreen;
-                        row.Cells[11].Style.BackColor = Color.LightGreen;
-                    }
+                    dataGridView1[7, rowDataList.IndexOf(row)].Value = true;
+                    row.CheckBox2Value = true;
+                    row.CheckBox1Value = false;
+                    UpdateCellColors(rowDataList.IndexOf(row));
                 }
             }
             else
             {
-                foreach (DataGridViewRow row in dataGridView1.Rows)
+                foreach (RowData row in rowDataList)
                 {
-                    if (!row.Cells[7].ReadOnly)
-                    {
-                        row.Cells[7].Value = false;
-
-                        row.Cells[1].Style.BackColor = Color.White;
-                        row.Cells[2].Style.BackColor = Color.White;
-                        row.Cells[3].Style.BackColor = Color.White;
-                        row.Cells[4].Style.BackColor = Color.White;
-                        row.Cells[5].Style.BackColor = Color.White;
-
-                        row.Cells[7].Style.BackColor = Color.White;
-                        row.Cells[8].Style.BackColor = Color.White;
-                        row.Cells[9].Style.BackColor = Color.White;
-                        row.Cells[10].Style.BackColor = Color.White;
-                        row.Cells[11].Style.BackColor = Color.White;
-                    }
+                    dataGridView1[7, rowDataList.IndexOf(row)].Value = false;
+                    row.CheckBox2Value = false;
+                    row.CheckBox1Value = false;
+                    UpdateCellColors(rowDataList.IndexOf(row));
                 }
             }
+            dataGridView1.EndEdit();
         }
 
         private void FrmCnlMerge_Load(object sender, EventArgs e)
@@ -306,5 +290,6 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
 
             DialogResult = DialogResult.OK;
         }
+
     }
 }

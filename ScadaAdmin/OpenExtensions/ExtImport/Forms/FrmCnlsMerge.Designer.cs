@@ -32,11 +32,6 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
         {
             label3 = new Label();
             dataGridView1 = new DataGridView();
-            btnCancel = new Button();
-            btnAdd = new Button();
-            saveFileDialog1 = new SaveFileDialog();
-            lblsrc = new Label();
-            lbldest = new Label();
             Column1Txt = new DataGridViewTextBoxColumn();
             ColumnChk = new DataGridViewCheckBoxColumn();
             fcnlName = new DataGridViewTextBoxColumn();
@@ -50,6 +45,11 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
             cnlType = new DataGridViewTextBoxColumn();
             tagCode = new DataGridViewTextBoxColumn();
             ColumnvIDE2 = new DataGridViewTextBoxColumn();
+            btnCancel = new Button();
+            btnAdd = new Button();
+            saveFileDialog1 = new SaveFileDialog();
+            lblsrc = new Label();
+            lbldest = new Label();
             ((ISupportInitialize)dataGridView1).BeginInit();
             SuspendLayout();
             // 
@@ -75,53 +75,6 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
             dataGridView1.Size = new Size(1671, 664);
             dataGridView1.TabIndex = 21;
             dataGridView1.CellContentClick += dataGridView1_CellContentClick;
-            // 
-            // btnCancel
-            // 
-            btnCancel.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
-            btnCancel.Location = new Point(1547, 715);
-            btnCancel.Name = "btnCancel";
-            btnCancel.Size = new Size(119, 35);
-            btnCancel.TabIndex = 23;
-            btnCancel.Text = "Cancel";
-            btnCancel.UseVisualStyleBackColor = true;
-            // 
-            // btnAdd
-            // 
-            btnAdd.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
-            btnAdd.Location = new Point(1408, 715);
-            btnAdd.Name = "btnAdd";
-            btnAdd.Size = new Size(109, 35);
-            btnAdd.TabIndex = 22;
-            btnAdd.Text = "Add";
-            btnAdd.UseVisualStyleBackColor = true;
-            btnAdd.Click += btnAdd_Click_1;
-            // 
-            // saveFileDialog1
-            // 
-            saveFileDialog1.Filter = "Fichiers XML (*.xml)|*.xml";
-            saveFileDialog1.RestoreDirectory = true;
-            // 
-            // lblsrc
-            // 
-            lblsrc.AutoSize = true;
-            lblsrc.Font = new Font("Segoe UI", 9F, FontStyle.Bold, GraphicsUnit.Point);
-            lblsrc.Location = new Point(11, 9);
-            lblsrc.Name = "lblsrc";
-            lblsrc.Size = new Size(56, 20);
-            lblsrc.TabIndex = 24;
-            lblsrc.Text = "Source";
-            // 
-            // lbldest
-            // 
-            lbldest.Anchor = AnchorStyles.Top | AnchorStyles.Right;
-            lbldest.AutoSize = true;
-            lbldest.Font = new Font("Segoe UI", 9F, FontStyle.Bold, GraphicsUnit.Point);
-            lbldest.Location = new Point(1592, 9);
-            lbldest.Name = "lbldest";
-            lbldest.Size = new Size(90, 20);
-            lbldest.TabIndex = 25;
-            lbldest.Text = "Destination";
             // 
             // Column1Txt
             // 
@@ -214,6 +167,53 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
             ColumnvIDE2.HeaderText = "";
             ColumnvIDE2.MinimumWidth = 6;
             ColumnvIDE2.Name = "ColumnvIDE2";
+            // 
+            // btnCancel
+            // 
+            btnCancel.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
+            btnCancel.Location = new Point(1547, 715);
+            btnCancel.Name = "btnCancel";
+            btnCancel.Size = new Size(119, 35);
+            btnCancel.TabIndex = 23;
+            btnCancel.Text = "Cancel";
+            btnCancel.UseVisualStyleBackColor = true;
+            // 
+            // btnAdd
+            // 
+            btnAdd.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
+            btnAdd.Location = new Point(1408, 715);
+            btnAdd.Name = "btnAdd";
+            btnAdd.Size = new Size(109, 35);
+            btnAdd.TabIndex = 22;
+            btnAdd.Text = "Add";
+            btnAdd.UseVisualStyleBackColor = true;
+            btnAdd.Click += btnAdd_Click_1;
+            // 
+            // saveFileDialog1
+            // 
+            saveFileDialog1.Filter = "Fichiers XML (*.xml)|*.xml";
+            saveFileDialog1.RestoreDirectory = true;
+            // 
+            // lblsrc
+            // 
+            lblsrc.AutoSize = true;
+            lblsrc.Font = new Font("Segoe UI", 9F, FontStyle.Bold, GraphicsUnit.Point);
+            lblsrc.Location = new Point(11, 9);
+            lblsrc.Name = "lblsrc";
+            lblsrc.Size = new Size(56, 20);
+            lblsrc.TabIndex = 24;
+            lblsrc.Text = "Source";
+            // 
+            // lbldest
+            // 
+            lbldest.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+            lbldest.AutoSize = true;
+            lbldest.Font = new Font("Segoe UI", 9F, FontStyle.Bold, GraphicsUnit.Point);
+            lbldest.Location = new Point(1592, 9);
+            lbldest.Name = "lbldest";
+            lbldest.Size = new Size(90, 20);
+            lbldest.TabIndex = 25;
+            lbldest.Text = "Destination";
             // 
             // FrmCnlsMerge
             // 
