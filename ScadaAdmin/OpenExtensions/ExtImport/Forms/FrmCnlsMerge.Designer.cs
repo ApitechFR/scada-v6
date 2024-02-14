@@ -44,6 +44,7 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
             dataType = new DataGridViewTextBoxColumn();
             cnlType = new DataGridViewTextBoxColumn();
             tagCode = new DataGridViewTextBoxColumn();
+            ColumnvIDE2 = new DataGridViewTextBoxColumn();
             btnCancel = new Button();
             btnAdd = new Button();
             saveFileDialog1 = new SaveFileDialog();
@@ -66,7 +67,7 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
             dataGridView1.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
             dataGridView1.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
             dataGridView1.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            dataGridView1.Columns.AddRange(new DataGridViewColumn[] { Column1Txt, ColumnChk, fcnlName, fdataType, fcnlType, fTagCode, ColumnVide, Column2Chk, cnlName, dataType, cnlType, tagCode });
+            dataGridView1.Columns.AddRange(new DataGridViewColumn[] { Column1Txt, ColumnChk, fcnlName, fdataType, fcnlType, fTagCode, ColumnVide, Column2Chk, cnlName, dataType, cnlType, tagCode, ColumnvIDE2 });
             dataGridView1.Location = new Point(11, 44);
             dataGridView1.Name = "dataGridView1";
             dataGridView1.RowHeadersWidth = 180;
@@ -78,6 +79,7 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
             // Column1Txt
             // 
             Column1Txt.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
+            Column1Txt.HeaderText = "Column1Txt";
             Column1Txt.MinimumWidth = 6;
             Column1Txt.Name = "Column1Txt";
             // 
@@ -92,24 +94,28 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
             // fcnlName
             // 
             fcnlName.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
+            fcnlName.HeaderText = "fcnlName";
             fcnlName.MinimumWidth = 6;
             fcnlName.Name = "fcnlName";
             // 
             // fdataType
             // 
             fdataType.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
+            fdataType.HeaderText = "fdataType";
             fdataType.MinimumWidth = 6;
             fdataType.Name = "fdataType";
             // 
             // fcnlType
             // 
             fcnlType.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
+            fcnlType.HeaderText = "fcnlType";
             fcnlType.MinimumWidth = 6;
             fcnlType.Name = "fcnlType";
             // 
             // fTagCode
             // 
             fTagCode.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
+            fTagCode.HeaderText = "fTagCode";
             fTagCode.MinimumWidth = 6;
             fTagCode.Name = "fTagCode";
             // 
@@ -132,25 +138,35 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
             // cnlName
             // 
             cnlName.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
+            cnlName.HeaderText = "cnlName";
             cnlName.MinimumWidth = 6;
             cnlName.Name = "cnlName";
             // 
             // dataType
             // 
             dataType.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
+            dataType.HeaderText = "dataType";
             dataType.MinimumWidth = 6;
             dataType.Name = "dataType";
             // 
             // cnlType
             // 
+            cnlType.HeaderText = "cnlType";
             cnlType.MinimumWidth = 6;
             cnlType.Name = "cnlType";
             // 
             // tagCode
             // 
             tagCode.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
+            tagCode.HeaderText = "tagCode";
             tagCode.MinimumWidth = 6;
             tagCode.Name = "tagCode";
+            // 
+            // ColumnvIDE2
+            // 
+            ColumnvIDE2.HeaderText = "";
+            ColumnvIDE2.MinimumWidth = 6;
+            ColumnvIDE2.Name = "ColumnvIDE2";
             // 
             // btnCancel
             // 
@@ -227,6 +243,8 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
         private Button btnAdd;
         private SaveFileDialog saveFileDialog;
         private SaveFileDialog saveFileDialog1;
+        private Label lblsrc;
+        private Label lbldest;
         private DataGridViewTextBoxColumn Column1Txt;
         private DataGridViewCheckBoxColumn ColumnChk;
         private DataGridViewTextBoxColumn fcnlName;
@@ -239,7 +257,6 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
         private DataGridViewTextBoxColumn dataType;
         private DataGridViewTextBoxColumn cnlType;
         private DataGridViewTextBoxColumn tagCode;
-        private Label lblsrc;
-        private Label lbldest;
+        private DataGridViewTextBoxColumn ColumnvIDE2;
     }
 }
