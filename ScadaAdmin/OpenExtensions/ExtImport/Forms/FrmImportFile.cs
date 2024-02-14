@@ -194,27 +194,14 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
             Cnl cnl = new Cnl();
             cnl.Name = row.Value[0];
             cnl.TagCode = row.Key;
-            //if (ConfigDictionaries.CnlDataType.ContainsKey(row.Value[1]))
-            //{
-            //    cnl.DataTypeID = ConfigDictionaries.CnlDataType[row.Value[1]];
-            //}
-            //else
             if (row.Value[1].Contains("ARRAY"))
             {
-                //if (ConfigDictionaries.CnlDataType.ContainsKey(row.Value[1].Split(' ')[2]))
-                //{
-                //    cnl.DataTypeID = ConfigDictionaries.CnlDataType[row.Value[1].Split(' ')[2]];
-                //}
                 int arrayLength = int.Parse(row.Value[1].Split(' ')[0].Split("..")[1].Split(']')[0])+1;
                 for(int i=0; i < arrayLength; i++)
                 {
                     Cnl cnlArray = new Cnl();
                     cnlArray.Name = string.Format("{0}[{1}]", row.Value[0], i);
                     cnlArray.TagCode = string.Format("{0}.{1}", row.Key, i);
-                    //if (ConfigDictionaries.CnlDataType.ContainsKey(row.Value[1].Split(' ')[2]))
-                    //{
-                    //    cnlArray.DataTypeID = ConfigDictionaries.CnlDataType[row.Value[1].Split(' ')[2]];
-                    //}
                     if(!splittedChannels.ContainsKey(cnl.TagCode))
                     {
                         splittedChannels.Add(cnl.TagCode, new List<Cnl>());
@@ -226,7 +213,6 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
             cnl.CnlTypeID = 2;
             cnl.DeviceNum = selectedDevice.DeviceNum;
             cnl.Active = true;
-            //cnl.EventMask = 81;
 
             return cnl;
         }
@@ -360,11 +346,6 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
                 {
                     cnl.CnlNum = project.ConfigDatabase.CnlTable.Count() > 0 ? project.ConfigDatabase.CnlTable.OrderBy(cnl => cnl.CnlNum).Last().CnlNum + 1 : 1;
                 }
-                //DEBUT test
-                //cnl.DataTypeID = null;
-                //cnl.EventMask = 81;
-                //cnl.ObjNum = 1;
-                //FIN test
                 project.ConfigDatabase.CnlTable.AddItem(cnl);
                 if(splittedChannels != null && splittedChannels.ContainsKey(cnl.TagCode))
                 {
@@ -667,20 +648,6 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
             {
                 template.ElemGroups[i].Elems.Sort((x, y) => int.Parse(x.TagCode.Split('.')[0]) - int.Parse(y.TagCode.Split('.')[0]));
                 template.ElemGroups[i].Address = int.Parse(Regex.Replace(template.ElemGroups[i].Elems[0].TagCode, @"[^0-9]", "")) - 1;
-                //for(int j = 1; j < template.ElemGroups[i].Elems.Count; j++)
-                //{
-                //    if (new List<ElemType> {ElemType.UShort, ElemType.Short}.Contains(template.ElemGroups[i].Elems[j].ElemType))
-                //    {
-                //        template.ElemGroups[i].Elems.Insert(j+1, new ElemConfig
-                //        {
-                //            Name = "Vide",
-                //            TagCode = string.Format("Vide-{0}.{1}", i, j),
-                //            ElemType = ElemType.Short,
-                //        });
-                //        i++;
-                //    }
-                //}
-
             }
 
             return template;
