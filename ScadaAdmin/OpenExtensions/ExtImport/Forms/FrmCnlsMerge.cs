@@ -186,20 +186,30 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
 
                 foreach (RowData row in rowDataList)
                 {
-                    dataGridView1[1, rowDataList.IndexOf(row)].Value = true;
-                    row.CheckBox1Value = true;
-                    row.CheckBox2Value = false;
-                    UpdateCellColors(rowDataList.IndexOf(row));
+                    if (dataGridView1.Columns[1] is DataGridViewCheckBoxColumn && dataGridView1.Columns[7] is DataGridViewCheckBoxColumn)
+                    {
+                        dataGridView1[1, rowDataList.IndexOf(row)].Value = true;
+                        dataGridView1[7, rowDataList.IndexOf(row)].Value = false;
+                        row.CheckBox1Value = true;
+                        row.CheckBox2Value = false;
+                        UpdateCellColors(rowDataList.IndexOf(row));
+                        dataGridView1.EndEdit();
+                    }
                 }
             }
             else
             {
                 foreach (RowData row in rowDataList)
                 {
-                    dataGridView1[1, rowDataList.IndexOf(row)].Value = false;
-                    row.CheckBox1Value = false;
-                    row.CheckBox2Value = false;
-                    UpdateCellColors(rowDataList.IndexOf(row));
+                    if (dataGridView1.Columns[1] is DataGridViewCheckBoxColumn && dataGridView1.Columns[7] is DataGridViewCheckBoxColumn)
+                    {
+                        dataGridView1[1, rowDataList.IndexOf(row)].Value = false;
+                        dataGridView1[7, rowDataList.IndexOf(row)].Value = false;
+                        row.CheckBox1Value = false;
+                        row.CheckBox2Value = false;
+                        UpdateCellColors(rowDataList.IndexOf(row));
+                        dataGridView1.EndEdit();
+                    }
                 }
             }
 
@@ -214,20 +224,30 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
 
                 foreach (RowData row in rowDataList)
                 {
-                    dataGridView1[7, rowDataList.IndexOf(row)].Value = true;
-                    row.CheckBox2Value = true;
-                    row.CheckBox1Value = false;
-                    UpdateCellColors(rowDataList.IndexOf(row));
+                    if (dataGridView1.Columns[1] is DataGridViewCheckBoxColumn && dataGridView1.Columns[7] is DataGridViewCheckBoxColumn)
+                        {
+                        dataGridView1[1, rowDataList.IndexOf(row)].Value = false;
+                        dataGridView1[7, rowDataList.IndexOf(row)].Value = true;
+                        row.CheckBox2Value = true;
+                        row.CheckBox1Value = false;
+                        UpdateCellColors(rowDataList.IndexOf(row));
+                        dataGridView1.EndEdit();
+                    }
                 }
             }
             else
             {
                 foreach (RowData row in rowDataList)
                 {
-                    dataGridView1[7, rowDataList.IndexOf(row)].Value = false;
-                    row.CheckBox2Value = false;
-                    row.CheckBox1Value = false;
-                    UpdateCellColors(rowDataList.IndexOf(row));
+                    if (dataGridView1.Columns[1] is DataGridViewCheckBoxColumn && dataGridView1.Columns[7] is DataGridViewCheckBoxColumn)
+                    {
+                        dataGridView1[7, rowDataList.IndexOf(row)].Value = false;
+                        dataGridView1[1, rowDataList.IndexOf(row)].Value = false;
+                        row.CheckBox2Value = false;
+                        row.CheckBox1Value = false;
+                        UpdateCellColors(rowDataList.IndexOf(row));
+                        dataGridView1.EndEdit();
+                    }
                 }
             }
             dataGridView1.EndEdit();
