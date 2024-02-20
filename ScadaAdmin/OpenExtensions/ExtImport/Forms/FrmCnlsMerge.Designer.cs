@@ -75,6 +75,7 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
             dataGridView1.Size = new Size(1671, 664);
             dataGridView1.TabIndex = 21;
             dataGridView1.CellContentClick += dataGridView1_CellContentClick;
+            dataGridView1.CellContentDoubleClick += dataGridView1_CellContentDoubleClick;
             // 
             // Column1Txt
             // 

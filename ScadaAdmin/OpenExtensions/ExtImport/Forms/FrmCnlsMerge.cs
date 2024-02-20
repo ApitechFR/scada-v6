@@ -118,21 +118,29 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
                 {
                     if (e.ColumnIndex == 1)
                     {
-                        rowData.CheckBox1Value = !rowData.CheckBox1Value;
+                        if (rowData.CheckBox1Value)
+                            rowData.CheckBox1Value = false;
+
+                        else if (!rowData.CheckBox1Value)
+                            rowData.CheckBox1Value = true;
 
                         if (rowData.CheckBox1Value)
                         {
-                            rowData.CheckBox2Value = !rowData.CheckBox1Value;
+                            rowData.CheckBox2Value = false;
                             dataGridView1[7, e.RowIndex].Value = false;
                         }
                     }
                     else if (e.ColumnIndex == 7)
                     {
-                        rowData.CheckBox2Value = !rowData.CheckBox2Value;
+                        if (rowData.CheckBox2Value)
+                            rowData.CheckBox2Value = false;
+
+                        else if (!rowData.CheckBox2Value)
+                            rowData.CheckBox2Value = true;
 
                         if (rowData.CheckBox2Value)
                         {
-                            rowData.CheckBox1Value = !rowData.CheckBox2Value;
+                            rowData.CheckBox1Value = false;
                             dataGridView1[1, e.RowIndex].Value = false;
                         }
                     }
@@ -141,6 +149,7 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
                 }
             }
             dataGridView1.ClearSelection();
+            dataGridView1.EndEdit();
         }
 
         private void UpdateCellColors(int rowIndex)
@@ -225,7 +234,7 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
                 foreach (RowData row in rowDataList)
                 {
                     if (dataGridView1.Columns[1] is DataGridViewCheckBoxColumn && dataGridView1.Columns[7] is DataGridViewCheckBoxColumn)
-                        {
+                    {
                         dataGridView1[1, rowDataList.IndexOf(row)].Value = false;
                         dataGridView1[7, rowDataList.IndexOf(row)].Value = true;
                         row.CheckBox2Value = true;
@@ -306,5 +315,48 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
             DialogResult = DialogResult.OK;
         }
 
+        private void dataGridView1_CellContentDoubleClick(object sender, DataGridViewCellEventArgs e)
+        {
+            if (e.RowIndex >= 0 && e.ColumnIndex >= 0)
+            {
+                RowData rowData = rowDataList[e.RowIndex];
+
+                if (dataGridView1.Columns[e.ColumnIndex] is DataGridViewCheckBoxColumn)
+                {
+                    if (e.ColumnIndex == 1)
+                    {
+                        if (rowData.CheckBox1Value)
+                            rowData.CheckBox1Value = false;
+
+                        else if (!rowData.CheckBox1Value)
+                            rowData.CheckBox1Value = true;
+
+                        if (rowData.CheckBox1Value)
+                        {
+                            rowData.CheckBox2Value = false;
+                            dataGridView1[7, e.RowIndex].Value = false;
+                        }
+                    }
+                    else if (e.ColumnIndex == 7)
+                    {
+                        if (rowData.CheckBox2Value)
+                            rowData.CheckBox2Value = false;
+
+                        else if (!rowData.CheckBox2Value)
+                            rowData.CheckBox2Value = true;
+
+                        if (rowData.CheckBox2Value)
+                        {
+                            rowData.CheckBox1Value = false;
+                            dataGridView1[1, e.RowIndex].Value = false;
+                        }
+                    }
+
+                    UpdateCellColors(e.RowIndex);
+                }
+            }
+            dataGridView1.ClearSelection();
+            dataGridView1.EndEdit();
+        }
     }
 }
