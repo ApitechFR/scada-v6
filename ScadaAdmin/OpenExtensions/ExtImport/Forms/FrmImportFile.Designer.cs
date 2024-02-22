@@ -350,6 +350,7 @@
             Controls.Add(txtPathFile);
             Controls.Add(btnSelectFile);
             Name = "FrmImportFile";
+            Text = "Import channels";
             ((System.ComponentModel.ISupportInitialize)pbStatus).EndInit();
             ((System.ComponentModel.ISupportInitialize)pictureBox1).EndInit();
             panel1.ResumeLayout(false);

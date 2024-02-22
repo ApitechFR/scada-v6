@@ -7,6 +7,7 @@ using Scada.Data.Entities;
 using System.Text.RegularExpressions;
 using System.Xml;
 using Scada.Forms;
+using System.Data;
 
 namespace Scada.Admin.Extensions.ExtImport.Forms
 {
@@ -193,26 +194,14 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
             Cnl cnl = new Cnl();
             cnl.Name = row.Value[0];
             cnl.TagCode = row.Key;
-            if (ConfigDictionaries.CnlDataType.ContainsKey(row.Value[1]))
+            if (row.Value[1].Contains("ARRAY"))
             {
-                cnl.DataTypeID = ConfigDictionaries.CnlDataType[row.Value[1]];
-            }
-            else if (row.Value[1].Contains("ARRAY"))
-            {
-                if (ConfigDictionaries.CnlDataType.ContainsKey(row.Value[1].Split(' ')[2]))
-                {
-                    cnl.DataTypeID = ConfigDictionaries.CnlDataType[row.Value[1].Split(' ')[2]];
-                }
                 int arrayLength = int.Parse(row.Value[1].Split(' ')[0].Split("..")[1].Split(']')[0])+1;
                 for(int i=0; i < arrayLength; i++)
                 {
                     Cnl cnlArray = new Cnl();
                     cnlArray.Name = string.Format("{0}[{1}]", row.Value[0], i);
                     cnlArray.TagCode = string.Format("{0}.{1}", row.Key, i);
-                    if (ConfigDictionaries.CnlDataType.ContainsKey(row.Value[1].Split(' ')[2]))
-                    {
-                        cnlArray.DataTypeID = ConfigDictionaries.CnlDataType[row.Value[1].Split(' ')[2]];
-                    }
                     if(!splittedChannels.ContainsKey(cnl.TagCode))
                     {
                         splittedChannels.Add(cnl.TagCode, new List<Cnl>());
@@ -223,7 +212,7 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
             //default Type is input/output
             cnl.CnlTypeID = 2;
             cnl.DeviceNum = selectedDevice.DeviceNum;
-
+            cnl.Active = true;
 
             return cnl;
         }
@@ -607,7 +596,7 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
                     }
                     newElemenGroup = new ElemGroupConfig();
                     newElemenGroup.DataBlock = DataBlock.HoldingRegisters;
-                    newElemenGroup.Address = int.Parse(Regex.Replace(row.Key, @"[^0-9]", ""));
+                    newElemenGroup.Address = int.Parse(Regex.Replace(row.Key, @"[^0-9]", "")) - 1;
                 }
                 previousPrefix = prefix;
                 previousType = newElem.ElemType;
@@ -655,6 +644,12 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
                 }
             }
             template.ElemGroups.Add(newElemenGroup);
+            for(int i=0; i<template.ElemGroups.Count; i++)
+            {
+                template.ElemGroups[i].Elems.Sort((x, y) => int.Parse(x.TagCode.Split('.')[0]) - int.Parse(y.TagCode.Split('.')[0]));
+                template.ElemGroups[i].Address = int.Parse(Regex.Replace(template.ElemGroups[i].Elems[0].TagCode, @"[^0-9]", "")) - 1;
+            }
+
             return template;
         }
 
