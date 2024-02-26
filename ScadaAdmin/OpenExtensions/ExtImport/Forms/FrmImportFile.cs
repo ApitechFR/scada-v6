@@ -331,7 +331,13 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
                 {
                     Cnl cnl = new Cnl();
                     cnl.Name = row.Value[0];
-                    cnl.TagCode = row.Key;
+
+                    //if it is a children of ghost row
+                    if (ghostRows.ContainsKey(row.Key.Split('.')[0]))
+                        cnl.TagCode = row.Key.Split('.')[0];
+
+                    else cnl.TagCode = row.Key;
+
                     //default Type is input/output
                     cnl.CnlTypeID = 2;
                     cnl.DeviceNum = selectedDevice.DeviceNum;
@@ -690,47 +696,55 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
                 }
                 else
                 {
-                    //we set its properties according to imported row
-                    string newType = elemTypeDico.Keys.Contains(row.Value[1]) ? row.Value[1] : cnlDataType.FirstOrDefault(t => t.Value == dataTypes.FirstOrDefault(dt => dt.Value == row.Value[1]).Key).Key;
-                    newElem.ElemType = elemTypeDico.Keys.Contains(row.Value[1]) ? elemTypeDico[row.Value[1]] : ElemType.Undefined;
-
-                    switch (ModbusUtils.GetDataLength(newElem.ElemType))
+                    //if it isn't a child of a ghost row 
+                    if (row.Key.Contains('.'))
                     {
-                        case 2:
-                            newElem.ByteOrder = textBox1.Text;
-                            break;
-                        case 4:
-                            newElem.ByteOrder = textBox2.Text;
-                            break;
-                        case 8:
-                            newElem.ByteOrder = textBox3.Text;
-                            break;
-                        default:
-                            newElem.ByteOrder = "0123";
-                            break;
+                        continue;
                     }
-
-                    newElem.Name = row.Value[0];
-                    newElem.TagCode = row.Key;
-                    newElemenGroup.DataBlock = DataBlock.HoldingRegisters;
-                    int index = importedRows.Keys.ToList().IndexOf(row.Key);
-
-                    //if these conditions are met, we add the current element group to the template and create a new one
-                    if (index == 0 || prefix != previousPrefix || newElem.ElemType != previousType || (prefix == "%MW" && newElemenGroup.Elems.Count == 125) || (prefix == "%M" && newElemenGroup.Elems.Count == 2000))
+                    else
                     {
-                        if (index > 0)
+                        //we set its properties according to imported row
+                        string newType = elemTypeDico.Keys.Contains(row.Value[1]) ? row.Value[1] : cnlDataType.FirstOrDefault(t => t.Value == dataTypes.FirstOrDefault(dt => dt.Value == row.Value[1]).Key).Key;
+                        newElem.ElemType = elemTypeDico.Keys.Contains(row.Value[1]) ? elemTypeDico[row.Value[1]] : ElemType.Undefined;
+
+                        switch (ModbusUtils.GetDataLength(newElem.ElemType))
                         {
-                            template.ElemGroups.Add(newElemenGroup);
+                            case 2:
+                                newElem.ByteOrder = textBox1.Text;
+                                break;
+                            case 4:
+                                newElem.ByteOrder = textBox2.Text;
+                                break;
+                            case 8:
+                                newElem.ByteOrder = textBox3.Text;
+                                break;
+                            default:
+                                newElem.ByteOrder = "0123";
+                                break;
                         }
-                        newElemenGroup = new ElemGroupConfig();
-                        newElemenGroup.DataBlock = DataBlock.HoldingRegisters;
-                        newElemenGroup.Address = int.Parse(Regex.Replace(row.Key, @"[^0-9]", "")) - 1;
-                    }
-                    previousPrefix = prefix;
-                    previousType = newElem.ElemType;
 
-                    //we add the new element to the current element group
-                    newElemenGroup.Elems.Add(newElem);
+                        newElem.Name = row.Value[0];
+                        newElem.TagCode = row.Key;
+                        newElemenGroup.DataBlock = DataBlock.HoldingRegisters;
+                        int index = importedRows.Keys.ToList().IndexOf(row.Key);
+
+                        //if these conditions are met, we add the current element group to the template and create a new one
+                        if (index == 0 || prefix != previousPrefix || newElem.ElemType != previousType || (prefix == "%MW" && newElemenGroup.Elems.Count == 125) || (prefix == "%M" && newElemenGroup.Elems.Count == 2000))
+                        {
+                            if (index > 0)
+                            {
+                                template.ElemGroups.Add(newElemenGroup);
+                            }
+                            newElemenGroup = new ElemGroupConfig();
+                            newElemenGroup.DataBlock = DataBlock.HoldingRegisters;
+                            newElemenGroup.Address = int.Parse(Regex.Replace(row.Key, @"[^0-9]", "")) - 1;
+                        }
+                        previousPrefix = prefix;
+                        previousType = newElem.ElemType;
+
+                        //we add the new element to the current element group
+                        newElemenGroup.Elems.Add(newElem);
+                    }
                 }
                 
             }
