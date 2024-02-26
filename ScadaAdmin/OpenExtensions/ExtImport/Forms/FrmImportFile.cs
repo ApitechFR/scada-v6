@@ -128,18 +128,12 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
 
                         //now we know the length of the bit list, we can deduce the type of the variable with key "X"
                         string parentRowType = "";
-                        if (bitListLength == 16)
+                        foreach (KeyValuePair<string, ElemType> type in elemTypeDico)
                         {
-                            parentRowType = "BOOL";
-                        }
-                        else {
-                            foreach (KeyValuePair<string, ElemType> type in elemTypeDico)
+                            if (ModbusUtils.GetDataLength(type.Value) == bitListLength / 8)
                             {
-                                if (ModbusUtils.GetDataLength(type.Value) == bitListLength / 8)
-                                {
-                                    parentRowType = type.Key;
-                                    break;
-                                }
+                                parentRowType = type.Key;
+                                break;
                             }
                         }
 
