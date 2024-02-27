@@ -8,6 +8,7 @@ using System.Text.RegularExpressions;
 using System.Xml;
 using Scada.Forms;
 using System.Data;
+using System.Collections.Generic;
 
 namespace Scada.Admin.Extensions.ExtImport.Forms
 {
@@ -24,7 +25,9 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
         string selectedPrefix;
         string selectedSuffix;
         //splittedChannels contains the channels that are waitinf for a formula, and keys are parents channels
-        Dictionary<string, List<Cnl>> splittedChannels; 
+        Dictionary<string, List<Cnl>> splittedChannels;
+        Dictionary<string, List<string>> ghostRows;
+        Dictionary<string, string> ghostChildren;
 
         private readonly ScadaProject project;
         public FrmImportFile(ScadaProject prj)
@@ -38,6 +41,8 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
             panel3.Visible = false;
             importedRows = new Dictionary<string, List<string>>();
             splittedChannels = new Dictionary<string, List<Cnl>>();
+            ghostRows = new Dictionary<string, List<string>>();
+            ghostChildren = new Dictionary<string, string>();
             button1.Enabled = false;
             textBox1.Enabled = false;
             textBox2.Enabled = false;
@@ -90,6 +95,60 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
             {
                 SaveExtImportConfig(extImportConfigPath);
             }
+        }
+
+        private Dictionary<string, List<string>> getGhostsRows()
+        {
+            Dictionary<string, ElemType> elemTypeDico = ConfigDictionaries.ElemTypeDictionary;
+            Dictionary<string, List<string>> ghostRows = new Dictionary<string, List<string>>();
+            //for each imported row
+            for (int i = 0; i < importedRows.Count(); i++)
+            {
+                var row = importedRows.ElementAt(i);
+                var prefix = row.Value[3] ?? "";
+                int rowIndex = importedRows.Keys.ToList().IndexOf(row.Key);
+                //If row tagcode contains a non-digit character (except prefix)
+                if (!row.Key.All(char.IsDigit))// && rowIndex > 0)
+                {
+                    //here, we are facing a row that is not a variable, but a bit, because its key is like "X.Y" and not just "X".
+                    //in this case, we have to create a variable and a channel for the "parent" value, supposed to have key "X".
+                    //we define X
+                    string leftPart = Regex.Split(row.Key, @"[^0-9]")[0];
+
+                    //if no other row has key "X", it means we are watching the first row of a list of bits. 
+                    //we have to define the length of the list, to know what type to choose for the variable with key "X"
+                    if (!ghostRows.Keys.Contains(leftPart))
+                    {
+                        int bitListLength = 0;
+                        string rLeftPart = leftPart;
+                        while (rLeftPart == leftPart && (rowIndex + bitListLength - 1) < importedRows.Count() - 1)
+                        {
+                            bitListLength++;
+                            KeyValuePair<string, List<string>> r = importedRows.ElementAt(rowIndex + bitListLength - 1);
+                            rLeftPart = Regex.Split(r.Key, @"[^0-9]")[0];
+                        }
+
+                        //now we know the length of the bit list, we can deduce the type of the variable with key "X"
+                        string parentRowType = "";
+                        foreach (KeyValuePair<string, ElemType> type in elemTypeDico)
+                        {
+                            if (ModbusUtils.GetDataLength(type.Value) == bitListLength / 8)
+                            {
+                                parentRowType = type.Key;
+                                break;
+                            }
+                        }
+
+                        //from here, we know the type of the variable with key "X", so we can create it
+                        //importedRows.Add(leftPart, new List<string> { row.Value[0], parentRowType, row.Value[2], row.Value[3] });
+
+                        //we add the tagcode of the current row to the splittedChannels list, to read it later
+                        ghostRows.Add(leftPart, new List<string> { row.Value[0], parentRowType, row.Value[2], row.Value[3] });
+                        //continue;
+                    }
+                }
+            }
+            return ghostRows;
         }
 
         private void SaveExtImportConfig(string path)
@@ -183,41 +242,6 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
         }
 
         /// <summary>
-        /// Create a channel object, filled with data from a row of the imported file
-        /// </summary>
-        /// <param name="rowKey"></param>
-        /// <param name="rowValue"></param>
-        /// <returns></returns>
-        private Cnl generateChannelFromRow(KeyValuePair<string, List<string>> row)
-        {
-            List<Cnl> bitChannels = new List<Cnl>();
-            Cnl cnl = new Cnl();
-            cnl.Name = row.Value[0];
-            cnl.TagCode = row.Key;
-            if (row.Value[1].Contains("ARRAY"))
-            {
-                int arrayLength = int.Parse(row.Value[1].Split(' ')[0].Split("..")[1].Split(']')[0])+1;
-                for(int i=0; i < arrayLength; i++)
-                {
-                    Cnl cnlArray = new Cnl();
-                    cnlArray.Name = string.Format("{0}[{1}]", row.Value[0], i);
-                    cnlArray.TagCode = string.Format("{0}.{1}", row.Key, i);
-                    if(!splittedChannels.ContainsKey(cnl.TagCode))
-                    {
-                        splittedChannels.Add(cnl.TagCode, new List<Cnl>());
-                    }
-                    splittedChannels[cnl.TagCode].Add(cnlArray);
-                }
-            }
-            //default Type is input/output
-            cnl.CnlTypeID = 2;
-            cnl.DeviceNum = selectedDevice.DeviceNum;
-            cnl.Active = true;
-
-            return cnl;
-        }
-
-        /// <summary>
         /// Hides or shows elements in the form, considering different verifications.
         /// </summary>
         private void refreshFormAccesses()
@@ -238,10 +262,21 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
                 splittedChannels =  new Dictionary<string, List<Cnl>>();
                 //update generated channels list
                 importedChannels = new List<Cnl>();
+                ghostRows = getGhostsRows();
 
-                importedChannels = importedRows.Select(generateChannelFromRow).ToList();
+                foreach (KeyValuePair<string, List<string>> ghostRow in ghostRows)
+                {
+                    if (!importedRows.ContainsKey(ghostRow.Key))
+                    {
+                        ghostRow.Value[0] = ghostRow.Value[0].Substring(0, ghostRow.Value[0].Length - 1);
+                        ghostRow.Value[2] = ghostRow.Value[2].Substring(0, ghostRow.Value[2].Length - 1);
+                        importedRows.Add(ghostRow.Key, ghostRow.Value);
+                    }
+                }
+                importedChannels = GenerateChannelFrowRow(importedRows);
                 //detect conflicts
                 DetectConflicts();
+
                 //We consider that there is a conflict if there are conflictual channels and if user has not already solved conflicts
                 bool hasConflicts = conflictualChannels.Count() > 0 && !conflictsAreSolved;
                 if (!hasConflicts && !conflictsAreSolved)
@@ -254,6 +289,76 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
                 button1.Enabled = !hasConflicts;
             }
         }
+        /// <summary>
+        /// Create a channel object, filled with data from a row of the imported file
+        /// </summary>
+        /// <param name="rowKey"></param>
+        /// <param name="rowValue"></param>
+        /// <returns></returns>
+
+        private List<Cnl> GenerateChannelFrowRow(Dictionary<string, List<string>> dico)
+        {
+            List<Cnl> list = new List<Cnl>();
+
+            foreach (KeyValuePair<string, List<string>> row in importedRows)
+            {
+                if (row.Value[1].Contains("ARRAY"))
+                {
+                    Dictionary<string, ElemType> elemTypeDico = ConfigDictionaries.ElemTypeDictionary;
+                    ElemConfig newElem = new ElemConfig();
+                    newElem.ElemType = elemTypeDico.Keys.Contains(row.Value[1]) ? elemTypeDico[row.Value[1]] : ElemType.Undefined;
+                    int dataLength = ModbusUtils.GetDataLength(newElem.ElemType);
+
+                    try {
+                        string[] arrayType = row.Value[1].Split(' ');
+                        var elemType = elemTypeDico.Keys.Contains(arrayType[2]) ? elemTypeDico[arrayType[2]] : ElemType.Undefined;
+                        int arrayLength = int.Parse(arrayType[0].Split("..")[1].Split(']')[0]) + 1;
+
+                        for (int j = 0; j < arrayLength; j++)
+                        {
+                            Cnl cnlArray = new Cnl();
+                            cnlArray.Name = string.Format("{0}{1}", row.Value[0], j);
+                            cnlArray.TagCode = string.Format("{0}", int.Parse(row.Key) + dataLength * j);
+                            cnlArray.CnlTypeID = 2;
+                            cnlArray.DeviceNum = selectedDevice.DeviceNum;
+                            cnlArray.Active = true;
+                            list.Add(cnlArray);
+                        }
+                    }
+                    catch(Exception e)
+                    {
+                        MessageBox.Show("Error reading the file: one of the variables is an ARRAY but does not appear to be in the form 'ARRAY[0..X] OF TYPE'. Details: " + e.Message);
+                    }
+                }
+                else
+                {
+                    Cnl cnl = new Cnl();
+                    cnl.Name = row.Value[0];
+
+                    //if it is a children of ghost row
+                    if (ghostRows.ContainsKey(row.Key.Split('.')[0]) && !ghostRows.ContainsKey(row.Key))
+                    {
+                        cnl.FormulaEnabled = true;
+                        if (!ghostChildren.ContainsKey(cnl.Name))
+                            ghostChildren.Add(cnl.Name, row.Key.Split('.')[0]);
+                        else continue;
+          
+                    }
+                    cnl.TagCode = row.Key;
+
+                    //default Type is input/output
+                    cnl.CnlTypeID = 2;
+                    cnl.DeviceNum = selectedDevice.DeviceNum;
+                    cnl.Active = true;
+
+                    list.Add(cnl);
+                }
+            }
+
+
+            return list;
+        }
+
 
         /// <summary>
         /// Find channels that enter in conflict with imported file rows
@@ -347,19 +452,18 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
                     cnl.CnlNum = project.ConfigDatabase.CnlTable.Count() > 0 ? project.ConfigDatabase.CnlTable.OrderBy(cnl => cnl.CnlNum).Last().CnlNum + 1 : 1;
                 }
                 project.ConfigDatabase.CnlTable.AddItem(cnl);
-                if(splittedChannels != null && splittedChannels.ContainsKey(cnl.TagCode))
+            }
+
+            foreach(Cnl cnl in project.ConfigDatabase.CnlTable)
+            {
+                //add formula
+                if (cnl.FormulaEnabled && ghostChildren.ContainsKey(cnl.Name))
                 {
-                    foreach(Cnl child in splittedChannels[cnl.TagCode])
+                    Cnl parent = cnls.FirstOrDefault(t => t.TagCode == ghostChildren[cnl.Name]);
+                    if (parent != null)
                     {
-                        child.FormulaEnabled = true;
-                        int bitIndex = splittedChannels[cnl.TagCode].FindIndex(c => c.TagCode == child.TagCode);
-                        child.InFormula = $"Getbit(Val({cnl.CnlNum}),{bitIndex})";
-                        if(child.CnlNum == 0)
-                            child.CnlNum = project.ConfigDatabase.CnlTable.Count() > 0 ? project.ConfigDatabase.CnlTable.OrderBy(cnl => cnl.CnlNum).Last().CnlNum + 1 : 1;
-                        //input/output by default
-                        child.CnlTypeID = 2;
-                        child.DeviceNum = selectedDevice.DeviceNum;
-                        project.ConfigDatabase.CnlTable.AddItem(child);
+                        cnl.InFormula = $"Val({parent.CnlNum})";
+                        cnl.TagCode = null;
                     }
                 }
             }
@@ -553,66 +657,22 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
             {
                 var prefix = row.Value[3] ?? "";
                 int rowIndex = importedRows.Keys.ToList().IndexOf(row.Key);
-                //if row tagcode contains a non-digit character (except prefix)
-                if (!row.Key.All(char.IsDigit) && rowIndex > 0)
-                {
-                    continue;
-                }
-
 
                 //we create a new configuration element
                 ElemConfig newElem = new ElemConfig();
-                //we set its properties according to imported row
-                string newType = elemTypeDico.Keys.Contains(row.Value[1]) ? row.Value[1] : cnlDataType.FirstOrDefault(t => t.Value == dataTypes.FirstOrDefault(dt => dt.Value == row.Value[1]).Key).Key;
-                newElem.ElemType = elemTypeDico.Keys.Contains(row.Value[1]) ? elemTypeDico[row.Value[1]] : ElemType.Undefined;
-
-                switch (ModbusUtils.GetDataLength(newElem.ElemType))
-                {
-                    case 2:
-                        newElem.ByteOrder = textBox1.Text;
-                        break;
-                    case 4:
-                        newElem.ByteOrder = textBox2.Text;
-                        break;
-                    case 8:
-                        newElem.ByteOrder = textBox3.Text;
-                        break;
-                    default:
-                        newElem.ByteOrder = "0123";
-                        break;
-                }
-
-                newElem.Name = row.Value[0];
-                newElem.TagCode = row.Key;
-                newElemenGroup.DataBlock = DataBlock.HoldingRegisters;
-                int index = importedRows.Keys.ToList().IndexOf(row.Key);
-
-                //if these conditions are met, we add the current element group to the template and create a new one
-                if (index == 0 || prefix != previousPrefix || newElem.ElemType != previousType || (prefix == "%MW" && newElemenGroup.Elems.Count == 125) || (prefix == "%M" && newElemenGroup.Elems.Count == 2000))
-                {
-                    if (index > 0)
-                    {
-                        template.ElemGroups.Add(newElemenGroup);
-                    }
-                    newElemenGroup = new ElemGroupConfig();
-                    newElemenGroup.DataBlock = DataBlock.HoldingRegisters;
-                    newElemenGroup.Address = int.Parse(Regex.Replace(row.Key, @"[^0-9]", "")) - 1;
-                }
-                previousPrefix = prefix;
-                previousType = newElem.ElemType;
-
-                //we add the new element to the current element group
-                newElemenGroup.Elems.Add(newElem);
 
                 if (row.Value[1].Contains("ARRAY"))
                 {
-                    //here, we assume that row.value[1] is like "ARRAY[0..5] OF BOOL"
+                    newElem.ElemType = elemTypeDico.Keys.Contains(row.Value[1]) ? elemTypeDico[row.Value[1]] : ElemType.Undefined;
+                    int dataLength = ModbusUtils.GetDataLength(newElem.ElemType);
+
                     try
                     {
                         string[] arrayType = row.Value[1].Split(' ');
-                        newElem.ElemType = elemTypeDico.Keys.Contains(arrayType[2]) ? elemTypeDico[arrayType[2]] : ElemType.Undefined;
-                        int arrayLength = int.Parse(arrayType[0].Split("..")[1].Split(']')[0])+1;
-                        for (int i = 0; i < arrayLength; i++)
+                        var elemType = elemTypeDico.Keys.Contains(arrayType[2]) ? elemTypeDico[arrayType[2]] : ElemType.Undefined;
+                        int arrayLength = int.Parse(arrayType[0].Split("..")[1].Split(']')[0]) + 1;
+
+                        for (int j = 0; j < arrayLength; j++)
                         {
                             ElemConfig newElemArray = new ElemConfig();
                             newElemArray.ElemType = newElem.ElemType;
@@ -631,10 +691,9 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
                                     newElemArray.ByteOrder = "0123";
                                     break;
                             }
-                            newElemArray.Name = string.Format("{0}[{1}]", row.Value[0], i);
-                            newElemArray.TagCode = string.Format("{0}.{1}", row.Key, i);
+                            newElemArray.Name = string.Format("{0}{1}", row.Value[0], j);
+                            newElemArray.TagCode = string.Format("{0}", int.Parse(row.Key) + dataLength * j);
                             newElemenGroup.Elems.Add(newElemArray);
-
                         }
                     }
                     catch (Exception e)
@@ -642,12 +701,68 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
                         MessageBox.Show("Error reading the file: one of the variables is an ARRAY but does not appear to be in the form 'ARRAY[0..X] OF TYPE'. Details: " + e.Message);
                     }
                 }
+                else
+                {
+                    //if it isn't a child of a ghost row 
+                    if (row.Key.Contains('.'))
+                    {
+                        continue;
+                    }
+                    else
+                    {
+                        //we set its properties according to imported row
+                        string newType = elemTypeDico.Keys.Contains(row.Value[1]) ? row.Value[1] : cnlDataType.FirstOrDefault(t => t.Value == dataTypes.FirstOrDefault(dt => dt.Value == row.Value[1]).Key).Key;
+                        newElem.ElemType = elemTypeDico.Keys.Contains(row.Value[1]) ? elemTypeDico[row.Value[1]] : ElemType.Undefined;
+
+                        switch (ModbusUtils.GetDataLength(newElem.ElemType))
+                        {
+                            case 2:
+                                newElem.ByteOrder = textBox1.Text;
+                                break;
+                            case 4:
+                                newElem.ByteOrder = textBox2.Text;
+                                break;
+                            case 8:
+                                newElem.ByteOrder = textBox3.Text;
+                                break;
+                            default:
+                                newElem.ByteOrder = "0123";
+                                break;
+                        }
+
+                        newElem.Name = row.Value[0];
+                        newElem.TagCode = row.Key;
+                        newElemenGroup.DataBlock = DataBlock.HoldingRegisters;
+                        int index = importedRows.Keys.ToList().IndexOf(row.Key);
+
+                        //if these conditions are met, we add the current element group to the template and create a new one
+                        if (index == 0 || prefix != previousPrefix || newElem.ElemType != previousType || (prefix == "%MW" && newElemenGroup.Elems.Count == 125) || (prefix == "%M" && newElemenGroup.Elems.Count == 2000))
+                        {
+                            if (index > 0)
+                            {
+                                template.ElemGroups.Add(newElemenGroup);
+                            }
+                            newElemenGroup = new ElemGroupConfig();
+                            newElemenGroup.DataBlock = DataBlock.HoldingRegisters;
+                            newElemenGroup.Address = int.Parse(Regex.Replace(row.Key, @"[^0-9]", "")) - 1;
+                        }
+                        previousPrefix = prefix;
+                        previousType = newElem.ElemType;
+
+                        //we add the new element to the current element group
+                        newElemenGroup.Elems.Add(newElem);
+                    }
+                }
+                
             }
             template.ElemGroups.Add(newElemenGroup);
             for(int i=0; i<template.ElemGroups.Count; i++)
             {
-                template.ElemGroups[i].Elems.Sort((x, y) => int.Parse(x.TagCode.Split('.')[0]) - int.Parse(y.TagCode.Split('.')[0]));
-                template.ElemGroups[i].Address = int.Parse(Regex.Replace(template.ElemGroups[i].Elems[0].TagCode, @"[^0-9]", "")) - 1;
+                if (template.ElemGroups[i].Elems.Count > 0)
+                {
+                    template.ElemGroups[i].Elems.Sort((x, y) => int.Parse(x.TagCode.Split('.')[0]) - int.Parse(y.TagCode.Split('.')[0]));
+                    template.ElemGroups[i].Address = int.Parse(Regex.Replace(template.ElemGroups[i].Elems[0].TagCode, @"[^0-9]", "")) - 1;
+                }
             }
 
             return template;
