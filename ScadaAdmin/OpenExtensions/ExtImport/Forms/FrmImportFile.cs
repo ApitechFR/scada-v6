@@ -27,6 +27,7 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
         //splittedChannels contains the channels that are waitinf for a formula, and keys are parents channels
         Dictionary<string, List<Cnl>> splittedChannels;
         Dictionary<string, List<string>> ghostRows;
+        Dictionary<string, string> ghostChildren;
 
         private readonly ScadaProject project;
         public FrmImportFile(ScadaProject prj)
@@ -41,6 +42,7 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
             importedRows = new Dictionary<string, List<string>>();
             splittedChannels = new Dictionary<string, List<Cnl>>();
             ghostRows = new Dictionary<string, List<string>>();
+            ghostChildren = new Dictionary<string, string>();
             button1.Enabled = false;
             textBox1.Enabled = false;
             textBox2.Enabled = false;
@@ -274,6 +276,7 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
                 importedChannels = GenerateChannelFrowRow(importedRows);
                 //detect conflicts
                 DetectConflicts();
+
                 //We consider that there is a conflict if there are conflictual channels and if user has not already solved conflicts
                 bool hasConflicts = conflictualChannels.Count() > 0 && !conflictsAreSolved;
                 if (!hasConflicts && !conflictsAreSolved)
@@ -333,10 +336,15 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
                     cnl.Name = row.Value[0];
 
                     //if it is a children of ghost row
-                    if (ghostRows.ContainsKey(row.Key.Split('.')[0]))
-                        cnl.TagCode = row.Key.Split('.')[0];
-
-                    else cnl.TagCode = row.Key;
+                    if (ghostRows.ContainsKey(row.Key.Split('.')[0]) && !ghostRows.ContainsKey(row.Key))
+                    {
+                        cnl.FormulaEnabled = true;
+                        if (!ghostChildren.ContainsKey(cnl.Name))
+                            ghostChildren.Add(cnl.Name, row.Key.Split('.')[0]);
+                        else continue;
+          
+                    }
+                    cnl.TagCode = row.Key;
 
                     //default Type is input/output
                     cnl.CnlTypeID = 2;
@@ -444,19 +452,18 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
                     cnl.CnlNum = project.ConfigDatabase.CnlTable.Count() > 0 ? project.ConfigDatabase.CnlTable.OrderBy(cnl => cnl.CnlNum).Last().CnlNum + 1 : 1;
                 }
                 project.ConfigDatabase.CnlTable.AddItem(cnl);
-                if(splittedChannels != null && splittedChannels.ContainsKey(cnl.TagCode))
+            }
+
+            foreach(Cnl cnl in project.ConfigDatabase.CnlTable)
+            {
+                //add formula
+                if (cnl.FormulaEnabled && ghostChildren.ContainsKey(cnl.Name))
                 {
-                    foreach(Cnl child in splittedChannels[cnl.TagCode])
+                    Cnl parent = cnls.FirstOrDefault(t => t.TagCode == ghostChildren[cnl.Name]);
+                    if (parent != null)
                     {
-                        child.FormulaEnabled = true;
-                        int bitIndex = splittedChannels[cnl.TagCode].FindIndex(c => c.TagCode == child.TagCode);
-                        child.InFormula = $"Getbit(Val({cnl.CnlNum}),{bitIndex})";
-                        if(child.CnlNum == 0)
-                            child.CnlNum = project.ConfigDatabase.CnlTable.Count() > 0 ? project.ConfigDatabase.CnlTable.OrderBy(cnl => cnl.CnlNum).Last().CnlNum + 1 : 1;
-                        //input/output by default
-                        child.CnlTypeID = 2;
-                        child.DeviceNum = selectedDevice.DeviceNum;
-                        project.ConfigDatabase.CnlTable.AddItem(child);
+                        cnl.InFormula = $"Val({parent.CnlNum})";
+                        cnl.TagCode = null;
                     }
                 }
             }
@@ -751,8 +758,11 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
             template.ElemGroups.Add(newElemenGroup);
             for(int i=0; i<template.ElemGroups.Count; i++)
             {
-                template.ElemGroups[i].Elems.Sort((x, y) => int.Parse(x.TagCode.Split('.')[0]) - int.Parse(y.TagCode.Split('.')[0]));
-                template.ElemGroups[i].Address = int.Parse(Regex.Replace(template.ElemGroups[i].Elems[0].TagCode, @"[^0-9]", "")) - 1;
+                if (template.ElemGroups[i].Elems.Count > 0)
+                {
+                    template.ElemGroups[i].Elems.Sort((x, y) => int.Parse(x.TagCode.Split('.')[0]) - int.Parse(y.TagCode.Split('.')[0]));
+                    template.ElemGroups[i].Address = int.Parse(Regex.Replace(template.ElemGroups[i].Elems[0].TagCode, @"[^0-9]", "")) - 1;
+                }
             }
 
             return template;
