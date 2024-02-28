@@ -57,35 +57,33 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
 
             foreach (var incomingChannel in incomingChannels)
             {
-                var sameCodeCurrentChannels = currentChannels.Where(cnl => cnl.TagCode == incomingChannel.TagCode).ToList();
+                var sameCodeCurrentChannels = currentChannels.FirstOrDefault(cnl => cnl.TagCode == incomingChannel.TagCode);
 
-                foreach (var cnl in sameCodeCurrentChannels)
-                {
-                    int rowIndex = dataGridView1.Rows.Add();
-                    DataGridViewRow row = dataGridView1.Rows[rowIndex];
-                    incomingChannel.CnlNum = cnl.CnlNum;
+                int rowIndex = dataGridView1.Rows.Add();
+                DataGridViewRow row = dataGridView1.Rows[rowIndex];
+                incomingChannel.CnlNum = sameCodeCurrentChannels.CnlNum;
 
-                    //Cells from 0 to 5 are for incoming row
-                    row.Cells[0].Value = cnl.CnlNum;
-                    row.Cells[1].Value = false;
-                    row.Cells[2].Value = incomingChannel.Name;
-                    row.Cells[3].Value = (incomingChannel.DataTypeID.HasValue) ? dataTypeDictionary[incomingChannel.DataTypeID.Value] : "";
-                    row.Cells[4].Value = cnlTypeDictionary[incomingChannel.CnlTypeID];
-                    row.Cells[5].Value = incomingChannel.TagCode;
+                //Cells from 0 to 5 are for incoming row
+                row.Cells[0].Value = sameCodeCurrentChannels.CnlNum;
+                row.Cells[1].Value = false;
+                row.Cells[2].Value = incomingChannel.Name;
+                row.Cells[3].Value = (incomingChannel.DataTypeID.HasValue) ? dataTypeDictionary[incomingChannel.DataTypeID.Value] : "";
+                row.Cells[4].Value = cnlTypeDictionary[incomingChannel.CnlTypeID];
+                row.Cells[5].Value = incomingChannel.TagCode;
 
-                    //Cell 6 contains incomingRow as a channel
-                    row.Cells[6].Value = incomingChannel;
+                //Cell 6 contains incomingRow as a channel
+                row.Cells[6].Value = incomingChannel;
 
-                    //Cells from 7 to 11 are for current row
-                    row.Cells[7].Value = false;
-                    row.Cells[8].Value = cnl.Name;
-                    row.Cells[9].Value = (cnl.DataTypeID.HasValue) ? dataTypeDictionary[cnl.DataTypeID.Value] : "";
-                    row.Cells[10].Value = cnlTypeDictionary[cnl.CnlTypeID];
-                    row.Cells[11].Value = cnl.TagCode;
+                //Cells from 7 to 11 are for current row
+                row.Cells[7].Value = false;
+                row.Cells[8].Value = sameCodeCurrentChannels.Name;
+                row.Cells[9].Value = (sameCodeCurrentChannels.DataTypeID.HasValue) ? dataTypeDictionary[sameCodeCurrentChannels.DataTypeID.Value] : "";
+                row.Cells[10].Value = cnlTypeDictionary[sameCodeCurrentChannels.CnlTypeID];
+                row.Cells[11].Value = sameCodeCurrentChannels.TagCode;
 
-                    //Cell 12 contains cnl as a channel
-                    row.Cells[12].Value = cnl;
-                }
+                //Cell 12 contains cnl as a channel
+                row.Cells[12].Value = sameCodeCurrentChannels;
+
             }
             dataGridView1.Columns[6].Visible = false;
             dataGridView1.Columns[12].Visible = false;

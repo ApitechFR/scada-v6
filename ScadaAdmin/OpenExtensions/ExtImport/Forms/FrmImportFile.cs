@@ -9,6 +9,7 @@ using System.Xml;
 using Scada.Forms;
 using System.Data;
 using System.Collections.Generic;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement.TextBox;
 
 namespace Scada.Admin.Extensions.ExtImport.Forms
 {
@@ -341,6 +342,7 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
                         cnl.FormulaEnabled = true;
                         if (!ghostChildren.ContainsKey(cnl.Name))
                             ghostChildren.Add(cnl.Name, row.Key.Split('.')[0]);
+                        cnl.TagCode = row.Key.Split('.')[0];
                     }
                     else cnl.TagCode = row.Key;
 
@@ -461,7 +463,6 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
                     if (parent != null)
                     {
                         cnl.InFormula = $"GetBit(Val({parent.CnlNum}),{count})";
-                        cnl.TagCode = parent.TagCode;
                     }
                     count++;
                 }
