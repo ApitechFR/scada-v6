@@ -9,6 +9,7 @@ using System.Xml;
 using Scada.Forms;
 using System.Data;
 using System.Collections.Generic;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement.TextBox;
 
 namespace Scada.Admin.Extensions.ExtImport.Forms
 {
@@ -341,10 +342,9 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
                         cnl.FormulaEnabled = true;
                         if (!ghostChildren.ContainsKey(cnl.Name))
                             ghostChildren.Add(cnl.Name, row.Key.Split('.')[0]);
-                        else continue;
-          
+                        cnl.TagCode = row.Key.Split('.')[0];
                     }
-                    cnl.TagCode = row.Key;
+                    else cnl.TagCode = row.Key;
 
                     //default Type is input/output
                     cnl.CnlTypeID = 2;
@@ -453,19 +453,20 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
                 }
                 project.ConfigDatabase.CnlTable.AddItem(cnl);
             }
-
+            int count = 0;
             foreach(Cnl cnl in project.ConfigDatabase.CnlTable)
             {
                 //add formula
                 if (cnl.FormulaEnabled && ghostChildren.ContainsKey(cnl.Name))
                 {
-                    Cnl parent = cnls.FirstOrDefault(t => t.TagCode == ghostChildren[cnl.Name]);
+                    Cnl parent = cnls.FirstOrDefault(t => t.TagCode == ghostChildren[cnl.Name] && !t.FormulaEnabled);
                     if (parent != null)
                     {
-                        cnl.InFormula = $"Val({parent.CnlNum})";
-                        cnl.TagCode = null;
+                        cnl.InFormula = $"GetBit(Val({parent.CnlNum}),{count})";
                     }
+                    count++;
                 }
+                
             }
             project.ConfigDatabase.CnlTable.Modified = true;
         }
