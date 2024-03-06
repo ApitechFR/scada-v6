@@ -31,41 +31,45 @@ scada.scheme.handleBlinking = function (divComp, blinking, bool) {
 	}
 };
 scada.scheme.updateStyles = function (divComp, cond, bool) {
-	if (cond.color && bool) {
-		divComp.css("color", cond.color);
-	} else if (cond.color && !bool) {
+	if ('color' in cond) {
 		divComp.css("color", cond.color);
 	}
-	if (cond.backgroundColor && bool) {
-		divComp.css("background-color", cond.backgroundColor);
-	} else {
-		divComp.css("background-color", String(cond.backColor));
-	}
-
-	if (cond.rotation && bool) {
-		divComp.css("transform", "rotate(" + cond.rotation + "deg)");
-	} else {
+	if ('rotation' in cond) {
 		divComp.css("transform", "rotate(" + cond.rotation + "deg)");
 	}
 
-	if (cond.isVisible !== undefined && bool) {
-		divComp.css("visibility", cond.isVisible ? "visible" : "hidden");
-	} else {
-		divComp.css("visibility", "visible");
+	if ('backgroundColor' in cond) {
+		if (bool) {
+			divComp.css("background-color", cond.backgroundColor);
+		} else {
+			divComp.css("background-color", cond.backColor ? String(cond.backColor) : "");
+		}
+	}
+	if ('isVisible' in cond) {
+		if (bool) {
+			divComp.css("visibility", cond.isVisible ? "visible" : "hidden");
+		} else {
+			divComp.css("visibility", "visible");
+		}
 	}
 
-	if (cond.width && bool) {
-		divComp.css("width", cond.width);
-	} else {
-		divComp.css("width", "100px");
+	if ('width' in cond) {
+		if (bool) {
+			divComp.css("width", cond.width);
+		} else {
+			divComp.css("width", "100px");
+		}
 	}
 
-	if (cond.height && bool) {
-		divComp.css("height", cond.height);
-	} else {
-		divComp.css("height", "100px");
+	if ('height' in cond) {
+		if (bool) {
+			divComp.css("height", cond.height);
+		} else {
+			divComp.css("height", "100px");
+		}
 	}
 };
+
 
 scada.scheme.applyRotation = function (divComp, props) {
 	if (props.rotation && props.rotation > 0) {
@@ -282,7 +286,7 @@ scada.scheme.BarGraphRenderer.prototype.createDom = function (
 
 	if (this.calculateFillingRate(props, null) === -1) {
 		var disabledBar = $(
-			"<div class='bar disabled' title='Erreur de configuration : MaxValue < MinValue ou absence de données valides' style='height: 71%; background-color: #5f5f81; filter: blur(1.5px);'>" +
+			"<div class='bar disabled' title='Erreur de configuration : absence de données valides' style='height: 71%; background-color: #5f5f81; filter: blur(1.5px);'>" +
 				"<span class='error-cross' style='position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 35px; color: red;'>X</span>" +
 				"</div>",
 		);
