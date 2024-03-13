@@ -336,21 +336,30 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
                     Cnl cnl = new Cnl();
                     cnl.Name = row.Value[0];
 
+                    //default Type is input/output
+                    cnl.CnlTypeID = 2;
+                    cnl.DeviceNum = selectedDevice.DeviceNum;
+                    cnl.Active = true;
+
                     //if it is a children of ghost row
                     if (ghostRows.ContainsKey(row.Key.Split('.')[0]) && !ghostRows.ContainsKey(row.Key))
                     {
                         cnl.FormulaEnabled = true;
                         if (!ghostChildren.ContainsKey(cnl.Name))
                             ghostChildren.Add(cnl.Name, row.Key.Split('.')[0]);
-                        cnl.TagCode = row.Key.Split('.')[0];
+
+                        //default Type is input/output
+                        cnl.CnlTypeID = 3;
                     }
-                    else cnl.TagCode = row.Key;
-
-                    //default Type is input/output
-                    cnl.CnlTypeID = 2;
-                    cnl.DeviceNum = selectedDevice.DeviceNum;
-                    cnl.Active = true;
-
+                    else
+                    {
+                        cnl.TagCode = row.Key;
+                        if(ghostRows.ContainsKey(row.Key))
+                        {
+                            cnl.FormatID = 2;
+                        }
+                    }
+                    
                     list.Add(cnl);
                 }
             }
@@ -466,7 +475,6 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
                     }
                     count++;
                 }
-                
             }
             project.ConfigDatabase.CnlTable.Modified = true;
         }
