@@ -1,100 +1,143 @@
-name: Build .NET Applications and Capture Artifacts
+name: Build .NET Application and Capture Artifacts
 
 on:
   push:
-    branches: [develop]
+    branches: [ develop ]
   pull_request:
-    branches: [develop]
+    branches: [ develop ]
 
 jobs:
   build-and-upload-artifacts:
     runs-on: windows-latest
 
     steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v2
+    - name: Checkout Repository
+      uses: actions/checkout@v2
 
-      - name: Setup .NET Core
-        uses: actions/setup-dotnet@v1
-        with:
-          dotnet-version: "6.0"
+    - name: Setup .NET Core
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: '6.0'
 
-      # Restore NuGet packages for each project
-      - name: Restore NuGet packages
-        run: |
-          dotnet restore ScadaCommon/ScadaCommon.sln
-          dotnet restore ScadaAgent/ScadaAgent/ScadaAgent.sln
-          dotnet restore ScadaComm/ScadaComm/ScadaComm.sln
-          dotnet restore ScadaServer/ScadaServer/ScadaServer.sln
-          dotnet restore ScadaWeb/ScadaWeb/ScadaWeb.sln
-          dotnet restore ScadaAdmin/ScadaAdmin/ScadaAdmin.sln
-          dotnet restore ScadaReport/ScadaReport.sln
-          dotnet restore ScadaComm/OpenDrivers/OpenDrivers.sln
-          dotnet restore ScadaComm/OpenDrivers2/OpenDrivers2.sln
-          dotnet restore ScadaServer/OpenModules/OpenModules.sln
-          dotnet restore ScadaWeb/OpenPlugins/OpenPlugins.sln
-          dotnet restore ScadaAdmin/OpenExtensions/OpenExtensions.sln
-
-      # Build each project
-      - name: Build Projects
-        run: |
-          dotnet build --no-restore --configuration Release ScadaCommon/ScadaCommon.sln
-          dotnet build --no-restore --configuration Release ScadaAgent/ScadaAgent/ScadaAgent.sln
-          dotnet build --no-restore --configuration Release ScadaComm/ScadaComm/ScadaComm.sln
-          dotnet build --no-restore --configuration Release ScadaServer/ScadaServer/ScadaServer.sln
-          dotnet build --no-restore --configuration Release ScadaWeb/ScadaWeb/ScadaWeb.sln
-          dotnet build --no-restore --configuration Release ScadaAdmin/ScadaAdmin/ScadaAdmin.sln
-          dotnet build --no-restore --configuration Release ScadaReport/ScadaReport.sln
-          dotnet build --no-restore --configuration Release ScadaComm/OpenDrivers/OpenDrivers.sln
-          dotnet build --no-restore --configuration Release ScadaComm/OpenDrivers2/OpenDrivers2.sln
-          dotnet build --no-restore --configuration Release ScadaServer/OpenModules/OpenModules.sln
-          dotnet build --no-restore --configuration Release ScadaWeb/OpenPlugins/OpenPlugins.sln
-        # dotnet build --no-restore --configuration Release ScadaAdmin/OpenExtensions/OpenExtensions.sln
-
-      # Publish each project
-      - name: Publish Projects
-        run: |
-          dotnet publish --no-restore --configuration Release --output ./publish/ScadaCommon ScadaCommon/ScadaCommon.sln
-          dotnet publish --no-restore --configuration Release --output ./publish/ScadaAgent ScadaAgent/ScadaAgent/ScadaAgent.sln
-          dotnet publish --no-restore --configuration Release --output ./publish/ScadaComm  ScadaComm/ScadaComm/ScadaComm.sln
-          dotnet publish --no-restore --configuration Release --output ./publish/ScadaServer ScadaServer/ScadaServer/ScadaServer.sln
-          dotnet publish --no-restore --configuration Release --output ./publish/ScadaWeb ScadaWeb/ScadaWeb/ScadaWeb.sln
-          dotnet publish --no-restore --configuration Release --output ./publish/ScadaAdmin ScadaAdmin/ScadaAdmin/ScadaAdmin.sln
-          dotnet publish --no-restore --configuration Release --output ./publish/ScadaReport ScadaReport/ScadaReport.sln
-          dotnet publish --no-restore --configuration Release --output ./publish/OpenDrivers ScadaComm/OpenDrivers/OpenDrivers.sln
-          dotnet publish --no-restore --configuration Release --output ./publish/OpenDrivers2 ScadaComm/OpenDrivers2/OpenDrivers2.sln
-          dotnet publish --no-restore --configuration Release --output ./publish/OpenModules ScadaServer/OpenModules/OpenModules.sln
-          dotnet publish --no-restore --configuration Release --output ./publish/OpenPlugins ScadaWeb/OpenPlugins/OpenPlugins.sln
-        # dotnet publish --no-restore --configuration Release --output ./publish/OpenExtensions ScadaAdmin/OpenExtensions/OpenExtensions.sln
-
-
-    # Prepare Artifacts Directory and check if paths exist before moving
-      - name: Prepare Artifacts Directory and Check Paths
-        shell: pwsh
-        run: |
-          mkdir ./publish/artifacts
-          $sourcePaths = @(
-            "./publish/ScadaWeb/OpenPlugins/PlgSchShapeComp/wwwroot/SchShapeComp/js/*.js",
-            "./publish/ScadaWeb/OpenPlugins/PlgSchShapeComp/bin/Release/net6.0/**",
-            "./publish/ScadaWeb/ScadaWeb/bin/Release/net6.0/*.dll",
-            "./publish/ScadaWeb/ScadaWeb/bin/Release/net6.0/ScadaWeb.exe"
-          )
-          foreach ($path in $sourcePaths) {
-            if (Test-Path $path) {
-              Copy-Item -Path $path -Destination ./publish/artifacts -Recurse -Force
-            } else {
-              Write-Host "Path not found: $path"
-            }
-          }
-
-  # List Artifacts Directory (for verification)
-      - name: List Artifacts Directory
-        run: Get-ChildItem -Path ./publish/artifacts -Recurse
-        shell: pwsh
+    # Restaurez les packages NuGet pour tous les projets nécessaires ici
+    - name: Restore NuGet packages for all projects
+      run: |
+        dotnet restore ScadaCommon/ScadaCommon.sln
+        dotnet restore ScadaAgent/ScadaAgent/ScadaAgent.sln
+        dotnet restore ScadaComm/ScadaComm/ScadaComm.sln
+        dotnet restore ScadaServer/ScadaServer/ScadaServer.sln
+        dotnet restore ScadaWeb/ScadaWeb/ScadaWeb.sln
+        dotnet restore ScadaAdmin/ScadaAdmin/ScadaAdmin.sln
+        dotnet restore ScadaReport/ScadaReport.sln
+        dotnet restore ScadaComm/OpenDrivers/OpenDrivers.sln
+        dotnet restore ScadaComm/OpenDrivers2/OpenDrivers2.sln
+        dotnet restore ScadaServer/OpenModules/OpenModules.sln
+        dotnet restore ScadaWeb/OpenPlugins/OpenPlugins.sln
         
-      # Upload Artifacts
-      - name: Upload Artifacts
-        uses: actions/upload-artifact@v2
-        with:
-          name: bundled-artifacts
-          path: ./publish/artifacts/**
+      ## dotnet restore ScadaAdmin/OpenExtensions/OpenExtensions.sln
+        
+
+    # Construisez chaque projet dans l'ordre spécifié
+    - name: Build ScadaCommon
+      run: dotnet build --no-restore --configuration Release ScadaCommon/ScadaCommon.sln
+      
+    - name: Build ScadaAgent
+      run: dotnet build --no-restore --configuration Release ScadaAgent/ScadaAgent/ScadaAgent.sln
+      
+    - name: Build ScadaComm
+      run: dotnet build --no-restore --configuration Release ScadaComm/ScadaComm/ScadaComm.sln
+
+    - name: Build ScadaServer
+      run: dotnet build --no-restore --configuration Release ScadaServer/ScadaServer/ScadaServer.sln
+
+    - name: Build ScadaWeb
+      run: dotnet build --no-restore --configuration Release ScadaWeb/ScadaWeb/ScadaWeb.sln
+
+    - name: Build ScadaAdmin
+      run: dotnet build --no-restore --configuration Release ScadaAdmin/ScadaAdmin/ScadaAdmin.sln
+
+    - name: Build ScadaReport
+      run: dotnet build --no-restore --configuration Release ScadaReport/ScadaReport.sln
+
+    - name: Build OpenDrivers
+      run: dotnet build --no-restore --configuration Release ScadaComm/OpenDrivers/OpenDrivers.sln
+
+    - name: Build OpenDrivers2
+      run: dotnet build --no-restore --configuration Release ScadaComm/OpenDrivers2/OpenDrivers2.sln
+
+    - name: Build OpenModules
+      run: dotnet build --no-restore --configuration Release ScadaServer/OpenModules/OpenModules.sln
+
+    - name: Build OpenPlugins
+      run: dotnet build --no-restore --configuration Release ScadaWeb/OpenPlugins/OpenPlugins.sln
+
+    # - name: Build OpenExtensions
+    #   run: dotnet build --no-restore --configuration Release ScadaAdmin/OpenExtensions/OpenExtensions.sln
+
+    
+
+    - name: Publish ScadaCommon
+      run: dotnet publish ScadaCommon/ScadaCommon.sln --no-restore --configuration Release --output ./publish/ScadaCommon
+
+    - name: Publish ScadaAgent
+      run: dotnet publish ScadaAgent/ScadaAgent/ScadaAgent.sln --no-restore --configuration Release --output ./publish/ScadaAgent
+
+    - name: Publish ScadaComm
+      run: dotnet publish ScadaComm/ScadaComm/ScadaComm.sln --no-restore --configuration Release --output ./publish/ScadaComm
+
+    - name: Publish ScadaServer
+      run: dotnet publish ScadaServer/ScadaServer/ScadaServer.sln --no-restore --configuration Release --output ./publish/ScadaServer
+
+    - name: Publish ScadaWeb
+      run: dotnet publish ScadaWeb/ScadaWeb/ScadaWeb.sln --no-restore --configuration Release --output ./publish/ScadaWeb
+
+    - name: Publish ScadaAdmin
+      run: dotnet publish ScadaAdmin/ScadaAdmin/ScadaAdmin.sln --no-restore --configuration Release --output ./publish/ScadaAdmin
+
+    - name: Publish ScadaReport
+      run: dotnet publish ScadaReport/ScadaReport.sln --no-restore --configuration Release --output ./publish/ScadaReport
+
+    - name: Publish OpenDrivers
+      run: dotnet publish ScadaComm/OpenDrivers/OpenDrivers.sln --no-restore --configuration Release --output ./publish/OpenDrivers
+
+    - name: Publish OpenDrivers2
+      run: dotnet publish ScadaComm/OpenDrivers2/OpenDrivers2.sln --no-restore --configuration Release --output ./publish/OpenDrivers2
+
+    - name: Publish OpenModules
+      run: dotnet publish ScadaServer/OpenModules/OpenModules.sln --no-restore --configuration Release --output ./publish/OpenModules
+
+    - name: Publish OpenPlugins
+      run: dotnet publish ScadaWeb/OpenPlugins/OpenPlugins.sln --no-restore --configuration Release --output ./publish/OpenPlugins
+
+    - name: Copy PlgSchShapeComp.dll to ScadaWeb Publish Directory
+      run: |
+        Copy-Item -Path "./publish/OpenPlugins/PlgSchShapeComp.dll" -Destination "./publish/ScadaWeb/"
+      shell: pwsh
+    
+
+
+    # - name: Publish OpenExtensions
+    #   run: dotnet publish ScadaAdmin/OpenExtensions/OpenExtensions.sln --no-restore --configuration Release --output ./publish/OpenExtensions
+
+    - name: Upload ScadaAdmin Artefacts
+      uses: actions/upload-artifact@v2
+      with:
+        name: scadaadmin-release-artifacts
+        path: |
+          ./publish/ScadaAdmin/ScadaAdmin.dll
+          ./publish/ScadaAdmin/ScadaAdmin.exe
+          ./publish/ScadaAdmin/ScadaAdminCommon.dll
+
+
+    - name: Upload ScadaWeb Artefacts
+      uses: actions/upload-artifact@v2
+      with:
+        name: scadaweb-release-artifacts
+        path: |
+          ./publish/ScadaWeb/ScadaWeb.exe
+          ./publish/ScadaWeb/ScadaWeb.dll
+          ./publish/ScadaWeb/ScadaWebCommon.dll
+          ./publish/ScadaWeb/ScadaCommon.dll
+          ./publish/ScadaWeb/PlgSchShapeComp.dll
+          ./publish/OpenPlugins/PlgSchShapeComp.dll 
+          ./publish/OpenPlugins/wwwroot/SchShapeComp/**/*
