@@ -348,7 +348,7 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
                         if (!ghostChildren.ContainsKey(cnl.Name))
                             ghostChildren.Add(cnl.Name, row.Key.Split('.')[0]);
 
-                        //default Type is input/output
+                        //set type to "calculated"
                         cnl.CnlTypeID = 3;
                     }
                     else
