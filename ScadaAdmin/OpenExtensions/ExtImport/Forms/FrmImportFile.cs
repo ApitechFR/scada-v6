@@ -347,7 +347,6 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
                         cnl.FormulaEnabled = true;
                         if (!ghostChildren.ContainsKey(cnl.Name))
                             ghostChildren.Add(cnl.Name, row.Key.Split('.')[0]);
-                        //cnl.TagCode = row.Key.Split('.')[0];
 
                         //default Type is input/output
                         cnl.CnlTypeID = 3;
@@ -357,7 +356,7 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
                         cnl.TagCode = row.Key;
                         if(ghostRows.ContainsKey(row.Key))
                         {
-                            cnl.FormatID = 1;
+                            cnl.FormatID = 2;
                         }
                     }
                     
