@@ -374,7 +374,7 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
         /// </summary>
         private void DetectConflicts()
         {
-            conflictualChannels = project.ConfigDatabase.CnlTable.Where(channel => importedChannels.Any(c => c.TagCode == channel.TagCode)).ToList();
+            conflictualChannels = project.ConfigDatabase.CnlTable.Where(channel => importedChannels.Any(c => c.TagCode == channel.TagCode && c.DeviceNum == selectedDevice.DeviceNum)).ToList();
         }
 
 
