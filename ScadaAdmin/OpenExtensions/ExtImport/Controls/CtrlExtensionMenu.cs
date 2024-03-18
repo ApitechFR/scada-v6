@@ -156,10 +156,6 @@ namespace Scada.Admin.Extensions.ExtImport.Controls
 				{
 					MessageBox.Show("Imported successfully", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 }
-				else
-				{
-                    MessageBox.Show("Import failed", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                }
 			}
 		}
 
