@@ -752,7 +752,6 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
 
                         newElem.Name = row.Value[0];
                         newElem.TagCode = row.Key;
-                        newElemenGroup.DataBlock = DataBlock.HoldingRegisters;
                         int index = importedRows.Keys.ToList().IndexOf(row.Key);
 
                         //if these conditions are met, we add the current element group to the template and create a new one
@@ -763,7 +762,7 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
                                 template.ElemGroups.Add(newElemenGroup);
                             }
                             newElemenGroup = new ElemGroupConfig();
-                            newElemenGroup.DataBlock = DataBlock.HoldingRegisters;
+                            newElemenGroup.DataBlock = newElem.ElemType == ElemType.Bool ? DataBlock.DiscreteInputs : DataBlock.HoldingRegisters;
                             newElemenGroup.Address = int.Parse(Regex.Replace(row.Key, @"[^0-9]", "")) - 1;
                         }
                         previousPrefix = prefix;
