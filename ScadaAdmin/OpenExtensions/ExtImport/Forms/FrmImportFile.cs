@@ -398,7 +398,18 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
             string adress = new string(columns[adressIndex].SkipWhile(x => !char.IsDigit(x)).ToArray());
             if (importedRows.ContainsKey(adress))
             {
-                return;
+                if (columns[typeIndex].Contains("ARRAY"))
+                {
+                    return;
+                }
+                else if (importedRows[adress][1].Contains("ARRAY"))
+                {
+                    importedRows.Remove(adress);
+                }
+                else
+                {
+                    MessageBox.Show("Error reading the file: the tagcode " + adress + " is already used in the file.");
+                }
             }
 
             string prefix = Regex.Split(columns[adressIndex], @"[0-9]").First();
