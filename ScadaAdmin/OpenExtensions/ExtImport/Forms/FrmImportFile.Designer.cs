@@ -270,6 +270,7 @@
             textBox1.Location = new Point(67, 24);
             textBox1.Margin = new Padding(3, 4, 3, 4);
             textBox1.Name = "textBox1";
+            textBox1.PlaceholderText = "Ex : 01";
             textBox1.Size = new Size(109, 27);
             textBox1.TabIndex = 29;
             // 
@@ -278,13 +279,14 @@
             textBox2.Location = new Point(67, 75);
             textBox2.Margin = new Padding(3, 4, 3, 4);
             textBox2.Name = "textBox2";
+            textBox2.PlaceholderText = "Ex : 0123";
             textBox2.Size = new Size(109, 27);
             textBox2.TabIndex = 31;
             // 
             // label9
             // 
             label9.AutoSize = true;
-            label9.Location = new Point(10, 28);
+            label9.Location = new Point(10, 27);
             label9.Name = "label9";
             label9.Size = new Size(56, 20);
             label9.TabIndex = 30;
@@ -295,13 +297,14 @@
             textBox3.Location = new Point(67, 127);
             textBox3.Margin = new Padding(3, 4, 3, 4);
             textBox3.Name = "textBox3";
+            textBox3.PlaceholderText = "Ex : 01234567";
             textBox3.Size = new Size(109, 27);
             textBox3.TabIndex = 33;
             // 
             // label10
             // 
             label10.AutoSize = true;
-            label10.Location = new Point(10, 79);
+            label10.Location = new Point(10, 78);
             label10.Name = "label10";
             label10.Size = new Size(56, 20);
             label10.TabIndex = 32;
@@ -326,7 +329,7 @@
             // label6
             // 
             label6.AutoSize = true;
-            label6.Location = new Point(10, 132);
+            label6.Location = new Point(10, 130);
             label6.Name = "label6";
             label6.Size = new Size(56, 20);
             label6.TabIndex = 35;
