@@ -213,8 +213,8 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
                     while (!sr.EndOfStream)
                     {
                         string line = sr.ReadLine();
-                        ignore non conform lines
-                        if (line.Split('\t').Length != 4)
+                        //ignore non conform lines
+                        if (line.Split('\t').Length < 4)
                         {
                             continue;
                         }
@@ -868,38 +868,51 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
         /// <exception cref="ScadaException"></exception>
         private void cbBoxSuffix_SelectedIndexChanged(object sender, EventArgs e)
         {
-
-
-
-
-
             if (importedRows.Count() == 0)
             {
                 return;
             }
+
             string previousSuffix = selectedSuffix;
             selectedSuffix = cbBoxSuffix.SelectedIndex > 0 ? availablePrefixSuffix.Keys.ElementAt(cbBoxSuffix.SelectedIndex - 1) : null;
             int? selectedPrefixRowColumnIndex = selectedPrefix != null ? availablePrefixSuffix.Values.ElementAt(cbBoxPrefix.SelectedIndex - 1) : null;
             int? selectedSuffixRowColumnIndex = cbBoxSuffix.SelectedIndex > 0 ? availablePrefixSuffix.Values.ElementAt(cbBoxSuffix.SelectedIndex - 1) : null;
 
-            string NameWithoutSuffix(int rowIndex)
+            string NameWithoutSuffix(KeyValuePair<string, List<string>> row)
             {
                 return selectedPrefixRowColumnIndex != null
                     ? selectedPrefixRowColumnIndex >= 0
-                        ? string.Join(" - ", importedRows.Values.ElementAt(rowIndex)[selectedPrefixRowColumnIndex ?? 0], importedRows.Values.ElementAt(rowIndex)[0])
-                        : string.Join(" - ", importedRows.Keys.ElementAt(rowIndex), importedRows.Values.ElementAt(rowIndex)[0])
-                    : importedRows.Values.ElementAt(rowIndex)[0];
+                        ? string.Join(" - ", row.Value[selectedPrefixRowColumnIndex ?? 0], row.Value[0])
+                        : string.Join(" - ", row.Key, row.Value[0])
+                    : row.Value[0];
             }
 
-            Func<Cnl, int, Cnl> updateChannel = (c, i) =>
+
+            Func<Cnl, int, Cnl> updateChannel = (channel, i) =>
             {
-                c.Name = selectedSuffixRowColumnIndex != null ?
-                c.Name = string.Format("{0} - {1}",
-                    NameWithoutSuffix(i),
-                    selectedSuffixRowColumnIndex >= 0 ? importedRows.Values.ElementAt(i)[selectedSuffixRowColumnIndex ?? 0]
-                    : importedRows.Keys.ElementAt(i))
-                : NameWithoutSuffix(i);
-                return c;
+                KeyValuePair<string, List<string>> correspondingRow = new KeyValuePair<string, List<string>>();
+                if (importedRows.Keys.Contains(channel.TagCode))
+                {
+                    correspondingRow = new KeyValuePair<string, List<string>>(channel.TagCode, importedRows[channel.TagCode]);
+                }
+                else if (ghostArrayElementRow.Keys.Contains(channel.TagCode))
+                {
+                    correspondingRow = new KeyValuePair<string, List<string>>(channel.TagCode, ghostArrayElementRow[channel.TagCode]);
+                }
+                else
+                {
+                    return channel;
+                }
+
+                channel.Name = selectedSuffixRowColumnIndex != null ?
+
+                string.Format("{0} - {1}", NameWithoutSuffix(correspondingRow), selectedSuffixRowColumnIndex >= 0
+                    ? correspondingRow.Value[selectedSuffixRowColumnIndex ?? 0]
+                    : channel.TagCode)
+
+                :
+                NameWithoutSuffix(correspondingRow);
+                return channel;
             };
 
             importedChannels = importedChannels.Select(updateChannel).ToList();
