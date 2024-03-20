@@ -151,10 +151,11 @@ namespace Scada.Admin.Extensions.ExtImport.Controls
 		{
 			if (adminContext.CurrentProject != null)
 			{
-
 				FrmImportFile frmImportFile = new(adminContext.CurrentProject);
-				frmImportFile.ShowDialog();
-
+				if (frmImportFile.ShowDialog() == DialogResult.OK)
+				{
+					MessageBox.Show("Imported successfully", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }
 			}
 		}
 

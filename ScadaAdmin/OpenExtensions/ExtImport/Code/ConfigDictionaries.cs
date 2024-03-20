@@ -42,7 +42,7 @@ namespace Scada.Admin.Extensions.ExtImport.Code
 		{
 				{"BOOL", ElemType.Bool },
 				{"EBOOL", ElemType.Bool },
-				{"REAL", ElemType.Double },
+				{"REAL", ElemType.Float },
 				{"FLOAT", ElemType.Float },
 				{"INT", ElemType.Short },
 				{"LONG", ElemType.Long },
