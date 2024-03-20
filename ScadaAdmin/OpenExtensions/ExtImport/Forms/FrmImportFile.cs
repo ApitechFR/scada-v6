@@ -376,10 +376,6 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
             return list;
         }
 
-        //private bool xyz(Cnl c, Cnl channel)
-        //{
-        //    return c.TagCode == channel.TagCode && c.DeviceNum == selectedDevice.DeviceNum
-        //}
         /// <summary>
         /// Find channels that enter in conflict with imported file rows
         /// </summary>
