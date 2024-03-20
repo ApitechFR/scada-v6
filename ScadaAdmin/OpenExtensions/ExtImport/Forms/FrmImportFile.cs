@@ -8,8 +8,6 @@ using System.Text.RegularExpressions;
 using System.Xml;
 using Scada.Forms;
 using System.Data;
-using System.Collections.Generic;
-using static System.Windows.Forms.VisualStyles.VisualStyleElement.TextBox;
 
 namespace Scada.Admin.Extensions.ExtImport.Forms
 {
@@ -29,6 +27,7 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
         Dictionary<string, List<Cnl>> splittedChannels;
         Dictionary<string, List<string>> ghostRows;
         Dictionary<string, string> ghostChildren;
+        Dictionary<string, List<string>> ghostArrayElementRow;
 
         private readonly ScadaProject project;
         public FrmImportFile(ScadaProject prj)
@@ -44,6 +43,7 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
             splittedChannels = new Dictionary<string, List<Cnl>>();
             ghostRows = new Dictionary<string, List<string>>();
             ghostChildren = new Dictionary<string, string>();
+            ghostArrayElementRow = new Dictionary<string, List<string>>();
             button1.Enabled = false;
             textBox1.Enabled = false;
             textBox2.Enabled = false;
@@ -213,6 +213,11 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
                     while (!sr.EndOfStream)
                     {
                         string line = sr.ReadLine();
+                        //ignore non conform lines
+                        if (line.Split('\t').Length < 4)
+                        {
+                            continue;
+                        }
                         if (isFirstLine)
                         {
                             if (line.StartsWith("%"))
@@ -257,10 +262,13 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
             textBox1.Enabled = areFileAndDeviceSelected;
             textBox2.Enabled = areFileAndDeviceSelected;
             textBox3.Enabled = areFileAndDeviceSelected;
+            panel5.Visible = areFileAndDeviceSelected;
+
 
             if (areFileAndDeviceSelected)
             {
-                splittedChannels =  new Dictionary<string, List<Cnl>>();
+                ghostArrayElementRow = new Dictionary<string, List<string>>();
+                splittedChannels = new Dictionary<string, List<Cnl>>();
                 //update generated channels list
                 importedChannels = new List<Cnl>();
                 ghostRows = getGhostsRows();
@@ -300,33 +308,32 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
         private List<Cnl> GenerateChannelFrowRow(Dictionary<string, List<string>> dico)
         {
             List<Cnl> list = new List<Cnl>();
+            Dictionary<string, ElemType> elemTypeDico = ConfigDictionaries.ElemTypeDictionary;
 
             foreach (KeyValuePair<string, List<string>> row in importedRows)
             {
                 if (row.Value[1].Contains("ARRAY"))
                 {
-                    Dictionary<string, ElemType> elemTypeDico = ConfigDictionaries.ElemTypeDictionary;
-                    ElemConfig newElem = new ElemConfig();
-                    newElem.ElemType = elemTypeDico.Keys.Contains(row.Value[1]) ? elemTypeDico[row.Value[1]] : ElemType.Undefined;
-                    int dataLength = ModbusUtils.GetDataLength(newElem.ElemType);
-
-                    try {
+                    try
+                    {
                         string[] arrayType = row.Value[1].Split(' ');
                         var elemType = elemTypeDico.Keys.Contains(arrayType[2]) ? elemTypeDico[arrayType[2]] : ElemType.Undefined;
                         int arrayLength = int.Parse(arrayType[0].Split("..")[1].Split(']')[0]) + 1;
+                        decimal dataLength = ModbusUtils.GetDataLength(elemType);
 
                         for (int j = 0; j < arrayLength; j++)
                         {
                             Cnl cnlArray = new Cnl();
-                            cnlArray.Name = string.Format("{0}{1}", row.Value[0], j);
-                            cnlArray.TagCode = string.Format("{0}", int.Parse(row.Key) + dataLength * j);
+                            cnlArray.Name = string.Format("{0}_{1}", row.Value[0], j);
+                            cnlArray.TagCode = string.Format("{0}", decimal.Parse(row.Key) + (dataLength == 1 ? dataLength * j : Math.Ceiling(dataLength * j / 2)));
                             cnlArray.CnlTypeID = 2;
                             cnlArray.DeviceNum = selectedDevice.DeviceNum;
                             cnlArray.Active = true;
                             list.Add(cnlArray);
+                            ghostArrayElementRow.Add(cnlArray.TagCode, new List<string> { cnlArray.Name, arrayType[2], row.Value[2], row.Value[3] });
                         }
                     }
-                    catch(Exception e)
+                    catch (Exception e)
                     {
                         MessageBox.Show("Error reading the file: one of the variables is an ARRAY but does not appear to be in the form 'ARRAY[0..X] OF TYPE'. Details: " + e.Message);
                     }
@@ -350,16 +357,17 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
 
                         //set type to "calculated"
                         cnl.CnlTypeID = 3;
+                        cnl.TagCode = row.Key;
                     }
                     else
                     {
                         cnl.TagCode = row.Key;
-                        if(ghostRows.ContainsKey(row.Key))
+                        if (ghostRows.ContainsKey(row.Key))
                         {
                             cnl.FormatID = 2;
                         }
                     }
-                    
+
                     list.Add(cnl);
                 }
             }
@@ -368,13 +376,13 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
             return list;
         }
 
-
         /// <summary>
         /// Find channels that enter in conflict with imported file rows
         /// </summary>
         private void DetectConflicts()
         {
-            conflictualChannels = project.ConfigDatabase.CnlTable.Where(channel => importedChannels.Any(c => c.TagCode == channel.TagCode)).ToList();
+
+            conflictualChannels = project.ConfigDatabase.CnlTable.Where(channel => importedChannels.Any(c => c.TagCode == channel.TagCode && channel.DeviceNum == selectedDevice.DeviceNum)).ToList();
         }
 
 
@@ -398,7 +406,18 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
             string adress = new string(columns[adressIndex].SkipWhile(x => !char.IsDigit(x)).ToArray());
             if (importedRows.ContainsKey(adress))
             {
-                return;
+                if (columns[typeIndex].Contains("ARRAY"))
+                {
+                    return;
+                }
+                else if (importedRows[adress][1].Contains("ARRAY"))
+                {
+                    importedRows.Remove(adress);
+                }
+                else
+                {
+                    MessageBox.Show("Error reading the file: the tagcode " + adress + " is already used in the file.");
+                }
             }
 
             string prefix = Regex.Split(columns[adressIndex], @"[0-9]").First();
@@ -463,7 +482,7 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
                 project.ConfigDatabase.CnlTable.AddItem(cnl);
             }
             int count = 0;
-            foreach(Cnl cnl in project.ConfigDatabase.CnlTable)
+            foreach (Cnl cnl in project.ConfigDatabase.CnlTable)
             {
                 //add formula
                 if (cnl.FormulaEnabled && ghostChildren.ContainsKey(cnl.Name))
@@ -511,7 +530,7 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
         {
 
             //Then, we generate a device configuration according to imported rows
-            bool doNext  = ImportDeviceConfiguration();
+            bool doNext = ImportDeviceConfiguration();
 
             if (doNext)
             {
@@ -660,6 +679,9 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
             ElemType previousType = ElemType.Undefined;
             Dictionary<string, ElemType> elemTypeDico = ConfigDictionaries.ElemTypeDictionary;
             Dictionary<string, int> cnlDataType = ConfigDictionaries.CnlDataType;
+            bool previousWasArray = false;
+            decimal previousDataLength = 0;
+            ElemConfig previousElem = new ElemConfig();
 
             //for each imported row
             foreach (KeyValuePair<string, List<string>> row in importedRows)
@@ -670,10 +692,20 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
                 //we create a new configuration element
                 ElemConfig newElem = new ElemConfig();
 
+                decimal dataLength = 0;
                 if (row.Value[1].Contains("ARRAY"))
                 {
-                    newElem.ElemType = elemTypeDico.Keys.Contains(row.Value[1]) ? elemTypeDico[row.Value[1]] : ElemType.Undefined;
-                    int dataLength = ModbusUtils.GetDataLength(newElem.ElemType);
+                    previousWasArray = true;
+                    newElem.ElemType = elemTypeDico.Keys.Contains(extractArrayType(row.Value[1])) ? elemTypeDico[extractArrayType(row.Value[1])] : ElemType.Undefined;
+                    dataLength = ModbusUtils.GetDataLength(newElem.ElemType);
+
+                    if (rowIndex > 0)
+                    {
+                        template.ElemGroups.Add(newElemenGroup);
+                    }
+                    newElemenGroup = new ElemGroupConfig();
+                    newElemenGroup.DataBlock = newElem.ElemType == ElemType.Bool ? DataBlock.DiscreteInputs : DataBlock.HoldingRegisters;
+                    newElemenGroup.Address = int.Parse(Regex.Replace(row.Key, @"[^0-9]", "")) - 1;
 
                     try
                     {
@@ -700,8 +732,8 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
                                     newElemArray.ByteOrder = "0123";
                                     break;
                             }
-                            newElemArray.Name = string.Format("{0}{1}", row.Value[0], j);
-                            newElemArray.TagCode = string.Format("{0}", int.Parse(row.Key) + dataLength * j);
+                            newElemArray.Name = string.Format("{0}_{1}", row.Value[0], j);
+                            newElemArray.TagCode = string.Format("{0}", decimal.Parse(row.Key) +(dataLength==1 ? dataLength * j:Math.Ceiling(dataLength * j / 2)));
                             newElemenGroup.Elems.Add(newElemArray);
                         }
                     }
@@ -709,6 +741,7 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
                     {
                         MessageBox.Show("Error reading the file: one of the variables is an ARRAY but does not appear to be in the form 'ARRAY[0..X] OF TYPE'. Details: " + e.Message);
                     }
+                    previousDataLength = dataLength;
                 }
                 else
                 {
@@ -722,8 +755,8 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
                         //we set its properties according to imported row
                         string newType = elemTypeDico.Keys.Contains(row.Value[1]) ? row.Value[1] : cnlDataType.FirstOrDefault(t => t.Value == dataTypes.FirstOrDefault(dt => dt.Value == row.Value[1]).Key).Key;
                         newElem.ElemType = elemTypeDico.Keys.Contains(row.Value[1]) ? elemTypeDico[row.Value[1]] : ElemType.Undefined;
-
-                        switch (ModbusUtils.GetDataLength(newElem.ElemType))
+                        dataLength = ModbusUtils.GetDataLength(newElem.ElemType);
+                        switch (dataLength)
                         {
                             case 2:
                                 newElem.ByteOrder = textBox1.Text;
@@ -741,42 +774,53 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
 
                         newElem.Name = row.Value[0];
                         newElem.TagCode = row.Key;
-                        newElemenGroup.DataBlock = DataBlock.HoldingRegisters;
                         int index = importedRows.Keys.ToList().IndexOf(row.Key);
-
+                        int previousTagCodeAsNumber = 0;
+                        int currentTagCodeAsNumber = 0;
+                        if (!previousWasArray && index > 0)
+                        {
+                         previousTagCodeAsNumber = int.Parse(Regex.Replace(previousElem.TagCode, @"[^0-9]", ""));
+                         currentTagCodeAsNumber = int.Parse(Regex.Replace(newElem.TagCode, @"[^0-9]", ""));
+                        }
                         //if these conditions are met, we add the current element group to the template and create a new one
-                        if (index == 0 || prefix != previousPrefix || newElem.ElemType != previousType || (prefix == "%MW" && newElemenGroup.Elems.Count == 125) || (prefix == "%M" && newElemenGroup.Elems.Count == 2000))
+                        if (previousWasArray || index == 0 || prefix != previousPrefix || newElem.ElemType != previousType || previousTagCodeAsNumber + Math.Ceiling(previousDataLength / 2) != currentTagCodeAsNumber)//(prefix == "%MW" && newElemenGroup.Elems.Count == 125) || (prefix == "%M" && newElemenGroup.Elems.Count == 2000))
                         {
                             if (index > 0)
                             {
                                 template.ElemGroups.Add(newElemenGroup);
                             }
                             newElemenGroup = new ElemGroupConfig();
-                            newElemenGroup.DataBlock = DataBlock.HoldingRegisters;
-                            newElemenGroup.Address = int.Parse(Regex.Replace(row.Key, @"[^0-9]", "")) - 1;
+                            newElemenGroup.DataBlock = newElem.ElemType == ElemType.Bool ? DataBlock.DiscreteInputs : DataBlock.HoldingRegisters;
+                            newElemenGroup.Address = int.Parse(Regex.Replace(row.Key, @"[^0-9]", "")) - 1 + (textBox4.Text == "" ? 0 : int.Parse(textBox4.Text));
                         }
                         previousPrefix = prefix;
                         previousType = newElem.ElemType;
 
                         //we add the new element to the current element group
                         newElemenGroup.Elems.Add(newElem);
+                        previousWasArray = false;
                     }
+                    previousDataLength = dataLength;
                 }
-                
+                previousElem = newElem;
             }
             template.ElemGroups.Add(newElemenGroup);
-            for(int i=0; i<template.ElemGroups.Count; i++)
+            for (int i = 0; i < template.ElemGroups.Count; i++)
             {
                 if (template.ElemGroups[i].Elems.Count > 0)
                 {
                     template.ElemGroups[i].Elems.Sort((x, y) => int.Parse(x.TagCode.Split('.')[0]) - int.Parse(y.TagCode.Split('.')[0]));
-                    template.ElemGroups[i].Address = int.Parse(Regex.Replace(template.ElemGroups[i].Elems[0].TagCode, @"[^0-9]", "")) - 1;
+                    template.ElemGroups[i].Address = int.Parse(Regex.Replace(template.ElemGroups[i].Elems[0].TagCode, @"[^0-9]", "")) - 1 + (textBox4.Text == "" ? 0 : int.Parse(textBox4.Text));
                 }
             }
 
             return template;
         }
 
+        private string extractArrayType(string type)
+        {
+            return type.Contains("ARRAY") ? type.Split(' ')[2] : type;
+        }
         /// <summary>
         /// Action triggered on prefix selection change
         /// </summary>
@@ -794,26 +838,40 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
             int? selectedPrefixRowColumnIndex = selectedPrefix != null ? availablePrefixSuffix.Values.ElementAt(cbBoxPrefix.SelectedIndex - 1) : null;
             int? selectedSuffixRowColumnIndex = cbBoxSuffix.SelectedIndex > 0 ? availablePrefixSuffix.Values.ElementAt(cbBoxSuffix.SelectedIndex - 1) : null;
 
-            string NameWithoutPrefix(int rowIndex)
+            string NameWithoutPrefix(KeyValuePair<string, List<string>> row)
             {
                 return selectedSuffixRowColumnIndex != null
                     ? selectedSuffixRowColumnIndex >= 0
-                        ? string.Join(" - ", importedRows.Values.ElementAt(rowIndex)[0], importedRows.Values.ElementAt(rowIndex)[selectedSuffixRowColumnIndex ?? 0])
-                        : string.Join(" - ", importedRows.Values.ElementAt(rowIndex)[0], importedRows.Keys.ElementAt(rowIndex))
-                    : importedRows.Values.ElementAt(rowIndex)[0];
+                        ? string.Join(" - ", row.Value[0], extractArrayType(row.Value[selectedSuffixRowColumnIndex ?? 0]))
+                        : string.Join(" - ", row.Value[0], row.Key)
+                    : row.Value[0];
             }
 
-            Func<Cnl, int, Cnl> updateChannel = (c, i) =>
+            Func<Cnl, int, Cnl> updateChannel = (channel, i) =>
             {
-                c.Name = selectedPrefixRowColumnIndex != null ?
+                KeyValuePair<string, List<string>> correspondingRow = new KeyValuePair<string, List<string>>();
+                if (importedRows.Keys.Contains(channel.TagCode))
+                {
+                    correspondingRow = new KeyValuePair<string, List<string>>(channel.TagCode, importedRows[channel.TagCode]);
+                }
+                else if (ghostArrayElementRow.Keys.Contains(channel.TagCode))
+                {
+                    correspondingRow = new KeyValuePair<string, List<string>>(channel.TagCode, ghostArrayElementRow[channel.TagCode]);
+                }
+                else
+                {
+                    return channel;
+                }
 
-                string.Format("{0} - {1}", selectedPrefixRowColumnIndex >= 0
-                    ? importedRows.Values.ElementAt(i)[selectedPrefixRowColumnIndex ?? 0]
-                    : importedRows.Keys.ElementAt(i), NameWithoutPrefix(i))
+                string newPrefix = selectedPrefixRowColumnIndex >= 0
+                    ? extractArrayType(correspondingRow.Value[selectedPrefixRowColumnIndex ?? 0]) 
+                    : channel.TagCode;
+                channel.Name = selectedPrefixRowColumnIndex != null ?
+                string.Format("{0} - {1}", newPrefix, NameWithoutPrefix(correspondingRow))
 
                 :
-                NameWithoutPrefix(i);
-                return c;
+                NameWithoutPrefix(correspondingRow);
+                return channel;
             };
 
             importedChannels = importedChannels.Select(updateChannel).ToList();
@@ -834,33 +892,66 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
             {
                 return;
             }
+
             string previousSuffix = selectedSuffix;
             selectedSuffix = cbBoxSuffix.SelectedIndex > 0 ? availablePrefixSuffix.Keys.ElementAt(cbBoxSuffix.SelectedIndex - 1) : null;
             int? selectedPrefixRowColumnIndex = selectedPrefix != null ? availablePrefixSuffix.Values.ElementAt(cbBoxPrefix.SelectedIndex - 1) : null;
             int? selectedSuffixRowColumnIndex = cbBoxSuffix.SelectedIndex > 0 ? availablePrefixSuffix.Values.ElementAt(cbBoxSuffix.SelectedIndex - 1) : null;
 
-            string NameWithoutSuffix(int rowIndex)
+            string NameWithoutSuffix(KeyValuePair<string, List<string>> row)
             {
                 return selectedPrefixRowColumnIndex != null
                     ? selectedPrefixRowColumnIndex >= 0
-                        ? string.Join(" - ", importedRows.Values.ElementAt(rowIndex)[selectedPrefixRowColumnIndex ?? 0], importedRows.Values.ElementAt(rowIndex)[0])
-                        : string.Join(" - ", importedRows.Keys.ElementAt(rowIndex), importedRows.Values.ElementAt(rowIndex)[0])
-                    : importedRows.Values.ElementAt(rowIndex)[0];
+                        ? string.Join(" - ", extractArrayType(row.Value[selectedPrefixRowColumnIndex ?? 0]), row.Value[0])
+                        : string.Join(" - ", row.Key, row.Value[0])
+                    : row.Value[0];
             }
 
-            Func<Cnl, int, Cnl> updateChannel = (c, i) =>
+
+            Func<Cnl, int, Cnl> updateChannel = (channel, i) =>
             {
-                c.Name = selectedSuffixRowColumnIndex != null ?
-                c.Name = string.Format("{0} - {1}",
-                    NameWithoutSuffix(i),
-                    selectedSuffixRowColumnIndex >= 0 ? importedRows.Values.ElementAt(i)[selectedSuffixRowColumnIndex ?? 0]
-                    : importedRows.Keys.ElementAt(i))
-                : NameWithoutSuffix(i);
-                return c;
+                KeyValuePair<string, List<string>> correspondingRow = new KeyValuePair<string, List<string>>();
+                if (importedRows.Keys.Contains(channel.TagCode))
+                {
+                    correspondingRow = new KeyValuePair<string, List<string>>(channel.TagCode, importedRows[channel.TagCode]);
+                }
+                else if (ghostArrayElementRow.Keys.Contains(channel.TagCode))
+                {
+                    correspondingRow = new KeyValuePair<string, List<string>>(channel.TagCode, ghostArrayElementRow[channel.TagCode]);
+                }
+                else
+                {
+                    return channel;
+                }
+
+                string newSuffix = selectedSuffixRowColumnIndex >= 0
+                    ? extractArrayType(correspondingRow.Value[selectedSuffixRowColumnIndex ?? 0])
+                    : channel.TagCode;
+                channel.Name = selectedSuffixRowColumnIndex != null ?
+                string.Format("{0} - {1}", NameWithoutSuffix(correspondingRow), selectedSuffixRowColumnIndex >= 0
+                    ? newSuffix
+                    : channel.TagCode)
+
+                :
+                NameWithoutSuffix(correspondingRow);
+                return channel;
             };
 
             importedChannels = importedChannels.Select(updateChannel).ToList();
             channelsToCreateAfterMerge = channelsToCreateAfterMerge != null ? channelsToCreateAfterMerge.Select(updateChannel).ToList() : importedChannels.DeepClone();
+        }
+
+        private void textBox4_TextChanged(object sender, EventArgs e)
+        {
+            // must be an int
+            if (!int.TryParse(textBox4.Text, out _))
+            {
+                if (textBox4.Text != string.Empty)
+                {
+                    MessageBox.Show("Please enter a valid integer.");
+                    textBox4.Text = string.Empty;
+                }
+            }
         }
     }
 }
