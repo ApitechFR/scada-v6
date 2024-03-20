@@ -354,13 +354,13 @@
             label7.AutoSize = true;
             label7.Location = new Point(3, 15);
             label7.Name = "label7";
-            label7.Size = new Size(173, 20);
+            label7.Size = new Size(185, 20);
             label7.TabIndex = 1;
-            label7.Text = "Gap start element adress";
+            label7.Text = "Start element adress gap : ";
             // 
             // textBox4
             // 
-            textBox4.Location = new Point(182, 12);
+            textBox4.Location = new Point(194, 12);
             textBox4.Name = "textBox4";
             textBox4.PlaceholderText = "Ex : 1";
             textBox4.Size = new Size(41, 27);
