@@ -262,6 +262,8 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
             textBox1.Enabled = areFileAndDeviceSelected;
             textBox2.Enabled = areFileAndDeviceSelected;
             textBox3.Enabled = areFileAndDeviceSelected;
+            panel5.Visible = areFileAndDeviceSelected;
+
 
             if (areFileAndDeviceSelected)
             {
@@ -383,7 +385,7 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
         /// </summary>
         private void DetectConflicts()
         {
-            
+
             conflictualChannels = project.ConfigDatabase.CnlTable.Where(channel => importedChannels.Any(c => c.TagCode == channel.TagCode && channel.DeviceNum == selectedDevice.DeviceNum)).ToList();
         }
 
@@ -793,7 +795,7 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
                             }
                             newElemenGroup = new ElemGroupConfig();
                             newElemenGroup.DataBlock = newElem.ElemType == ElemType.Bool ? DataBlock.DiscreteInputs : DataBlock.HoldingRegisters;
-                            newElemenGroup.Address = int.Parse(Regex.Replace(row.Key, @"[^0-9]", "")) - 1;
+                            newElemenGroup.Address = int.Parse(Regex.Replace(row.Key, @"[^0-9]", "")) - 1 + (textBox4.Text == "" ? 0 : int.Parse(textBox4.Text));
                         }
                         previousPrefix = prefix;
                         previousType = newElem.ElemType;
@@ -812,7 +814,7 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
                 if (template.ElemGroups[i].Elems.Count > 0)
                 {
                     template.ElemGroups[i].Elems.Sort((x, y) => int.Parse(x.TagCode.Split('.')[0]) - int.Parse(y.TagCode.Split('.')[0]));
-                    template.ElemGroups[i].Address = int.Parse(Regex.Replace(template.ElemGroups[i].Elems[0].TagCode, @"[^0-9]", "")) - 1;
+                    template.ElemGroups[i].Address = int.Parse(Regex.Replace(template.ElemGroups[i].Elems[0].TagCode, @"[^0-9]", "")) - 1 + (textBox4.Text == "" ? 0 : int.Parse(textBox4.Text));
                 }
             }
 
@@ -941,6 +943,19 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
 
             importedChannels = importedChannels.Select(updateChannel).ToList();
             channelsToCreateAfterMerge = channelsToCreateAfterMerge != null ? channelsToCreateAfterMerge.Select(updateChannel).ToList() : importedChannels.DeepClone();
+        }
+
+        private void textBox4_TextChanged(object sender, EventArgs e)
+        {
+            // must be an int
+            if (!int.TryParse(textBox4.Text, out _))
+            {
+                if (textBox4.Text != string.Empty)
+                {
+                    MessageBox.Show("Please enter a valid integer.");
+                    textBox4.Text = string.Empty;
+                }
+            }
         }
     }
 }

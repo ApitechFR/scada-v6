@@ -55,12 +55,16 @@
             label10 = new Label();
             panel4 = new Panel();
             label6 = new Label();
+            panel5 = new Panel();
+            label7 = new Label();
+            textBox4 = new TextBox();
             ((System.ComponentModel.ISupportInitialize)pbStatus).BeginInit();
             ((System.ComponentModel.ISupportInitialize)pictureBox1).BeginInit();
             panel1.SuspendLayout();
             panel2.SuspendLayout();
             panel3.SuspendLayout();
             panel4.SuspendLayout();
+            panel5.SuspendLayout();
             SuspendLayout();
             // 
             // txtPathFile
@@ -123,7 +127,7 @@
             // label3
             // 
             label3.AutoSize = true;
-            label3.Location = new Point(0, 4);
+            label3.Location = new Point(3, 3);
             label3.Name = "label3";
             label3.Size = new Size(50, 20);
             label3.TabIndex = 18;
@@ -152,7 +156,7 @@
             // 
             cbBoxPrefix.DropDownStyle = ComboBoxStyle.DropDownList;
             cbBoxPrefix.FormattingEnabled = true;
-            cbBoxPrefix.Location = new Point(0, 27);
+            cbBoxPrefix.Location = new Point(3, 27);
             cbBoxPrefix.Name = "cbBoxPrefix";
             cbBoxPrefix.Size = new Size(222, 28);
             cbBoxPrefix.TabIndex = 15;
@@ -160,7 +164,7 @@
             // 
             // button1
             // 
-            button1.Location = new Point(390, 344);
+            button1.Location = new Point(389, 399);
             button1.Name = "button1";
             button1.Size = new Size(118, 29);
             button1.TabIndex = 19;
@@ -170,7 +174,7 @@
             // 
             // button2
             // 
-            button2.Location = new Point(250, 344);
+            button2.Location = new Point(249, 399);
             button2.Name = "button2";
             button2.Size = new Size(120, 29);
             button2.TabIndex = 20;
@@ -191,7 +195,7 @@
             // label4
             // 
             label4.AutoSize = true;
-            label4.Location = new Point(24, 5);
+            label4.Location = new Point(28, 5);
             label4.Name = "label4";
             label4.Size = new Size(240, 20);
             label4.TabIndex = 22;
@@ -232,9 +236,9 @@
             panel1.Controls.Add(cbBoxPrefix);
             panel1.Controls.Add(cbBoxSuffix);
             panel1.Controls.Add(label2);
-            panel1.Location = new Point(15, 240);
+            panel1.Location = new Point(14, 309);
             panel1.Name = "panel1";
-            panel1.Size = new Size(493, 76);
+            panel1.Size = new Size(493, 74);
             panel1.TabIndex = 26;
             // 
             // panel2
@@ -270,6 +274,7 @@
             textBox1.Location = new Point(67, 24);
             textBox1.Margin = new Padding(3, 4, 3, 4);
             textBox1.Name = "textBox1";
+            textBox1.PlaceholderText = "Ex : 01";
             textBox1.Size = new Size(109, 27);
             textBox1.TabIndex = 29;
             // 
@@ -278,13 +283,14 @@
             textBox2.Location = new Point(67, 75);
             textBox2.Margin = new Padding(3, 4, 3, 4);
             textBox2.Name = "textBox2";
+            textBox2.PlaceholderText = "Ex : 0123";
             textBox2.Size = new Size(109, 27);
             textBox2.TabIndex = 31;
             // 
             // label9
             // 
             label9.AutoSize = true;
-            label9.Location = new Point(10, 28);
+            label9.Location = new Point(10, 27);
             label9.Name = "label9";
             label9.Size = new Size(56, 20);
             label9.TabIndex = 30;
@@ -295,13 +301,14 @@
             textBox3.Location = new Point(67, 127);
             textBox3.Margin = new Padding(3, 4, 3, 4);
             textBox3.Name = "textBox3";
+            textBox3.PlaceholderText = "Ex : 01234567";
             textBox3.Size = new Size(109, 27);
             textBox3.TabIndex = 33;
             // 
             // label10
             // 
             label10.AutoSize = true;
-            label10.Location = new Point(10, 79);
+            label10.Location = new Point(10, 78);
             label10.Name = "label10";
             label10.Size = new Size(56, 20);
             label10.TabIndex = 32;
@@ -326,17 +333,46 @@
             // label6
             // 
             label6.AutoSize = true;
-            label6.Location = new Point(10, 132);
+            label6.Location = new Point(10, 130);
             label6.Name = "label6";
             label6.Size = new Size(56, 20);
             label6.TabIndex = 35;
             label6.Text = "8 Bytes";
             // 
+            // panel5
+            // 
+            panel5.Controls.Add(label7);
+            panel5.Controls.Add(textBox4);
+            panel5.Location = new Point(14, 240);
+            panel5.Name = "panel5";
+            panel5.Size = new Size(493, 45);
+            panel5.TabIndex = 35;
+            panel5.Visible = false;
+            // 
+            // label7
+            // 
+            label7.AutoSize = true;
+            label7.Location = new Point(3, 15);
+            label7.Name = "label7";
+            label7.Size = new Size(185, 20);
+            label7.TabIndex = 1;
+            label7.Text = "Start element adress gap : ";
+            // 
+            // textBox4
+            // 
+            textBox4.Location = new Point(194, 12);
+            textBox4.Name = "textBox4";
+            textBox4.PlaceholderText = "Ex : 1";
+            textBox4.Size = new Size(41, 27);
+            textBox4.TabIndex = 0;
+            textBox4.TextChanged += textBox4_TextChanged;
+            // 
             // FrmImportFile
             // 
             AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(525, 388);
+            ClientSize = new Size(532, 440);
+            Controls.Add(panel5);
             Controls.Add(panel4);
             Controls.Add(panel3);
             Controls.Add(label8);
@@ -361,6 +397,8 @@
             panel3.PerformLayout();
             panel4.ResumeLayout(false);
             panel4.PerformLayout();
+            panel5.ResumeLayout(false);
+            panel5.PerformLayout();
             ResumeLayout(false);
             PerformLayout();
         }
@@ -395,5 +433,7 @@
         private TextBox textBox3;
         private Label label10;
         private Panel panel4;
+        private Panel panel5;
+        private TextBox textBox4;
     }
 }
