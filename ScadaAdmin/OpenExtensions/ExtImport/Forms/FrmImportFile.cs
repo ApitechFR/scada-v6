@@ -262,6 +262,8 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
             textBox1.Enabled = areFileAndDeviceSelected;
             textBox2.Enabled = areFileAndDeviceSelected;
             textBox3.Enabled = areFileAndDeviceSelected;
+            panel5.Visible = areFileAndDeviceSelected;
+
 
             if (areFileAndDeviceSelected)
             {
@@ -387,7 +389,7 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
         /// </summary>
         private void DetectConflicts()
         {
-            
+
             conflictualChannels = project.ConfigDatabase.CnlTable.Where(channel => importedChannels.Any(c => c.TagCode == channel.TagCode && channel.DeviceNum == selectedDevice.DeviceNum)).ToList();
         }
 
@@ -842,7 +844,7 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
                 {
                     return channel;
                 }
-                
+
                 channel.Name = selectedPrefixRowColumnIndex != null ?
 
                 string.Format("{0} - {1}", selectedPrefixRowColumnIndex >= 0
@@ -917,6 +919,19 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
 
             importedChannels = importedChannels.Select(updateChannel).ToList();
             channelsToCreateAfterMerge = channelsToCreateAfterMerge != null ? channelsToCreateAfterMerge.Select(updateChannel).ToList() : importedChannels.DeepClone();
+        }
+
+        private void textBox4_TextChanged(object sender, EventArgs e)
+        {
+            // must be an int
+            if (!int.TryParse(textBox4.Text, out _))
+            {
+                if (textBox4.Text != string.Empty)
+                {
+                    MessageBox.Show("Please enter a valid integer.");
+                    textBox4.Text = string.Empty;
+                }
+            }
         }
     }
 }
