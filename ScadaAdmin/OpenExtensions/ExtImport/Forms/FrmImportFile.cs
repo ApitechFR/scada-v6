@@ -312,22 +312,18 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
             {
                 if (row.Value[1].Contains("ARRAY"))
                 {
-                    //ElemConfig newElem = new ElemConfig();
-                    //newElem.ElemType = elemTypeDico.Keys.Contains(row.Value[1]) ? elemTypeDico[row.Value[1]] : ElemType.Undefined;
-                    //int dataLength = ModbusUtils.GetDataLength(newElem.ElemType);
-
                     try
                     {
                         string[] arrayType = row.Value[1].Split(' ');
                         var elemType = elemTypeDico.Keys.Contains(arrayType[2]) ? elemTypeDico[arrayType[2]] : ElemType.Undefined;
                         int arrayLength = int.Parse(arrayType[0].Split("..")[1].Split(']')[0]) + 1;
-                        int dataLength = ModbusUtils.GetDataLength(elemType);
+                        decimal dataLength = ModbusUtils.GetDataLength(elemType);
 
                         for (int j = 0; j < arrayLength; j++)
                         {
                             Cnl cnlArray = new Cnl();
-                            cnlArray.Name = string.Format("{0}{1}", row.Value[0], j);
-                            cnlArray.TagCode = string.Format("{0}", int.Parse(row.Key) + dataLength * j);
+                            cnlArray.Name = string.Format("{0}_{1}", row.Value[0], j);
+                            cnlArray.TagCode = string.Format("{0}", decimal.Parse(row.Key) + (dataLength == 1 ? dataLength * j : Math.Ceiling(dataLength * j / 2)));
                             cnlArray.CnlTypeID = 2;
                             cnlArray.DeviceNum = selectedDevice.DeviceNum;
                             cnlArray.Active = true;
@@ -685,6 +681,9 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
             ElemType previousType = ElemType.Undefined;
             Dictionary<string, ElemType> elemTypeDico = ConfigDictionaries.ElemTypeDictionary;
             Dictionary<string, int> cnlDataType = ConfigDictionaries.CnlDataType;
+            bool previousWasArray = false;
+            decimal previousDataLength = 0;
+            ElemConfig previousElem = new ElemConfig();
 
             //for each imported row
             foreach (KeyValuePair<string, List<string>> row in importedRows)
@@ -695,10 +694,20 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
                 //we create a new configuration element
                 ElemConfig newElem = new ElemConfig();
 
+                decimal dataLength = 0;
                 if (row.Value[1].Contains("ARRAY"))
                 {
-                    newElem.ElemType = elemTypeDico.Keys.Contains(row.Value[1]) ? elemTypeDico[row.Value[1]] : ElemType.Undefined;
-                    int dataLength = ModbusUtils.GetDataLength(newElem.ElemType);
+                    previousWasArray = true;
+                    newElem.ElemType = elemTypeDico.Keys.Contains(extractArrayType(row.Value[1])) ? elemTypeDico[extractArrayType(row.Value[1])] : ElemType.Undefined;
+                    dataLength = ModbusUtils.GetDataLength(newElem.ElemType);
+
+                    if (rowIndex > 0)
+                    {
+                        template.ElemGroups.Add(newElemenGroup);
+                    }
+                    newElemenGroup = new ElemGroupConfig();
+                    newElemenGroup.DataBlock = newElem.ElemType == ElemType.Bool ? DataBlock.DiscreteInputs : DataBlock.HoldingRegisters;
+                    newElemenGroup.Address = int.Parse(Regex.Replace(row.Key, @"[^0-9]", "")) - 1;
 
                     try
                     {
@@ -725,8 +734,8 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
                                     newElemArray.ByteOrder = "0123";
                                     break;
                             }
-                            newElemArray.Name = string.Format("{0}{1}", row.Value[0], j);
-                            newElemArray.TagCode = string.Format("{0}", int.Parse(row.Key) + dataLength * j);
+                            newElemArray.Name = string.Format("{0}_{1}", row.Value[0], j);
+                            newElemArray.TagCode = string.Format("{0}", decimal.Parse(row.Key) +(dataLength==1 ? dataLength * j:Math.Ceiling(dataLength * j / 2)));
                             newElemenGroup.Elems.Add(newElemArray);
                         }
                     }
@@ -734,6 +743,7 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
                     {
                         MessageBox.Show("Error reading the file: one of the variables is an ARRAY but does not appear to be in the form 'ARRAY[0..X] OF TYPE'. Details: " + e.Message);
                     }
+                    previousDataLength = dataLength;
                 }
                 else
                 {
@@ -747,8 +757,8 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
                         //we set its properties according to imported row
                         string newType = elemTypeDico.Keys.Contains(row.Value[1]) ? row.Value[1] : cnlDataType.FirstOrDefault(t => t.Value == dataTypes.FirstOrDefault(dt => dt.Value == row.Value[1]).Key).Key;
                         newElem.ElemType = elemTypeDico.Keys.Contains(row.Value[1]) ? elemTypeDico[row.Value[1]] : ElemType.Undefined;
-
-                        switch (ModbusUtils.GetDataLength(newElem.ElemType))
+                        dataLength = ModbusUtils.GetDataLength(newElem.ElemType);
+                        switch (dataLength)
                         {
                             case 2:
                                 newElem.ByteOrder = textBox1.Text;
@@ -767,9 +777,15 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
                         newElem.Name = row.Value[0];
                         newElem.TagCode = row.Key;
                         int index = importedRows.Keys.ToList().IndexOf(row.Key);
-
+                        int previousTagCodeAsNumber = 0;
+                        int currentTagCodeAsNumber = 0;
+                        if (!previousWasArray && index > 0)
+                        {
+                         previousTagCodeAsNumber = int.Parse(Regex.Replace(previousElem.TagCode, @"[^0-9]", ""));
+                         currentTagCodeAsNumber = int.Parse(Regex.Replace(newElem.TagCode, @"[^0-9]", ""));
+                        }
                         //if these conditions are met, we add the current element group to the template and create a new one
-                        if (index == 0 || prefix != previousPrefix || newElem.ElemType != previousType || (prefix == "%MW" && newElemenGroup.Elems.Count == 125) || (prefix == "%M" && newElemenGroup.Elems.Count == 2000))
+                        if (previousWasArray || index == 0 || prefix != previousPrefix || newElem.ElemType != previousType || previousTagCodeAsNumber + Math.Ceiling(previousDataLength / 2) != currentTagCodeAsNumber)//(prefix == "%MW" && newElemenGroup.Elems.Count == 125) || (prefix == "%M" && newElemenGroup.Elems.Count == 2000))
                         {
                             if (index > 0)
                             {
@@ -784,9 +800,11 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
 
                         //we add the new element to the current element group
                         newElemenGroup.Elems.Add(newElem);
+                        previousWasArray = false;
                     }
+                    previousDataLength = dataLength;
                 }
-
+                previousElem = newElem;
             }
             template.ElemGroups.Add(newElemenGroup);
             for (int i = 0; i < template.ElemGroups.Count; i++)
@@ -801,6 +819,10 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
             return template;
         }
 
+        private string extractArrayType(string type)
+        {
+            return type.Contains("ARRAY") ? type.Split(' ')[2] : type;
+        }
         /// <summary>
         /// Action triggered on prefix selection change
         /// </summary>
@@ -822,7 +844,7 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
             {
                 return selectedSuffixRowColumnIndex != null
                     ? selectedSuffixRowColumnIndex >= 0
-                        ? string.Join(" - ", row.Value[0], row.Value[selectedSuffixRowColumnIndex ?? 0])
+                        ? string.Join(" - ", row.Value[0], extractArrayType(row.Value[selectedSuffixRowColumnIndex ?? 0]))
                         : string.Join(" - ", row.Value[0], row.Key)
                     : row.Value[0];
             }
@@ -842,12 +864,12 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
                 {
                     return channel;
                 }
-                
-                channel.Name = selectedPrefixRowColumnIndex != null ?
 
-                string.Format("{0} - {1}", selectedPrefixRowColumnIndex >= 0
-                    ? correspondingRow.Value[selectedPrefixRowColumnIndex ?? 0]
-                    : channel.TagCode, NameWithoutPrefix(correspondingRow))
+                string newPrefix = selectedPrefixRowColumnIndex >= 0
+                    ? extractArrayType(correspondingRow.Value[selectedPrefixRowColumnIndex ?? 0]) 
+                    : channel.TagCode;
+                channel.Name = selectedPrefixRowColumnIndex != null ?
+                string.Format("{0} - {1}", newPrefix, NameWithoutPrefix(correspondingRow))
 
                 :
                 NameWithoutPrefix(correspondingRow);
@@ -882,7 +904,7 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
             {
                 return selectedPrefixRowColumnIndex != null
                     ? selectedPrefixRowColumnIndex >= 0
-                        ? string.Join(" - ", row.Value[selectedPrefixRowColumnIndex ?? 0], row.Value[0])
+                        ? string.Join(" - ", extractArrayType(row.Value[selectedPrefixRowColumnIndex ?? 0]), row.Value[0])
                         : string.Join(" - ", row.Key, row.Value[0])
                     : row.Value[0];
             }
@@ -904,10 +926,12 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
                     return channel;
                 }
 
+                string newSuffix = selectedSuffixRowColumnIndex >= 0
+                    ? extractArrayType(correspondingRow.Value[selectedSuffixRowColumnIndex ?? 0])
+                    : channel.TagCode;
                 channel.Name = selectedSuffixRowColumnIndex != null ?
-
                 string.Format("{0} - {1}", NameWithoutSuffix(correspondingRow), selectedSuffixRowColumnIndex >= 0
-                    ? correspondingRow.Value[selectedSuffixRowColumnIndex ?? 0]
+                    ? newSuffix
                     : channel.TagCode)
 
                 :
