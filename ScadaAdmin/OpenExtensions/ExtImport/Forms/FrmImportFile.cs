@@ -214,7 +214,7 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
                     {
                         string line = sr.ReadLine();
                         //ignore non conform lines
-                        if (line.Split('\t').Length < 4)
+                        if (line.Split('\t').Length < 4 || (line.Split('\t').Where(x => x != "").Count() < 3))
                         {
                             continue;
                         }
