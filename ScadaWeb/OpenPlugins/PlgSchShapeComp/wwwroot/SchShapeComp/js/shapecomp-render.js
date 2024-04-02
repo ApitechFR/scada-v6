@@ -116,7 +116,7 @@ function mergeAndModifyConditions(conditions) {
 		return acc;
 	}, {});
 
-	// Fusion de chaque groupe
+	// Fusion of each group
 	Object.values(groups).forEach((group) => {
 		let mergedCondition = group.reduce(
 			(acc, condition) => {
