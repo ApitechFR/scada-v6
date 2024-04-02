@@ -31,21 +31,24 @@ scada.scheme.handleBlinking = function (divComp, blinking, bool) {
 	}
 };
 scada.scheme.updateStyles = function (divComp, cond, bool) {
-	if ('color' in cond) {
+	if ("color" in cond) {
 		divComp.css("color", cond.color);
 	}
-	if ('rotation' in cond) {
+	if ("rotation" in cond) {
 		divComp.css("transform", "rotate(" + cond.rotation + "deg)");
 	}
 
-	if ('backgroundColor' in cond) {
+	if ("backgroundColor" in cond) {
 		if (bool) {
 			divComp.css("background-color", cond.backgroundColor);
 		} else {
-			divComp.css("background-color", cond.backColor ? String(cond.backColor) : "");
+			divComp.css(
+				"background-color",
+				cond.backColor ? String(cond.backColor) : "",
+			);
 		}
 	}
-	if ('isVisible' in cond) {
+	if ("isVisible" in cond) {
 		if (bool) {
 			divComp.css("visibility", cond.isVisible ? "visible" : "hidden");
 		} else {
@@ -53,7 +56,7 @@ scada.scheme.updateStyles = function (divComp, cond, bool) {
 		}
 	}
 
-	if ('width' in cond) {
+	if ("width" in cond) {
 		if (bool) {
 			divComp.css("width", cond.width);
 		} else {
@@ -61,7 +64,7 @@ scada.scheme.updateStyles = function (divComp, cond, bool) {
 		}
 	}
 
-	if ('height' in cond) {
+	if ("height" in cond) {
 		if (bool) {
 			divComp.css("height", cond.height);
 		} else {
@@ -69,7 +72,6 @@ scada.scheme.updateStyles = function (divComp, cond, bool) {
 		}
 	}
 };
-
 
 scada.scheme.applyRotation = function (divComp, props) {
 	if (props.rotation && props.rotation > 0) {
@@ -95,6 +97,54 @@ scada.scheme.updateColors = function (divComp, cnlDataExt, isHovered, props) {
 	setBackColor(divComp, backColor, true, statusColor);
 	setBorderColor(divComp, borderColor, true, statusColor);
 };
+function mergeAndModifyConditions(conditions) {
+	let result = [];
+	const criteriaFields = [
+		"compareOperator1",
+		"compareArgument1",
+		"logicalOperator",
+		"compareOperator2",
+		"compareArgument2",
+	];
+
+	let groups = conditions.reduce((acc, condition) => {
+		const criteriaKey = criteriaFields
+			.map((field) => condition[field])
+			.join("_");
+		if (!acc[criteriaKey]) acc[criteriaKey] = [];
+		acc[criteriaKey].push(condition);
+		return acc;
+	}, {});
+
+	// Fusion de chaque groupe
+	Object.values(groups).forEach((group) => {
+		let mergedCondition = group.reduce(
+			(acc, condition) => {
+				Object.keys(condition).forEach((key) => {
+					if (!criteriaFields.includes(key)) {
+						if (
+							typeof condition[key] === "string" &&
+							condition[key] &&
+							!acc[key]
+						)
+							acc[key] = condition[key];
+						if (
+							typeof condition[key] === "number" &&
+							condition[key] > (acc[key] || 0)
+						)
+							acc[key] = condition[key];
+					}
+				});
+				return acc;
+			},
+			{ ...group[0] },
+		);
+
+		result.push(mergedCondition);
+	});
+
+	return result;
+}
 
 scada.scheme.updateComponentData = function (component, renderContext) {
 	var props = component.props;
@@ -106,15 +156,21 @@ scada.scheme.updateComponentData = function (component, renderContext) {
 
 	if (props.conditions && cnlDataExt.d.stat > 0) {
 		var cnlVal = cnlDataExt.d.val;
+		var mergedAndModifiedConditions = mergeAndModifyConditions(
+			props.conditions,
+		);
+		let count = 0;
 
-		for (var cond of props.conditions) {
+		for (var cond of mergedAndModifiedConditions) {
 			if (scada.scheme.calc.conditionSatisfied(cond, cnlVal)) {
 				scada.scheme.updateStyles(divComp, cond, true);
 				scada.scheme.handleBlinking(divComp, cond.blinking, true);
-				break;
+				count = count + 1;
 			} else {
-				scada.scheme.updateStyles(divComp, props, false);
-				scada.scheme.handleBlinking(divComp, cond.blinking, false);
+				if (count < 0) {
+					scada.scheme.updateStyles(divComp, props, false);
+					scada.scheme.handleBlinking(divComp, cond.blinking, false);
+				}
 			}
 		}
 	}
@@ -138,6 +194,8 @@ scada.scheme.CustomSVGRenderer.prototype.createDom = function (
 
 	var divComp = $("<div id='comp" + component.id + "'></div>");
 	this.prepareComponent(divComp, component, false, true);
+	this.setBackColor(divComp, props.backColor);
+
 	scada.scheme.applyRotation(divComp, props);
 
 	if (
