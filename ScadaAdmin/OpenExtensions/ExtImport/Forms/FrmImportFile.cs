@@ -398,7 +398,8 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
             int commentIndex = 3;
 
             string[] columns = line.Split('\t');
-            if (columns[adressIndex] == "")
+            string prefix = Regex.Split(columns[adressIndex], @"[0-9]").First();
+            if (columns[adressIndex] == "" || prefix.Length<2 || prefix[0]!='%' || prefix[1]!='M')
             {
                 return;
             }
@@ -416,11 +417,10 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
                 }
                 else
                 {
-                    MessageBox.Show("Error reading the file: the tagcode " + adress + " is already used in the file.");
+                    MessageBox.Show("Error reading the file: The tagcode " + adress + " (used in this adress : "+prefix+adress+") is used mutliple times in the file.");
                 }
             }
 
-            string prefix = Regex.Split(columns[adressIndex], @"[0-9]").First();
 
             this.importedRows.Add(adress, new List<string>
             {
