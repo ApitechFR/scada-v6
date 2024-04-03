@@ -111,8 +111,8 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
                 //If row tagcode contains a non-digit character (except prefix)
                 if (!row.Key.All(char.IsDigit))// && rowIndex > 0)
                 {
-                    //here, we are facing a row that is not a variable, but a bit, because its key is like "X.Y" and not just "X".
-                    //in this case, we have to create a variable and a channel for the "parent" value, supposed to have key "X".
+                    //here, we are facing a row that is not a variable, but a bit, because its key is like "X.Y" or "X:XY" (:X is the separator here between X and Y) and not just "X".
+                    //in this case, we have to create a variable and a channel for the "parent" value, supposed to have key "number1".
                     //we define X
                     string leftPart = Regex.Split(row.Key, @"[^0-9]")[0];
 
@@ -145,7 +145,6 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
 
                         //we add the tagcode of the current row to the splittedChannels list, to read it later
                         ghostRows.Add(leftPart, new List<string> { row.Value[0], parentRowType, row.Value[2], row.Value[3] });
-                        //continue;
                     }
                 }
             }
