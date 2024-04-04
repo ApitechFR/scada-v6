@@ -20,8 +20,6 @@ namespace Scada.Web.Plugins.PlgSchShapeComp.Code
 			CtrlCnlNum = 0;
 			InCnlNumCustom = "NA (0)";
 			CtrlCnlNumCustom = "NA (0)";
-			Width = 100;
-			Height = 130;
 		}
 
 		[DisplayName("Conditions"), Category(Categories.Behavior)]
@@ -34,19 +32,10 @@ namespace Scada.Web.Plugins.PlgSchShapeComp.Code
 		[Description("The type of SVG shape.")]
 		public string ShapeType { get; set; }
 
-		[DisplayName("Width"), Category(Categories.Appearance)]
-		[Description("The Width of SVG shape.")]
-		public int Width { get; set; }
-
 		[DisplayName("Rotation"), Category(Categories.Appearance)]
 		[Description("The rotation angle of the SVG shape in degrees.")]
 		[DefaultValue(0)]
 		public int Rotation { get; set; }
-
-		[DisplayName("Height"), Category(Categories.Appearance)]
-		[Description("The Height of SVG shape.")]
-		[DefaultValue(130)]
-		public int Height { get; set; }
 
 		/// <summary>
 		/// Get or set the input channel number
@@ -73,15 +62,12 @@ namespace Scada.Web.Plugins.PlgSchShapeComp.Code
 		[DefaultValue(0)]
 		public int CtrlCnlNum { get; set; }
 
-
-
 		/// <summary>
 		/// Get or set the control channel number custom
 		/// </summary>
 		[DisplayName("Output channel"), Category(Categories.Data)]
 		[Description("The output channel number associated with the component.")]
 		public string CtrlCnlNumCustom { get; set; }
-
 
 		/// <summary>
 		/// Get or set the action
@@ -98,8 +84,6 @@ namespace Scada.Web.Plugins.PlgSchShapeComp.Code
 			Rotation = xmlNode.GetChildAsInt("Rotation");
 			InCnlNum = xmlNode.GetChildAsInt("InCnlNum");
 			CtrlCnlNum = xmlNode.GetChildAsInt("CtrlCnlNum");
-			Width = xmlNode.GetChildAsInt("Width");
-			Height = xmlNode.GetChildAsInt("Height");
 			InCnlNumCustom = xmlNode.GetChildAsString("InCnlNumCustom");
 			CtrlCnlNumCustom = xmlNode.GetChildAsString("CtrlCnlNumCustom");
 			XmlNode conditionsNode = xmlNode.SelectSingleNode("Conditions");
@@ -131,13 +115,10 @@ namespace Scada.Web.Plugins.PlgSchShapeComp.Code
 			xmlElem.AppendElem("ShapeType", ShapeType);
 			xmlElem.AppendElem("InCnlNum", InCnlNum);
 			xmlElem.AppendElem("CtrlCnlNum", CtrlCnlNum);
-			xmlElem.AppendElem("Width", Width);
-			xmlElem.AppendElem("Height", Height);
 			xmlElem.AppendElem("InCnlNumCustom", InCnlNumCustom);
 			xmlElem.AppendElem("CtrlCnlNumCustom", CtrlCnlNumCustom);
 			xmlElem.AppendElem("Action", Action.ToString());
 		}
-
 
 		public override ComponentBase Clone()
 		{
