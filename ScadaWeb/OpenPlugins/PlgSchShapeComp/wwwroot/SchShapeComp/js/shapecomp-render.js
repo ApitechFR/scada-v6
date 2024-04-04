@@ -74,7 +74,7 @@ scada.scheme.updateStyles = function (divComp, cond, bool) {
 };
 
 scada.scheme.applyRotation = function (divComp, props) {
-	if (props.rotation && props.rotation > 0) {
+	if (props.rotation) {
 		divComp.css({
 			transform: "rotate(" + props.rotation + "deg)",
 		});
@@ -116,36 +116,40 @@ function mergeAndModifyConditions(conditions) {
 		return acc;
 	}, {});
 
-	// Fusion of each group
 	Object.values(groups).forEach((group) => {
-		let mergedCondition = group.reduce(
-			(acc, condition) => {
-				Object.keys(condition).forEach((key) => {
-					if (!criteriaFields.includes(key)) {
+		let mergedCondition = { ...group[0] };
+		group.slice(1).forEach((condition) => {
+			Object.keys(condition).forEach((key) => {
+				if (!criteriaFields.includes(key) && condition[key] != null) {
+					// for blinking attribute only
+					if (key.toLowerCase() === "blinking") {
 						if (
-							typeof condition[key] === "string" &&
-							condition[key] &&
-							!acc[key]
-						)
-							acc[key] = condition[key];
+							condition[key] !== 0 ||
+							mergedCondition[key] === undefined ||
+							mergedCondition[key] === null ||
+							mergedCondition[key] === 0
+						) {
+							mergedCondition[key] = condition[key];
+						}
+					} else {
+						// for other attributes
 						if (
-							typeof condition[key] === "number" &&
-							condition[key] > (acc[key] || 0)
-						)
-							acc[key] = condition[key];
+							mergedCondition[key] === undefined ||
+							mergedCondition[key] === null ||
+							mergedCondition[key] === ""
+						) {
+							mergedCondition[key] = condition[key];
+						}
 					}
-				});
-				return acc;
-			},
-			{ ...group[0] },
-		);
+				}
+			});
+		});
 
 		result.push(mergedCondition);
 	});
 
 	return result;
 }
-
 scada.scheme.updateComponentData = function (component, renderContext) {
 	var props = component.props;
 	if (props.inCnlNum <= 0) {
