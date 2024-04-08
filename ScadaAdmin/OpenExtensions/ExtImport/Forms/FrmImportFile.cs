@@ -431,6 +431,10 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
                         Console.WriteLine(a);
                         //get the element group linked to the element linked to the channel
                         ElemGroupConfig elemGroup = deviceTemplate.ElemGroups.FirstOrDefault(eg => eg.Elems.Any(e => e.TagCode == channel.TagCode));
+                        if(elemGroup == null)
+                        {
+                            return false;
+                        }
                         return elemGroup.DataBlock == DataBlock.DiscreteInputs && importedChannelsDataBlocks[c] == DataBlock.DiscreteInputs;
                     }
                     return false;
