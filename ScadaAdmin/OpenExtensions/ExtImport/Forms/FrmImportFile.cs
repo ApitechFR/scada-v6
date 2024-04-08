@@ -28,6 +28,8 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
         Dictionary<string, List<string>> ghostRows;
         Dictionary<string, string> ghostChildren;
         Dictionary<string, List<string>> ghostArrayElementRow;
+        Dictionary<Cnl, DataBlock> importedChannelsDataBlocks;
+        private bool preventImport = false;
 
         private readonly ScadaProject project;
         public FrmImportFile(ScadaProject prj)
@@ -44,6 +46,7 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
             ghostRows = new Dictionary<string, List<string>>();
             ghostChildren = new Dictionary<string, string>();
             ghostArrayElementRow = new Dictionary<string, List<string>>();
+            importedChannelsDataBlocks = new Dictionary<Cnl, DataBlock>();
             button1.Enabled = false;
             textBox1.Enabled = false;
             textBox2.Enabled = false;
@@ -112,7 +115,7 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
                 if (!row.Key.All(char.IsDigit))// && rowIndex > 0)
                 {
                     //here, we are facing a row that is not a variable, but a bit, because its key is like "X.Y" or "X:XY" (:X is the separator here between X and Y) and not just "X".
-                    //in this case, we have to create a variable and a channel for the "parent" value, supposed to have key "number1".
+                    //in this case, we have to create a variable and a channel for the "parent" value, supposed to have key "X".
                     //we define X
                     string leftPart = Regex.Split(row.Key, @"[^0-9]")[0];
 
@@ -281,7 +284,7 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
                         importedRows.Add(ghostRow.Key, ghostRow.Value);
                     }
                 }
-                importedChannels = GenerateChannelFrowRow(importedRows);
+                importedChannels = GenerateChannelsFrowRows();
                 //detect conflicts
                 DetectConflicts();
 
@@ -293,6 +296,7 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
                 }
                 //hide and display conflicts related labels and button container
                 panel2.Visible = hasConflicts;
+                button3.Enabled = !preventImport;
                 panel3.Visible = !hasConflicts;
                 button1.Enabled = !hasConflicts;
             }
@@ -304,7 +308,7 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
         /// <param name="rowValue"></param>
         /// <returns></returns>
 
-        private List<Cnl> GenerateChannelFrowRow(Dictionary<string, List<string>> dico)
+        private List<Cnl> GenerateChannelsFrowRows()
         {
             List<Cnl> list = new List<Cnl>();
             Dictionary<string, ElemType> elemTypeDico = ConfigDictionaries.ElemTypeDictionary;
@@ -329,6 +333,7 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
                             cnlArray.DeviceNum = selectedDevice.DeviceNum;
                             cnlArray.Active = true;
                             list.Add(cnlArray);
+                            importedChannelsDataBlocks.Add(cnlArray, elemType == ElemType.Bool ? DataBlock.DiscreteInputs : DataBlock.HoldingRegisters);
                             ghostArrayElementRow.Add(cnlArray.TagCode, new List<string> { cnlArray.Name, arrayType[2], row.Value[2], row.Value[3] });
                         }
                     }
@@ -368,6 +373,8 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
                     }
 
                     list.Add(cnl);
+                    var elemType = elemTypeDico.Keys.Contains(row.Value[1]) ? elemTypeDico[row.Value[1]] : ElemType.Undefined;
+                    importedChannelsDataBlocks.Add(cnl, elemType == ElemType.Bool ? DataBlock.DiscreteInputs : DataBlock.HoldingRegisters);
                 }
             }
 
@@ -381,9 +388,54 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
         private void DetectConflicts()
         {
 
-            conflictualChannels = project.ConfigDatabase.CnlTable.Where(channel => importedChannels.Any(c => c.TagCode == channel.TagCode && channel.DeviceNum == selectedDevice.DeviceNum)).ToList();
-        }
+            DeviceConfig currentDeviceConfig = null;
+            foreach (ProjectInstance instance in project.Instances)
+            {
+                if (instance.LoadAppConfig(out _) && instance.CommApp.Enabled)
+                {
+                    foreach (LineConfig lineConfig in instance.CommApp.AppConfig.Lines)
+                    {
+                        foreach (DeviceConfig deviceConfig in lineConfig.DevicePolling)
+                        {
+                            if (deviceConfig.DeviceNum == selectedDevice.DeviceNum)
+                            {
+                                currentDeviceConfig = deviceConfig;
+                                continue;
+                            }
+                        }
+                    }
+                }
+            }
 
+            preventImport = false;
+            conflictualChannels = project.ConfigDatabase.CnlTable.Where(channel => importedChannels.Any(
+                c =>
+                {
+                    if(preventImport)
+                    {
+                        return true;
+                    }
+                    if(c.TagCode == channel.TagCode && channel.DeviceNum == selectedDevice.DeviceNum)
+                    {
+                        //get device template from the device configuration file
+                        DeviceTemplate deviceTemplate = new DeviceTemplate();
+                        if(currentDeviceConfig == null || currentDeviceConfig.PollingOptions.CmdLine == "" || currentDeviceConfig.PollingOptions.CmdLine
+                         == null || !File.Exists(string.Format("{0}\\Instances\\Default\\ScadaComm\\Config\\{1}", project.ProjectDir, currentDeviceConfig.PollingOptions.CmdLine)))
+                        {
+                            //afficher une popup pour dire que le fichier de configuration du device n'existe pas
+                            MessageBox.Show("Channel n°"+channel.CnlNum+" is linked to a device n°"+ selectedDevice.DeviceNum+", but no configuration file was found for this device. The detection of conflicts cannot be performed.");
+                            preventImport = true;
+                            return true;
+                        }
+                        deviceTemplate.Load(string.Format("{0}\\Instances\\Default\\ScadaComm\\Config\\{1}", project.ProjectDir, currentDeviceConfig.PollingOptions.CmdLine), out string a);
+                        Console.WriteLine(a);
+                        //get the element group linked to the element linked to the channel
+                        ElemGroupConfig elemGroup = deviceTemplate.ElemGroups.FirstOrDefault(eg => eg.Elems.Any(e => e.TagCode == channel.TagCode));
+                        return elemGroup.DataBlock == DataBlock.DiscreteInputs && importedChannelsDataBlocks[c] == DataBlock.DiscreteInputs;
+                    }
+                    return false;
+                    })).ToList();
+        }
 
         /// <summary>
         /// Read a line from an automate file
@@ -391,6 +443,7 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
         /// <param name="l"></param>
         private void readAutomateLine(string line, bool isPL7)
         {
+            Dictionary<string, ElemType> elemTypeDico = ConfigDictionaries.ElemTypeDictionary;
             int adressIndex = isPL7 ? 0 : 1;
             int mnemoniqueIndex = isPL7 ? 1 : 0;
             int typeIndex = 2;
