@@ -11,7 +11,7 @@ namespace Scada.Web.Plugins.PlgSchShapeComp.Code.PropertyGrid
 		
 		public BarGraphConditions() : base()
 		{
-			FillColor = "";
+			FillColor = "None";
 		}
 
 		[DisplayName("Fill Color"), Category(Categories.Appearance)]
@@ -26,7 +26,7 @@ namespace Scada.Web.Plugins.PlgSchShapeComp.Code.PropertyGrid
 		public override void SaveToXml(XmlElement xmlElem)
 		{
 			base.SaveToXml(xmlElem);
-			xmlElem.AppendElem("FillColor", FillColor);
+			xmlElem.AppendElem("FillColor", string.IsNullOrEmpty(FillColor) ? "None" : FillColor);
 		}
 
 		public override object Clone()
