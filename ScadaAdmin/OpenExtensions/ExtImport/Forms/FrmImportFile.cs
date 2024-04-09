@@ -353,11 +353,11 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
                     cnl.Active = true;
 
                     //if it is a children of ghost row
-                    if (ghostRows.ContainsKey(row.Key.Split('.')[0]) && !ghostRows.ContainsKey(row.Key))
+                    if (ghostRows.ContainsKey(new string(row.Key.TakeWhile(c => char.IsDigit(c)).ToArray())) && !ghostRows.ContainsKey(row.Key))
                     {
                         cnl.FormulaEnabled = true;
                         if (!ghostChildren.ContainsKey(cnl.Name))
-                            ghostChildren.Add(cnl.Name, row.Key.Split('.')[0]);
+                            ghostChildren.Add(cnl.Name, new string(row.Key.TakeWhile(c => char.IsDigit(c)).ToArray()));
 
                         //set type to "calculated"
                         cnl.CnlTypeID = 3;
@@ -865,7 +865,8 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
             {
                 if (template.ElemGroups[i].Elems.Count > 0)
                 {
-                    template.ElemGroups[i].Elems.Sort((x, y) => int.Parse(x.TagCode.Split('.')[0]) - int.Parse(y.TagCode.Split('.')[0]));
+
+                    template.ElemGroups[i].Elems.Sort((x, y) => int.Parse(new string(x.TagCode.TakeWhile(c => char.IsDigit(c)).ToArray())) - int.Parse(new string(y.TagCode.TakeWhile(c => char.IsDigit(c)).ToArray())));
                     template.ElemGroups[i].Address = int.Parse(Regex.Replace(template.ElemGroups[i].Elems[0].TagCode, @"[^0-9]", "")) - 1 + (textBox4.Text == "" ? 0 : int.Parse(textBox4.Text));
                 }
             }
