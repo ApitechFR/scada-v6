@@ -124,27 +124,6 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
                     //we have to define the length of the list, to know what type to choose for the variable with key "X"
                     if (!ghostRows.Keys.Contains(leftPart))
                     {
-                        //_______________________________________________________
-                        //////////////int bitListLength = 0;
-                        //////////////string rLeftPart = leftPart;
-                        //////////////while (rLeftPart == leftPart && (rowIndex + bitListLength - 1) < importedRows.Count() - 1)
-                        //////////////{
-                        //////////////    bitListLength++;
-                        //////////////    KeyValuePair<string, List<string>> r = importedRows.ElementAt(rowIndex + bitListLength - 1);
-                        //////////////    rLeftPart = Regex.Split(r.Key, @"[^0-9]")[0];
-                        //////////////}
-
-                        ////////////////now we know the length of the bit list, we can deduce the type of the variable with key "X"
-                        //////////////string parentRowType = "";
-                        //////////////foreach (KeyValuePair<string, ElemType> type in elemTypeDico)
-                        //////////////{
-                        //////////////    if (ModbusUtils.GetDataLength(type.Value) == bitListLength / 8)
-                        //////////////    {
-                        //////////////        parentRowType = type.Key;
-                        //////////////        break;
-                        //////////////    }
-                        //////////////}
-                        //_______________________________________________________
                         string parentRowType = "WORD";
                         switch(row.Value[3])
                         {
@@ -299,8 +278,6 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
                 {
                     if (!importedRows.ContainsKey(ghostRow.Key))
                     {
-                        //ghostRow.Value[0] = ghostRow.Value[0].Substring(0, ghostRow.Value[0].Length - 1);
-                        //ghostRow.Value[2] = ghostRow.Value[2].Substring(0, ghostRow.Value[2].Length - 1);
                         importedRows.Add(ghostRow.Key, ghostRow.Value);
                     }
                 }
@@ -444,7 +421,6 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
                         if(currentDeviceConfig == null || currentDeviceConfig.PollingOptions.CmdLine == "" || currentDeviceConfig.PollingOptions.CmdLine
                          == null || !File.Exists(string.Format("{0}\\Instances\\Default\\ScadaComm\\Config\\{1}", project.ProjectDir, currentDeviceConfig.PollingOptions.CmdLine)))
                         {
-                            //afficher une popup pour dire que le fichier de configuration du device n'existe pas
                             MessageBox.Show("Channel n°"+channel.CnlNum+" is linked to a device n°"+ selectedDevice.DeviceNum+", but no configuration file was found for this device. The detection of conflicts cannot be performed.");
                             preventImport = true;
                             return true;
