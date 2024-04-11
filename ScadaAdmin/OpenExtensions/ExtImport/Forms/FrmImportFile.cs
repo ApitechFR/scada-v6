@@ -112,7 +112,7 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
                 var prefix = row.Value[3] ?? "";
                 
                 //If row tagcode contains a non-digit character (except prefix)
-                if (!row.Value[4].All(char.IsDigit))// && rowIndex > 0)
+                if (!row.Value[4].All(char.IsDigit))
                 {
                     //here, we are facing a row that is not a variable, but a bit, because its key is like "X.Y" or "X:XY" (:X is the separator here between X and Y) and not just "X".
                     //in this case, we have to create a variable and a channel for the "parent" value, supposed to have key "X".
