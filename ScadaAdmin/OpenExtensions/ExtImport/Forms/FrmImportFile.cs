@@ -28,6 +28,8 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
         Dictionary<string, List<string>> ghostRows;
         Dictionary<string, string> ghostChildren;
         Dictionary<string, List<string>> ghostArrayElementRow;
+        Dictionary<Cnl, DataBlock> importedChannelsDataBlocks;
+        private bool preventImport = false;
 
         private readonly ScadaProject project;
         public FrmImportFile(ScadaProject prj)
@@ -44,6 +46,7 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
             ghostRows = new Dictionary<string, List<string>>();
             ghostChildren = new Dictionary<string, string>();
             ghostArrayElementRow = new Dictionary<string, List<string>>();
+            importedChannelsDataBlocks = new Dictionary<Cnl, DataBlock>();
             button1.Enabled = false;
             textBox1.Enabled = false;
             textBox2.Enabled = false;
@@ -107,45 +110,41 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
             {
                 var row = importedRows.ElementAt(i);
                 var prefix = row.Value[3] ?? "";
-                int rowIndex = importedRows.Keys.ToList().IndexOf(row.Key);
+                
                 //If row tagcode contains a non-digit character (except prefix)
-                if (!row.Key.All(char.IsDigit))// && rowIndex > 0)
+                if (!row.Value[4].All(char.IsDigit))
                 {
-                    //here, we are facing a row that is not a variable, but a bit, because its key is like "X.Y" and not just "X".
+                    //here, we are facing a row that is not a variable, but a bit, because its key is like "X.Y" or "X:XY" (:X is the separator here between X and Y) and not just "X".
                     //in this case, we have to create a variable and a channel for the "parent" value, supposed to have key "X".
                     //we define X
-                    string leftPart = Regex.Split(row.Key, @"[^0-9]")[0];
+                    string leftPart = row.Value[3]+Regex.Split(row.Value[4], @"[^0-9]")[0];
 
                     //if no other row has key "X", it means we are watching the first row of a list of bits. 
                     //we have to define the length of the list, to know what type to choose for the variable with key "X"
                     if (!ghostRows.Keys.Contains(leftPart))
                     {
-                        int bitListLength = 0;
-                        string rLeftPart = leftPart;
-                        while (rLeftPart == leftPart && (rowIndex + bitListLength - 1) < importedRows.Count() - 1)
+                        string parentRowType = "WORD";
+                        switch(row.Value[3])
                         {
-                            bitListLength++;
-                            KeyValuePair<string, List<string>> r = importedRows.ElementAt(rowIndex + bitListLength - 1);
-                            rLeftPart = Regex.Split(r.Key, @"[^0-9]")[0];
-                        }
-
-                        //now we know the length of the bit list, we can deduce the type of the variable with key "X"
-                        string parentRowType = "";
-                        foreach (KeyValuePair<string, ElemType> type in elemTypeDico)
-                        {
-                            if (ModbusUtils.GetDataLength(type.Value) == bitListLength / 8)
-                            {
-                                parentRowType = type.Key;
+                            case "%M":
+                                parentRowType = "BOOL";
                                 break;
-                            }
+                            case "%MW":
+                                parentRowType = "WORD";
+                                break;
+                            case "%MD":
+                                parentRowType = "DWORD";
+                                break;
+                            case "%MF":
+                                parentRowType = "FLOAT";
+                                break;
                         }
 
                         //from here, we know the type of the variable with key "X", so we can create it
                         //importedRows.Add(leftPart, new List<string> { row.Value[0], parentRowType, row.Value[2], row.Value[3] });
 
                         //we add the tagcode of the current row to the splittedChannels list, to read it later
-                        ghostRows.Add(leftPart, new List<string> { row.Value[0], parentRowType, row.Value[2], row.Value[3] });
-                        //continue;
+                        ghostRows.Add(leftPart, new List<string> { row.Value[0], parentRowType, row.Value[2], row.Value[3], row.Value[4]});
                     }
                 }
             }
@@ -202,6 +201,7 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
         /// <param name="fileName"></param>
         private void readFile(string fileName)
         {
+            preventImport = false;
             using (StreamReader sr = new StreamReader(fileName))
             {
                 if (Path.GetExtension(fileName) == ".txt" || Path.GetExtension(fileName) == ".TXT")
@@ -277,12 +277,10 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
                 {
                     if (!importedRows.ContainsKey(ghostRow.Key))
                     {
-                        ghostRow.Value[0] = ghostRow.Value[0].Substring(0, ghostRow.Value[0].Length - 1);
-                        ghostRow.Value[2] = ghostRow.Value[2].Substring(0, ghostRow.Value[2].Length - 1);
                         importedRows.Add(ghostRow.Key, ghostRow.Value);
                     }
                 }
-                importedChannels = GenerateChannelFrowRow(importedRows);
+                importedChannels = GenerateChannelsFrowRows();
                 //detect conflicts
                 DetectConflicts();
 
@@ -294,6 +292,7 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
                 }
                 //hide and display conflicts related labels and button container
                 panel2.Visible = hasConflicts;
+                button3.Enabled = !preventImport;
                 panel3.Visible = !hasConflicts;
                 button1.Enabled = !hasConflicts;
             }
@@ -305,7 +304,7 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
         /// <param name="rowValue"></param>
         /// <returns></returns>
 
-        private List<Cnl> GenerateChannelFrowRow(Dictionary<string, List<string>> dico)
+        private List<Cnl> GenerateChannelsFrowRows()
         {
             List<Cnl> list = new List<Cnl>();
             Dictionary<string, ElemType> elemTypeDico = ConfigDictionaries.ElemTypeDictionary;
@@ -325,12 +324,13 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
                         {
                             Cnl cnlArray = new Cnl();
                             cnlArray.Name = string.Format("{0}_{1}", row.Value[0], j);
-                            cnlArray.TagCode = string.Format("{0}", decimal.Parse(row.Key) + (dataLength == 1 ? dataLength * j : Math.Ceiling(dataLength * j / 2)));
+                            cnlArray.TagCode = string.Format("{0}{1}", row.Value[3], decimal.Parse(row.Value[4]) + (dataLength == 1 ? dataLength * j : Math.Ceiling(dataLength * j / 2)));
                             cnlArray.CnlTypeID = 2;
                             cnlArray.DeviceNum = selectedDevice.DeviceNum;
                             cnlArray.Active = true;
                             list.Add(cnlArray);
-                            ghostArrayElementRow.Add(cnlArray.TagCode, new List<string> { cnlArray.Name, arrayType[2], row.Value[2], row.Value[3] });
+                            importedChannelsDataBlocks.Add(cnlArray, elemType == ElemType.Bool ? DataBlock.DiscreteInputs : DataBlock.HoldingRegisters);
+                            ghostArrayElementRow.Add(cnlArray.TagCode, new List<string> { cnlArray.Name, arrayType[2], row.Value[2], row.Value[3], row.Value[4] });
                         }
                     }
                     catch (Exception e)
@@ -349,11 +349,13 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
                     cnl.Active = true;
 
                     //if it is a children of ghost row
-                    if (ghostRows.ContainsKey(row.Key.Split('.')[0]) && !ghostRows.ContainsKey(row.Key))
+                    if (ghostRows.ContainsKey(row.Value[3]+new string(row.Value[4].TakeWhile(c => char.IsDigit(c)).ToArray())) && !ghostRows.ContainsKey(row.Key))
                     {
                         cnl.FormulaEnabled = true;
-                        if (!ghostChildren.ContainsKey(cnl.Name))
-                            ghostChildren.Add(cnl.Name, row.Key.Split('.')[0]);
+                        if (!ghostChildren.ContainsKey(row.Key))
+                        {
+                            ghostChildren.Add(row.Key, row.Value[3] + new string(row.Value[4].TakeWhile(c => char.IsDigit(c)).ToArray()));
+                        }
 
                         //set type to "calculated"
                         cnl.CnlTypeID = 3;
@@ -369,6 +371,8 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
                     }
 
                     list.Add(cnl);
+                    var elemType = elemTypeDico.Keys.Contains(row.Value[1]) ? elemTypeDico[row.Value[1]] : ElemType.Undefined;
+                    importedChannelsDataBlocks.Add(cnl, elemType == ElemType.Bool ? DataBlock.DiscreteInputs : DataBlock.HoldingRegisters);
                 }
             }
 
@@ -382,9 +386,62 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
         private void DetectConflicts()
         {
 
-            conflictualChannels = project.ConfigDatabase.CnlTable.Where(channel => importedChannels.Any(c => c.TagCode == channel.TagCode && channel.DeviceNum == selectedDevice.DeviceNum)).ToList();
-        }
+            DeviceConfig currentDeviceConfig = null;
+            foreach (ProjectInstance instance in project.Instances)
+            {
+                if (instance.LoadAppConfig(out _) && instance.CommApp.Enabled)
+                {
+                    foreach (LineConfig lineConfig in instance.CommApp.AppConfig.Lines)
+                    {
+                        foreach (DeviceConfig deviceConfig in lineConfig.DevicePolling)
+                        {
+                            if (deviceConfig.DeviceNum == selectedDevice.DeviceNum)
+                            {
+                                currentDeviceConfig = deviceConfig;
+                                continue;
+                            }
+                        }
+                    }
+                }
+            }
 
+            preventImport = false;
+            conflictualChannels = project.ConfigDatabase.CnlTable.Where(channel => importedChannels.Any(
+                c =>
+                {
+                    if(preventImport)
+                    {
+                        return true;
+                    }
+                    if(c.TagCode == channel.TagCode && channel.DeviceNum == selectedDevice.DeviceNum)
+                    {
+                        //get device template from the device configuration file
+                        DeviceTemplate deviceTemplate = new DeviceTemplate();
+                        if(currentDeviceConfig == null || currentDeviceConfig.PollingOptions.CmdLine == "" || currentDeviceConfig.PollingOptions.CmdLine
+                         == null || !File.Exists(string.Format("{0}\\Instances\\Default\\ScadaComm\\Config\\{1}", project.ProjectDir, currentDeviceConfig.PollingOptions.CmdLine)))
+                        {
+                            MessageBox.Show("Channel n°"+channel.CnlNum+" is linked to a device n°"+ selectedDevice.DeviceNum+", but no configuration file was found for this device. The detection of conflicts cannot be performed.");
+                            preventImport = true;
+                            return true;
+                        }
+                        string tagCodeWithoutPrefix = new string(channel.TagCode.SkipWhile(c => !char.IsDigit(c)).ToArray());
+                        if(!tagCodeWithoutPrefix.All(char.IsDigit))
+                        {
+                            return true;
+                        }
+                        deviceTemplate.Load(string.Format("{0}\\Instances\\Default\\ScadaComm\\Config\\{1}", project.ProjectDir, currentDeviceConfig.PollingOptions.CmdLine), out string a);
+                        Console.WriteLine(a);
+                        //get the element group linked to the element linked to the channel
+                        ElemGroupConfig elemGroup = deviceTemplate.ElemGroups.FirstOrDefault(eg => eg.Elems.Any(e => e.TagCode == channel.TagCode));
+                        if(elemGroup == null)
+                        {
+                            return false;
+                        }
+                        return (elemGroup.DataBlock == DataBlock.DiscreteInputs) == (importedChannelsDataBlocks[c] == DataBlock.DiscreteInputs);
+                    }
+                    return false;
+                    })).ToList();
+        }
 
         /// <summary>
         /// Read a line from an automate file
@@ -392,42 +449,45 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
         /// <param name="l"></param>
         private void readAutomateLine(string line, bool isPL7)
         {
+            Dictionary<string, ElemType> elemTypeDico = ConfigDictionaries.ElemTypeDictionary;
             int adressIndex = isPL7 ? 0 : 1;
             int mnemoniqueIndex = isPL7 ? 1 : 0;
             int typeIndex = 2;
             int commentIndex = 3;
 
             string[] columns = line.Split('\t');
-            if (columns[adressIndex] == "")
+            string prefix = Regex.Split(columns[adressIndex], @"[0-9]").First();
+            if (columns[adressIndex] == "" || prefix.Length<2 || prefix[0]!='%' || prefix[1]!='M')
             {
                 return;
             }
 
             string adress = new string(columns[adressIndex].SkipWhile(x => !char.IsDigit(x)).ToArray());
-            if (importedRows.ContainsKey(adress))
+            if (importedRows.ContainsKey(columns[adressIndex]) && importedRows[columns[adressIndex]][3] == prefix)
             {
                 if (columns[typeIndex].Contains("ARRAY"))
                 {
                     return;
                 }
-                else if (importedRows[adress][1].Contains("ARRAY"))
+                else if (importedRows[columns[adressIndex]][1].Contains("ARRAY"))
                 {
-                    importedRows.Remove(adress);
+                    importedRows.Remove(columns[adressIndex]);
                 }
                 else
                 {
-                    MessageBox.Show("Error reading the file: the tagcode " + adress + " is already used in the file.");
+                    MessageBox.Show("Error reading the file: The tagcode " + columns[adressIndex] + " is used multiple times in the file.");
+                    preventImport = true;
+                    return;
                 }
             }
 
-            string prefix = Regex.Split(columns[adressIndex], @"[0-9]").First();
-
-            this.importedRows.Add(adress, new List<string>
+            this.importedRows.Add(prefix+adress, new List<string>
             {
                 columns[mnemoniqueIndex],
                 columns[typeIndex],
                 columns[commentIndex].Replace("\"", ""),
-                prefix
+                prefix,
+                adress
             });
         }
 
@@ -479,15 +539,44 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
                 {
                     cnl.CnlNum = project.ConfigDatabase.CnlTable.Count() > 0 ? project.ConfigDatabase.CnlTable.OrderBy(cnl => cnl.CnlNum).Last().CnlNum + 1 : 1;
                 }
+                //If the channel already exists in the project
+                //The user already chosed the channels to keep in the merge form, but some channels were not present in the merge form because they were deduced after
+                if (project.ConfigDatabase.CnlTable.Any(c => c.DeviceNum == selectedDevice.DeviceNum && c.TagCode == cnl.TagCode))
+                {
+                    //If the channel was deduced from a range of bits
+                    if (ghostRows.ContainsKey(cnl.TagCode))
+                    {
+                        continue;
+                    }
+                    //If the channel is an array element
+                    if (ghostArrayElementRow.ContainsKey(cnl.TagCode))
+                    {
+                        //we delete the existing channel
+                        var existingCnl = project.ConfigDatabase.CnlTable.FirstOrDefault(c => c.DeviceNum == selectedDevice.DeviceNum && c.TagCode == cnl.TagCode);
+                        if (existingCnl != null)
+                        {
+                            cnl.CnlNum = existingCnl.CnlNum;
+                            project.ConfigDatabase.CnlTable.RemoveItem(existingCnl.CnlNum);
+                            project.ConfigDatabase.CnlTable.AddItem(cnl);
+                            continue;
+                        }
+                    }
+                }
                 project.ConfigDatabase.CnlTable.AddItem(cnl);
+                
             }
             int count = 0;
-            foreach (Cnl cnl in project.ConfigDatabase.CnlTable)
+            foreach (Cnl cnl in project.ConfigDatabase.CnlTable.Where(c=>c.DeviceNum == selectedDevice.DeviceNum))
             {
                 //add formula
-                if (cnl.FormulaEnabled && ghostChildren.ContainsKey(cnl.Name))
+                if (cnl.FormulaEnabled && ghostChildren.ContainsKey(cnl.TagCode))
                 {
-                    Cnl parent = cnls.FirstOrDefault(t => t.TagCode == ghostChildren[cnl.Name] && !t.FormulaEnabled);
+                    
+                    Cnl parent = project.ConfigDatabase.CnlTable.FirstOrDefault(t => t.DeviceNum == selectedDevice.DeviceNum && t.TagCode == ghostChildren[cnl.TagCode] && !t.FormulaEnabled);
+                    if(parent == null)
+                    {
+                        parent = cnls.FirstOrDefault(t => t.TagCode == ghostChildren[cnl.TagCode] && !t.FormulaEnabled);
+                    }
                     if (parent != null)
                     {
                         cnl.InFormula = $"GetBit(Val({parent.CnlNum}),{count})";
@@ -733,7 +822,7 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
                                     break;
                             }
                             newElemArray.Name = string.Format("{0}_{1}", row.Value[0], j);
-                            newElemArray.TagCode = string.Format("{0}", decimal.Parse(row.Key) +(dataLength==1 ? dataLength * j:Math.Ceiling(dataLength * j / 2)));
+                            newElemArray.TagCode = string.Format("{0}{1}", row.Value[3],decimal.Parse(row.Value[4]) +(dataLength==1 ? dataLength * j:Math.Ceiling(dataLength * j / 2)));
                             newElemenGroup.Elems.Add(newElemArray);
                         }
                     }
@@ -745,8 +834,8 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
                 }
                 else
                 {
-                    //if it isn't a child of a ghost row 
-                    if (row.Key.Contains('.'))
+                    //if it is a child of a ghost row 
+                    if (row.Value[4] != new string(row.Value[4].TakeWhile(c => char.IsDigit(c)).ToArray()))
                     {
                         continue;
                     }
@@ -809,7 +898,12 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
             {
                 if (template.ElemGroups[i].Elems.Count > 0)
                 {
-                    template.ElemGroups[i].Elems.Sort((x, y) => int.Parse(x.TagCode.Split('.')[0]) - int.Parse(y.TagCode.Split('.')[0]));
+                    template.ElemGroups[i].Elems.Sort((x, y) =>
+                    {
+                        string xtagCodeWithoutPrefix = new string(x.TagCode.SkipWhile(c => !char.IsDigit(c)).ToArray());
+                        string ytagCodeWithoutPrefix = new string(y.TagCode.SkipWhile(c => !char.IsDigit(c)).ToArray());
+                        return int.Parse(new string(xtagCodeWithoutPrefix.TakeWhile(c => char.IsDigit(c)).ToArray())) - int.Parse(new string(ytagCodeWithoutPrefix.TakeWhile(c => char.IsDigit(c)).ToArray()));
+                        });
                     template.ElemGroups[i].Address = int.Parse(Regex.Replace(template.ElemGroups[i].Elems[0].TagCode, @"[^0-9]", "")) - 1 + (textBox4.Text == "" ? 0 : int.Parse(textBox4.Text));
                 }
             }
