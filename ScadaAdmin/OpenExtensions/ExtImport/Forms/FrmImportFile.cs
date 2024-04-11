@@ -449,6 +449,11 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
                             preventImport = true;
                             return true;
                         }
+                        string tagCodeWithoutPrefix = new string(channel.TagCode.SkipWhile(c => !char.IsDigit(c)).ToArray());
+                        if(!tagCodeWithoutPrefix.All(char.IsDigit))
+                        {
+                            return true;
+                        }
                         deviceTemplate.Load(string.Format("{0}\\Instances\\Default\\ScadaComm\\Config\\{1}", project.ProjectDir, currentDeviceConfig.PollingOptions.CmdLine), out string a);
                         Console.WriteLine(a);
                         //get the element group linked to the element linked to the channel
@@ -457,7 +462,7 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
                         {
                             return false;
                         }
-                        return elemGroup.DataBlock == DataBlock.DiscreteInputs && importedChannelsDataBlocks[c] == DataBlock.DiscreteInputs;
+                        return (elemGroup.DataBlock == DataBlock.DiscreteInputs) == (importedChannelsDataBlocks[c] == DataBlock.DiscreteInputs);
                     }
                     return false;
                     })).ToList();
@@ -559,7 +564,31 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
                 {
                     cnl.CnlNum = project.ConfigDatabase.CnlTable.Count() > 0 ? project.ConfigDatabase.CnlTable.OrderBy(cnl => cnl.CnlNum).Last().CnlNum + 1 : 1;
                 }
+                //If the channel already exists in the project
+                //The user already chosed the channels to keep in the merge form, but some channels were not present in the merge form because they were deduced after
+                if (project.ConfigDatabase.CnlTable.Any(c => c.DeviceNum == selectedDevice.DeviceNum && c.TagCode == cnl.TagCode))
+                {
+                    //If the channel was deduced from a range of bits
+                    if (ghostRows.ContainsKey(cnl.TagCode))
+                    {
+                        continue;
+                    }
+                    //If the channel is an array element
+                    if (ghostArrayElementRow.ContainsKey(cnl.TagCode))
+                    {
+                        //we delete the existing channel
+                        var existingCnl = project.ConfigDatabase.CnlTable.FirstOrDefault(c => c.DeviceNum == selectedDevice.DeviceNum && c.TagCode == cnl.TagCode);
+                        if (existingCnl != null)
+                        {
+                            cnl.CnlNum = existingCnl.CnlNum;
+                            project.ConfigDatabase.CnlTable.RemoveItem(existingCnl.CnlNum);
+                            project.ConfigDatabase.CnlTable.AddItem(cnl);
+                            continue;
+                        }
+                    }
+                }
                 project.ConfigDatabase.CnlTable.AddItem(cnl);
+                
             }
             int count = 0;
             foreach (Cnl cnl in project.ConfigDatabase.CnlTable.Where(c=>c.DeviceNum == selectedDevice.DeviceNum))
@@ -567,7 +596,12 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
                 //add formula
                 if (cnl.FormulaEnabled && ghostChildren.ContainsKey(cnl.TagCode))
                 {
-                    Cnl parent = cnls.FirstOrDefault(t => t.TagCode == ghostChildren[cnl.TagCode] && !t.FormulaEnabled);
+                    
+                    Cnl parent = project.ConfigDatabase.CnlTable.FirstOrDefault(t => t.DeviceNum == selectedDevice.DeviceNum && t.TagCode == ghostChildren[cnl.TagCode] && !t.FormulaEnabled);
+                    if(parent == null)
+                    {
+                        parent = cnls.FirstOrDefault(t => t.TagCode == ghostChildren[cnl.TagCode] && !t.FormulaEnabled);
+                    }
                     if (parent != null)
                     {
                         cnl.InFormula = $"GetBit(Val({parent.CnlNum}),{count})";
