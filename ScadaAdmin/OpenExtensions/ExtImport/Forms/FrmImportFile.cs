@@ -110,7 +110,6 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
             {
                 var row = importedRows.ElementAt(i);
                 var prefix = row.Value[3] ?? "";
-                //int rowIndex = importedRows.Keys.ToList().IndexOf(row.Key);
                 
                 //If row tagcode contains a non-digit character (except prefix)
                 if (!row.Value[4].All(char.IsDigit))// && rowIndex > 0)
