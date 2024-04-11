@@ -31,21 +31,38 @@ scada.scheme.handleBlinking = function (divComp, blinking, bool) {
 	}
 };
 scada.scheme.updateStyles = function (divComp, cond, bool) {
-	if ('color' in cond) {
+	if ("color" in cond) {
 		divComp.css("color", cond.color);
 	}
-	if ('rotation' in cond) {
+	if ("rotation" in cond) {
 		divComp.css("transform", "rotate(" + cond.rotation + "deg)");
 	}
 
-	if ('backgroundColor' in cond) {
-		if (bool) {
-			divComp.css("background-color", cond.backgroundColor);
+	if ("backgroundColor" in cond || "backColor" in cond) {
+		var lineChild = divComp.find(".line");
+
+		if (lineChild.length > 0) {
+			if (bool) {
+				lineChild.css("background-color", cond.backgroundColor);
+			} else {
+				lineChild.css(
+					"background-color",
+					cond.backColor ? String(cond.backColor) : "",
+				);
+			}
 		} else {
-			divComp.css("background-color", cond.backColor ? String(cond.backColor) : "");
+			if (bool) {
+				divComp.css("background-color", cond.backgroundColor);
+			} else {
+				divComp.css(
+					"background-color",
+					cond.backColor ? String(cond.backColor) : "",
+				);
+			}
 		}
 	}
-	if ('isVisible' in cond) {
+
+	if ("isVisible" in cond) {
 		if (bool) {
 			divComp.css("visibility", cond.isVisible ? "visible" : "hidden");
 		} else {
@@ -53,7 +70,7 @@ scada.scheme.updateStyles = function (divComp, cond, bool) {
 		}
 	}
 
-	if ('width' in cond) {
+	if ("width" in cond) {
 		if (bool) {
 			divComp.css("width", cond.width);
 		} else {
@@ -61,7 +78,7 @@ scada.scheme.updateStyles = function (divComp, cond, bool) {
 		}
 	}
 
-	if ('height' in cond) {
+	if ("height" in cond) {
 		if (bool) {
 			divComp.css("height", cond.height);
 		} else {
@@ -70,9 +87,8 @@ scada.scheme.updateStyles = function (divComp, cond, bool) {
 	}
 };
 
-
 scada.scheme.applyRotation = function (divComp, props) {
-	if (props.rotation && props.rotation > 0) {
+	if (props.rotation) {
 		divComp.css({
 			transform: "rotate(" + props.rotation + "deg)",
 		});
@@ -96,6 +112,34 @@ scada.scheme.updateColors = function (divComp, cnlDataExt, isHovered, props) {
 	setBorderColor(divComp, borderColor, true, statusColor);
 };
 
+function mergeWithPriorityToFirst(conditions) {
+	let mergedCondition = {};
+
+	for (let condition of conditions) {
+		Object.keys(condition).forEach((key) => {
+			if (
+				key === "compareOperator1" ||
+				key === "compareArgument1" ||
+				key === "logicalOperator" ||
+				key === "compareOperator2" ||
+				key === "compareArgument2"
+			) {
+				return;
+			}
+			if (
+				mergedCondition[key] === undefined ||
+				mergedCondition[key] === null ||
+				mergedCondition[key] === "" ||
+				mergedCondition[key] === "None" ||
+				(key === "isVisible" && typeof condition[key] === "boolean")
+			) {
+				mergedCondition[key] = condition[key];
+			}
+		});
+	}
+
+	return mergedCondition;
+}
 scada.scheme.updateComponentData = function (component, renderContext) {
 	var props = component.props;
 	if (props.inCnlNum <= 0) {
@@ -107,16 +151,23 @@ scada.scheme.updateComponentData = function (component, renderContext) {
 	if (props.conditions && cnlDataExt.d.stat > 0) {
 		var cnlVal = cnlDataExt.d.val;
 
+		let condSastifieds = [];
+		let notSatisfieds = [];
 		for (var cond of props.conditions) {
 			if (scada.scheme.calc.conditionSatisfied(cond, cnlVal)) {
-				scada.scheme.updateStyles(divComp, cond, true);
-				scada.scheme.handleBlinking(divComp, cond.blinking, true);
-				break;
+				condSastifieds.push(cond);
 			} else {
-				scada.scheme.updateStyles(divComp, props, false);
-				scada.scheme.handleBlinking(divComp, cond.blinking, false);
+				notSatisfieds.push(cond);
 			}
 		}
+		let mergeWithPriority = mergeWithPriorityToFirst(condSastifieds);
+		scada.scheme.updateStyles(divComp, mergeWithPriority, true);
+		scada.scheme.handleBlinking(divComp, mergeWithPriority.blinking, true);
+
+		notSatisfieds.forEach((notScondSastified) => {
+			scada.scheme.updateStyles(divComp, props, false);
+			scada.scheme.handleBlinking(divComp, notScondSastified.blinking, false);
+		});
 	}
 };
 
@@ -138,6 +189,8 @@ scada.scheme.CustomSVGRenderer.prototype.createDom = function (
 
 	var divComp = $("<div id='comp" + component.id + "'></div>");
 	this.prepareComponent(divComp, component, false, true);
+	this.setBackColor(divComp, props.backColor);
+
 	scada.scheme.applyRotation(divComp, props);
 
 	if (
