@@ -29,9 +29,9 @@
 	<Reference Include="ScadaServerCommon">
       <HintPath>..\..\ScadaAdmin\ScadaAdminCommon\bin\Release\net6.0-windows\ScadaServerCommon.dll</HintPath>
 	</Reference>
-	  <Reference Include="DrvModbus.Common">
-		  <HintPath>..\..\ScadaAdmin\ScadaAdmin\bin\Release\net6.0-windows\Lib\DrvModbus.Common.dll</HintPath>
-	  </Reference>
+	<Reference Include="DrvModbus.Common">
+		<HintPath>..\..\ScadaAdmin\ScadaAdmin\bin\Release\net6.0-windows\Lib\DrvModbus.Common.dll</HintPath>
+	</Reference>
   </ItemGroup>
 
   <ItemGroup>
@@ -50,11 +50,20 @@
     <Compile Update="Forms\FrmCnlsMerge.cs">
       <SubType>Form</SubType>
     </Compile>
+    <Compile Update="Properties\Settings.Designer.cs">
+      <DesignTimeSharedInput>True</DesignTimeSharedInput>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Settings.settings</DependentUpon>
+    </Compile>
   </ItemGroup>
 
   <ItemGroup>
     <None Update="Lang\ExtImport.en-GB.xml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Properties\Settings.settings">
+      <Generator>SettingsSingleFileGenerator</Generator>
+      <LastGenOutput>Settings.Designer.cs</LastGenOutput>
     </None>
   </ItemGroup>
 
