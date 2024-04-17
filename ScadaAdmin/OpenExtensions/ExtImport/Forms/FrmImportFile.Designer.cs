@@ -366,6 +366,7 @@
             textBox4.Size = new Size(41, 27);
             textBox4.TabIndex = 0;
             textBox4.TextChanged += textBox4_TextChanged;
+            textBox4.Leave += textBox4_Leave;
             // 
             // FrmImportFile
             // 
