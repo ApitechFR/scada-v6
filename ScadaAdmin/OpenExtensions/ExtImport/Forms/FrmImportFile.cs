@@ -617,18 +617,24 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
         /// <param name="e"></param>
         private void button1_Click(object sender, EventArgs e)
         {
-
-            //Then, we generate a device configuration according to imported rows
-            bool doNext = ImportDeviceConfiguration();
-
-            if (doNext)
+            if (string.IsNullOrEmpty(textBox4.Text))
             {
-                //save the default byte order in project config
-                string extImportConfigPath = string.Format("{0}\\Instances\\Default\\ExtImport\\extImportConfig.xml", project.ProjectDir);
-                SaveExtImportConfig(extImportConfigPath);
+                MessageBox.Show("Please fill the adress gap input", "Warning", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+            else
+            {
+                //Then, we generate a device configuration according to imported rows
+                bool doNext = ImportDeviceConfiguration();
 
-                //Finally, we close the form
-                DialogResult = DialogResult.OK;
+                if (doNext)
+                {
+                    //save the default byte order in project config
+                    string extImportConfigPath = string.Format("{0}\\Instances\\Default\\ExtImport\\extImportConfig.xml", project.ProjectDir);
+                    SaveExtImportConfig(extImportConfigPath);
+
+                    //Finally, we close the form
+                    DialogResult = DialogResult.OK;
+                }
             }
         }
 
@@ -872,7 +878,7 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
                          currentTagCodeAsNumber = int.Parse(Regex.Replace(newElem.TagCode, @"[^0-9]", ""));
                         }
                         //if these conditions are met, we add the current element group to the template and create a new one
-                        if (previousWasArray || index == 0 || prefix != previousPrefix || newElem.ElemType != previousType || previousTagCodeAsNumber + Math.Ceiling(previousDataLength / 2) != currentTagCodeAsNumber)//(prefix == "%MW" && newElemenGroup.Elems.Count == 125) || (prefix == "%M" && newElemenGroup.Elems.Count == 2000))
+                        if (previousWasArray || index == 0 || prefix != previousPrefix || newElem.ElemType != previousType || previousTagCodeAsNumber + Math.Ceiling(previousDataLength / 2) != currentTagCodeAsNumber || (prefix == "%MW" && newElemenGroup.Elems.Count == 125) || (prefix == "%M" && newElemenGroup.Elems.Count == 2000))
                         {
                             if (index > 0)
                             {
