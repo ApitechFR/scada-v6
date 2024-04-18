@@ -619,7 +619,7 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
         {
             if (string.IsNullOrEmpty(textBox4.Text))
             {
-                MessageBox.Show("Please fill the adress gap input", "Attention", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show("Please fill the adress gap input", "Warning", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
             else
             {
