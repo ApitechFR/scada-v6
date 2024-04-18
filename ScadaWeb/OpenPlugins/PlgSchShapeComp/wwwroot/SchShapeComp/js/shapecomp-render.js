@@ -31,17 +31,17 @@ scada.scheme.handleBlinking = function (divComp, blinking, bool) {
 	}
 };
 scada.scheme.updateStyles = function (divComp, cond, bool) {
-	if ("color" in cond) {
+	if ("color" in cond && cond.color !== null) {
 		divComp.css("color", cond.color);
 	}
-	if ("rotation" in cond) {
+	if ("rotation" in cond && cond.rotation !== null) {
 		divComp.css("transform", "rotate(" + cond.rotation + "deg)");
 	}
 
 	if ("backgroundColor" in cond || "backColor" in cond) {
 		var lineChild = divComp.find(".line");
 
-		if (lineChild.length > 0) {
+		if (lineChild.length > 0 && cond.backgroundColor !== null) {
 			if (bool) {
 				lineChild.css("background-color", cond.backgroundColor);
 			} else {
@@ -51,7 +51,7 @@ scada.scheme.updateStyles = function (divComp, cond, bool) {
 				);
 			}
 		} else {
-			if (bool) {
+			if (bool && cond.backgroundColor !== null) {
 				divComp.css("background-color", cond.backgroundColor);
 			} else {
 				divComp.css(
@@ -62,7 +62,7 @@ scada.scheme.updateStyles = function (divComp, cond, bool) {
 		}
 	}
 
-	if ("isVisible" in cond) {
+	if ("isVisible" in cond ) {
 		if (bool) {
 			divComp.css("visibility", cond.isVisible ? "visible" : "hidden");
 		} else {
@@ -70,7 +70,7 @@ scada.scheme.updateStyles = function (divComp, cond, bool) {
 		}
 	}
 
-	if ("width" in cond) {
+	if ("width" in cond && cond.with !== null) {
 		if (bool) {
 			divComp.css("width", cond.width);
 		} else {
@@ -78,7 +78,7 @@ scada.scheme.updateStyles = function (divComp, cond, bool) {
 		}
 	}
 
-	if ("height" in cond) {
+	if ("height" in cond && cond.height !== null) {
 		if (bool) {
 			divComp.css("height", cond.height);
 		} else {
@@ -129,6 +129,7 @@ function mergeWithPriorityToFirst(conditions) {
 			if (
 				mergedCondition[key] === undefined ||
 				mergedCondition[key] === null ||
+				mergedCondition[key] === 0 ||
 				mergedCondition[key] === "" ||
 				mergedCondition[key] === "None" ||
 				(key === "isVisible" && typeof condition[key] === "boolean")
@@ -151,23 +152,29 @@ scada.scheme.updateComponentData = function (component, renderContext) {
 	if (props.conditions && cnlDataExt.d.stat > 0) {
 		var cnlVal = cnlDataExt.d.val;
 
-		let condSastifieds = [];
-		let notSatisfieds = [];
+		let conditionSatisfied = [];
+
 		for (var cond of props.conditions) {
 			if (scada.scheme.calc.conditionSatisfied(cond, cnlVal)) {
-				condSastifieds.push(cond);
+				//scada.scheme.updateStyles(divComp, cond, true);
+				//scada.scheme.handleBlinking(divComp, cond.blinking, true);
+				conditionSatisfied.push(cond);
+
 			} else {
-				notSatisfieds.push(cond);
+				scada.scheme.updateStyles(divComp, props, false);
+				scada.scheme.handleBlinking(divComp, cond.blinking, false);
 			}
 		}
-		let mergeWithPriority = mergeWithPriorityToFirst(condSastifieds);
-		scada.scheme.updateStyles(divComp, mergeWithPriority, true);
-		scada.scheme.handleBlinking(divComp, mergeWithPriority.blinking, true);
+		if (conditionSatisfied.length > 1) {
+			let mergeWithPriority = mergeWithPriorityToFirst(conditionSatisfied);
 
-		notSatisfieds.forEach((notScondSastified) => {
-			scada.scheme.updateStyles(divComp, props, false);
-			scada.scheme.handleBlinking(divComp, notScondSastified.blinking, false);
-		});
+			scada.scheme.updateStyles(divComp, mergeWithPriority, true);
+			scada.scheme.handleBlinking(divComp, mergeWithPriority.blinking, true);
+		} else if (conditionSatisfied.length === 1) {
+			scada.scheme.updateStyles(divComp, conditionSatisfied[0], true);
+			scada.scheme.handleBlinking(divComp, conditionSatisfied[0].blinking, true);
+		}
+
 	}
 };
 
