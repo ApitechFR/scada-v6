@@ -126,16 +126,16 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
                         string parentRowType = "WORD";
                         switch(row.Value[3])
                         {
-                            case "%M":
+                            case "%M": //2000
                                 parentRowType = "BOOL";
                                 break;
-                            case "%MW":
+                            case "%MW": //125
                                 parentRowType = "WORD";
                                 break;
-                            case "%MD":
+                            case "%MD": //62
                                 parentRowType = "DWORD";
                                 break;
-                            case "%MF":
+                            case "%MF": //62
                                 parentRowType = "FLOAT";
                                 break;
                         }
@@ -878,7 +878,7 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
                          currentTagCodeAsNumber = int.Parse(Regex.Replace(newElem.TagCode, @"[^0-9]", ""));
                         }
                         //if these conditions are met, we add the current element group to the template and create a new one
-                        if (previousWasArray || index == 0 || prefix != previousPrefix || newElem.ElemType != previousType || previousTagCodeAsNumber + Math.Ceiling(previousDataLength / 2) != currentTagCodeAsNumber || (prefix == "%MW" && newElemenGroup.Elems.Count == 125) || (prefix == "%M" && newElemenGroup.Elems.Count == 2000))
+                        if (previousWasArray || index == 0 || prefix != previousPrefix || newElem.ElemType != previousType || previousTagCodeAsNumber + Math.Ceiling(previousDataLength / 2) != currentTagCodeAsNumber || (prefix == "%MW" && newElemenGroup.Elems.Count == 125) || (prefix == "%M" && newElemenGroup.Elems.Count == 2000) || (prefix == "%MD" && newElemenGroup.Elems.Count == 62) || (prefix == "%MF" && newElemenGroup.Elems.Count == 62))
                         {
                             if (index > 0)
                             {
