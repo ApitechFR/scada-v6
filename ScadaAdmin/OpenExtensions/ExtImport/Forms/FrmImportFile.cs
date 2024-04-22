@@ -126,16 +126,16 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
                         string parentRowType = "WORD";
                         switch(row.Value[3])
                         {
-                            case "%M": //2000
+                            case "%M":
                                 parentRowType = "BOOL";
                                 break;
-                            case "%MW": //125
+                            case "%MW":
                                 parentRowType = "WORD";
                                 break;
-                            case "%MD": //62
+                            case "%MD":
                                 parentRowType = "DWORD";
                                 break;
-                            case "%MF": //62
+                            case "%MF":
                                 parentRowType = "FLOAT";
                                 break;
                         }
