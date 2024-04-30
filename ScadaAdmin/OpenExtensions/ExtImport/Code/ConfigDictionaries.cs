@@ -53,8 +53,23 @@ namespace Scada.Admin.Extensions.ExtImport.Code
 				{"WORD", ElemType.UShort },
 				{"DINT", ElemType.Int },
         };
+        public static Dictionary<string, ElemType> PL7ElemTypeDictionary { get; } = new Dictionary<string, ElemType>
+        {
+                {"BOOL", ElemType.Bool },
+                {"EBOOL", ElemType.Bool },
+                {"REAL", ElemType.Float },
+                {"FLOAT", ElemType.Float },
+                {"INT", ElemType.Short },
+                {"LONG", ElemType.Long },
+                {"SHORT", ElemType.Short },
+                {"DWORD", ElemType.Int },
+                {"QWORD", ElemType.ULong },
+                {"UNDEFINED", ElemType.Undefined },
+                {"WORD", ElemType.Short },
+                {"DINT", ElemType.Int },
+        };
 
-		public static List<Obj> prefixesAndSuffixes { get; } = new List<Obj>
+        public static List<Obj> prefixesAndSuffixes { get; } = new List<Obj>
 		{
 			new Obj { ObjNum = 0, Name = " " },
 			new Obj { ObjNum = 1, Name = "DeviceName" },
