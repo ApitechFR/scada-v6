@@ -30,6 +30,7 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
         Dictionary<string, List<string>> ghostArrayElementRow;
         Dictionary<Cnl, DataBlock> importedChannelsDataBlocks;
         private bool preventImport = false;
+        private bool isPL7 = false;
 
         private readonly ScadaProject project;
         public FrmImportFile(ScadaProject prj)
@@ -103,7 +104,7 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
 
         private Dictionary<string, List<string>> getGhostsRows()
         {
-            Dictionary<string, ElemType> elemTypeDico = ConfigDictionaries.ElemTypeDictionary;
+            Dictionary<string, ElemType> elemTypeDico = getElemTypeDictionary();
             Dictionary<string, List<string>> ghostRows = new Dictionary<string, List<string>>();
             //for each imported row
             for (int i = 0; i < importedRows.Count(); i++)
@@ -207,7 +208,7 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
                 if (Path.GetExtension(fileName) == ".txt" || Path.GetExtension(fileName) == ".TXT")
                 {
                     bool isFirstLine = true;
-                    bool isPL7 = false;
+                    isPL7 = false;
                     importedRows.Clear();
 
                     while (!sr.EndOfStream)
@@ -227,7 +228,7 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
                             isFirstLine = false;
                         }
 
-                        readAutomateLine(line, isPL7);
+                        readAutomateLine(line);
                     }
                 }
 
@@ -297,6 +298,12 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
                 button1.Enabled = !hasConflicts;
             }
         }
+
+        Dictionary<string, ElemType> getElemTypeDictionary()
+        {
+            return isPL7 ? ConfigDictionaries.ElemTypeDictionary : ConfigDictionaries.PL7ElemTypeDictionary;
+        }
+
         /// <summary>
         /// Create a channel object, filled with data from a row of the imported file
         /// </summary>
@@ -307,7 +314,7 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
         private List<Cnl> GenerateChannelsFrowRows()
         {
             List<Cnl> list = new List<Cnl>();
-            Dictionary<string, ElemType> elemTypeDico = ConfigDictionaries.ElemTypeDictionary;
+            Dictionary<string, ElemType> elemTypeDico = getElemTypeDictionary();
 
             foreach (KeyValuePair<string, List<string>> row in importedRows)
             {
@@ -447,9 +454,9 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
         /// Read a line from an automate file
         /// </summary>
         /// <param name="l"></param>
-        private void readAutomateLine(string line, bool isPL7)
+        private void readAutomateLine(string line)
         {
-            Dictionary<string, ElemType> elemTypeDico = ConfigDictionaries.ElemTypeDictionary;
+            Dictionary<string, ElemType> elemTypeDico = getElemTypeDictionary();
             int adressIndex = isPL7 ? 0 : 1;
             int mnemoniqueIndex = isPL7 ? 1 : 0;
             int typeIndex = 2;
@@ -772,7 +779,7 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
             Dictionary<int, string> dataTypes = project.ConfigDatabase.DataTypeTable.ToDictionary(x => x.DataTypeID, x => x.Name);
             string previousPrefix = "";
             ElemType previousType = ElemType.Undefined;
-            Dictionary<string, ElemType> elemTypeDico = ConfigDictionaries.ElemTypeDictionary;
+            Dictionary<string, ElemType> elemTypeDico = getElemTypeDictionary();
             Dictionary<string, int> cnlDataType = ConfigDictionaries.CnlDataType;
             bool previousWasArray = false;
             decimal previousDataLength = 0;
