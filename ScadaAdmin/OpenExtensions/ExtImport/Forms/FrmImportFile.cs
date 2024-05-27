@@ -54,7 +54,7 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
             textBox3.Enabled = false;
 
             cbDevice.Items.Clear();
-            project.ConfigDatabase.DeviceTable.AsEnumerable().ToList().ForEach(d => cbDevice.Items.Add(d.Name));
+            getAvailableDevices().ForEach(d => cbDevice.Items.Add(d.Name));
             cbBoxPrefix.Items.Add("None");
             cbBoxPrefix.Items.AddRange(availablePrefixSuffix.Keys.ToArray());
             cbBoxPrefix.SelectedItem = "None";
@@ -655,6 +655,29 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
             DialogResult = DialogResult.Cancel;
         }
 
+        private List<Device> getAvailableDevices()
+        {
+            List<Device> devices = new List<Device>();
+            foreach (ProjectInstance instance in project.Instances)
+            {
+                if (instance.LoadAppConfig(out _) && instance.CommApp.Enabled)
+                {
+                    foreach (LineConfig lineConfig in instance.CommApp.AppConfig.Lines)
+                    {
+                        foreach (DeviceConfig deviceConfig in lineConfig.DevicePolling)
+                        {
+                            Device availableDevice = project.ConfigDatabase.DeviceTable.FirstOrDefault(d => d.DeviceNum == deviceConfig.DeviceNum);
+                            if (availableDevice != null)
+                            {
+                                devices.Add(availableDevice);
+                            }
+                        }
+                    }
+                }
+            }
+            return devices;
+        }
+
         /// <summary>
         /// Action triggered on device selection change
         /// </summary>
@@ -663,7 +686,7 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
         /// <exception cref="ScadaException"></exception>
         private void cbDevice_SelectedIndexChanged(object sender, EventArgs e)
         {
-            selectedDevice = project.ConfigDatabase.DeviceTable.ToList()[cbDevice.SelectedIndex];
+            selectedDevice = getAvailableDevices()[cbDevice.SelectedIndex];
             if (channelsToCreateAfterMerge != null)
             {
                 channelsToCreateAfterMerge = channelsToCreateAfterMerge.Select(c => { c.DeviceNum = selectedDevice.DeviceNum; return c; }).ToList();
@@ -704,7 +727,6 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
 
             //find current device configuration file
             SaveFileDialog saveFileDialog1 = new SaveFileDialog();
-            saveFileDialog1.FileName = string.Format("{0}.xml", selectedDevice.Name);
 
             DeviceConfig currentConfig = null;
             ProjectInstance currentInstance = null;
@@ -729,40 +751,55 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
                 }
             }
 
+            if(saveFileDialog1.FileName == "ScadaCommConfig.xml")
+            {
+                saveFileDialog1.FileName = string.Format("{0}.xml", selectedDevice.Name);
+            }
             saveFileDialog1.InitialDirectory = string.Format("{0}\\Instances\\Default\\ScadaComm\\Config", this.project.ProjectDir);
             saveFileDialog1.Filter = "Fichiers XML (*.xml)|*.xml";
             if (saveFileDialog1.ShowDialog() == DialogResult.OK)
             {
-                //First, we add channels chosen in merge form to the project's channels
-                AddChannelsToProject(channelsToCreateAfterMerge);
-
-                //If not all imported rows were in conflict, we create channels for all other rows and add them to the project's channels
-                //Warning : there can be multiple conflictual channels for one imported channel
-                if (importedChannels.Count() != importedChannels.Where(ic => conflictualChannels.Any(c => c.TagCode == ic.TagCode)).Count() && conflictualChannels.Count() > 0)
+                if(saveFileDialog1.FileName == string.Format("{0}\\Instances\\Default\\ScadaComm\\Config\\ScadaCommConfig.xml", this.project.ProjectDir))
                 {
-                    // we create channels for all other rows, which were not in conflict
-                    List<Cnl> nonConflictualChannels = importedChannels.Where(ic => !conflictualChannels.Any(c => c.TagCode == ic.TagCode)).ToList();
-                    //we add them to the project's channels
-                    AddChannelsToProject(nonConflictualChannels);
+                    MessageBox.Show("This filename is reserved. Please choose another name.");
                 }
-                using (Stream s = File.Open(saveFileDialog1.FileName, FileMode.Create))
-                using (StreamWriter sw = new StreamWriter(s))
+                else
                 {
-                    xmlDoc.Save(sw);
-                }
+                    //First, we add channels chosen in merge form to the project's channels
+                    AddChannelsToProject(channelsToCreateAfterMerge);
 
-                //replace device configuration file in project
-                var newFilename = saveFileDialog1.FileName.Split('\\').Last();
-                if (currentConfig != null)
-                {
-                    currentConfig.PollingOptions.CmdLine = newFilename;
-                    string fileName = Path.Combine(currentInstance.CommApp.ConfigDir, CommConfig.DefaultFileName);
-                    if (!currentInstance.CommApp.AppConfig.Save(string.Format(fileName, this.project.ProjectDir), out string errMess))
+                    //If not all imported rows were in conflict, we create channels for all other rows and add them to the project's channels
+                    //Warning : there can be multiple conflictual channels for one imported channel
+                    if (importedChannels.Count() != importedChannels.Where(ic => conflictualChannels.Any(c => c.TagCode == ic.TagCode)).Count() && conflictualChannels.Count() > 0)
                     {
-                        ScadaUiUtils.ShowError(errMess);
+                        // we create channels for all other rows, which were not in conflict
+                        List<Cnl> nonConflictualChannels = importedChannels.Where(ic => !conflictualChannels.Any(c => c.TagCode == ic.TagCode)).ToList();
+                        //we add them to the project's channels
+                        AddChannelsToProject(nonConflictualChannels);
                     }
+                    using (Stream s = File.Open(saveFileDialog1.FileName, FileMode.Create))
+                    using (StreamWriter sw = new StreamWriter(s))
+                    {
+                        xmlDoc.Save(sw);
+                    }
+
+                    //replace device configuration file in project
+                    var newFilename = saveFileDialog1.FileName.Split('\\').Last();
+                    if (currentConfig != null)
+                    {
+                        currentConfig.PollingOptions.CmdLine = newFilename;
+                        string fileName = Path.Combine(currentInstance.CommApp.ConfigDir, CommConfig.DefaultFileName);
+                        if (!currentInstance.CommApp.AppConfig.Save(string.Format(fileName, this.project.ProjectDir), out string errMess))
+                        {
+                            ScadaUiUtils.ShowError(errMess);
+                        }
+                    }
+                    doNext = true;
                 }
-                doNext = true;
+            }
+            else
+            {
+                MessageBox.Show("An error occured while saving the file. Please try again.");
             }
             return doNext;
         }
