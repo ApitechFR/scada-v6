@@ -301,7 +301,7 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
 
         Dictionary<string, ElemType> getElemTypeDictionary()
         {
-            return isPL7 ? ConfigDictionaries.ElemTypeDictionary : ConfigDictionaries.PL7ElemTypeDictionary;
+            return isPL7 ? ConfigDictionaries.PL7ElemTypeDictionary : ConfigDictionaries.ElemTypeDictionary;
         }
 
         /// <summary>
