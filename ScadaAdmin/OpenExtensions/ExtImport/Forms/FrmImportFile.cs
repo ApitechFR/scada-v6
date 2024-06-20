@@ -29,6 +29,7 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
         Dictionary<string, string> ghostChildren;
         Dictionary<string, List<string>> ghostArrayElementRow;
         Dictionary<Cnl, DataBlock> importedChannelsDataBlocks;
+        private List<Cnl> channelsToReplaceWithoutExplicitUserAction;
         private bool preventImport = false;
         private bool isPL7 = false;
 
@@ -48,6 +49,7 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
             ghostChildren = new Dictionary<string, string>();
             ghostArrayElementRow = new Dictionary<string, List<string>>();
             importedChannelsDataBlocks = new Dictionary<Cnl, DataBlock>();
+            channelsToReplaceWithoutExplicitUserAction = new List<Cnl>();
             button1.Enabled = false;
             textBox1.Enabled = false;
             textBox2.Enabled = false;
@@ -413,38 +415,43 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
             }
 
             preventImport = false;
-            conflictualChannels = project.ConfigDatabase.CnlTable.Where(channel => importedChannels.Any(
-                c =>
+            channelsToReplaceWithoutExplicitUserAction = project.ConfigDatabase.CnlTable.Where(existingChannel => importedChannels.Any(
+                importedChannel =>
+                {
+                    return importedChannel.TagCode == existingChannel.TagCode && existingChannel.DeviceNum == selectedDevice.DeviceNum && existingChannel.Name == importedChannel.Name;
+                })).ToList();
+            conflictualChannels = project.ConfigDatabase.CnlTable.Where(existingChannel => importedChannels.Any(
+                importedChannel =>
                 {
                     if(preventImport)
                     {
                         return true;
                     }
-                    if(c.TagCode == channel.TagCode && channel.DeviceNum == selectedDevice.DeviceNum)
+                    if(importedChannel.TagCode == existingChannel.TagCode && existingChannel.DeviceNum == selectedDevice.DeviceNum && existingChannel.Name != importedChannel.Name)
                     {
                         //get device template from the device configuration file
                         DeviceTemplate deviceTemplate = new DeviceTemplate();
                         if(currentDeviceConfig == null || currentDeviceConfig.PollingOptions.CmdLine == "" || currentDeviceConfig.PollingOptions.CmdLine
                          == null || !File.Exists(string.Format("{0}\\Instances\\Default\\ScadaComm\\Config\\{1}", project.ProjectDir, currentDeviceConfig.PollingOptions.CmdLine)))
                         {
-                            MessageBox.Show("Channel n°"+channel.CnlNum+" is linked to a device n°"+ selectedDevice.DeviceNum+", but no configuration file was found for this device. The detection of conflicts cannot be performed.");
+                            MessageBox.Show("Channel n°"+ existingChannel.CnlNum+" is linked to a device n°"+ selectedDevice.DeviceNum+", but no configuration file was found for this device. The detection of conflicts cannot be performed.");
                             preventImport = true;
                             return true;
                         }
-                        string tagCodeWithoutPrefix = new string(channel.TagCode.SkipWhile(c => !char.IsDigit(c)).ToArray());
+                        string tagCodeWithoutPrefix = new string(existingChannel.TagCode.SkipWhile(c => !char.IsDigit(c)).ToArray());
                         if(!tagCodeWithoutPrefix.All(char.IsDigit))
                         {
                             return true;
                         }
                         deviceTemplate.Load(string.Format("{0}\\Instances\\Default\\ScadaComm\\Config\\{1}", project.ProjectDir, currentDeviceConfig.PollingOptions.CmdLine), out string a);
-                        Console.WriteLine(a);
-                        //get the element group linked to the element linked to the channel
-                        ElemGroupConfig elemGroup = deviceTemplate.ElemGroups.FirstOrDefault(eg => eg.Elems.Any(e => e.TagCode == channel.TagCode));
+
+                        //get the element group linked to the element linked to the existingChannel
+                        ElemGroupConfig elemGroup = deviceTemplate.ElemGroups.FirstOrDefault(eg => eg.Elems.Any(e => e.TagCode == existingChannel.TagCode));
                         if(elemGroup == null)
                         {
                             return false;
                         }
-                        return (elemGroup.DataBlock == DataBlock.DiscreteInputs) == (importedChannelsDataBlocks[c] == DataBlock.DiscreteInputs);
+                        return (elemGroup.DataBlock == DataBlock.DiscreteInputs) == (importedChannelsDataBlocks[importedChannel] == DataBlock.DiscreteInputs);
                     }
                     return false;
                     })).ToList();
@@ -570,7 +577,6 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
                     }
                 }
                 project.ConfigDatabase.CnlTable.AddItem(cnl);
-                
             }
             int count = 0;
             foreach (Cnl cnl in project.ConfigDatabase.CnlTable.Where(c=>c.DeviceNum == selectedDevice.DeviceNum))
@@ -687,9 +693,9 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
         private void cbDevice_SelectedIndexChanged(object sender, EventArgs e)
         {
             selectedDevice = getAvailableDevices()[cbDevice.SelectedIndex];
-            if (channelsToCreateAfterMerge != null)
+            if (importedChannels != null)
             {
-                channelsToCreateAfterMerge = channelsToCreateAfterMerge.Select(c => { c.DeviceNum = selectedDevice.DeviceNum; return c; }).ToList();
+                channelsToCreateAfterMerge = importedChannels.Select(c => { c.DeviceNum = selectedDevice.DeviceNum; return c; }).ToList();
             }
             refreshFormAccesses();
         }
@@ -751,10 +757,11 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
                 }
             }
 
-            if(saveFileDialog1.FileName == "ScadaCommConfig.xml")
+            if(saveFileDialog1.FileName == "ScadaCommConfig.xml" || saveFileDialog1.FileName == "")
             {
                 saveFileDialog1.FileName = string.Format("{0}.xml", selectedDevice.Name);
             }
+            
             saveFileDialog1.InitialDirectory = string.Format("{0}\\Instances\\Default\\ScadaComm\\Config", this.project.ProjectDir);
             saveFileDialog1.Filter = "Fichiers XML (*.xml)|*.xml";
             if (saveFileDialog1.ShowDialog() == DialogResult.OK)
@@ -765,18 +772,25 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
                 }
                 else
                 {
-                    //First, we add channels chosen in merge form to the project's channels
-                    AddChannelsToProject(channelsToCreateAfterMerge);
-
-                    //If not all imported rows were in conflict, we create channels for all other rows and add them to the project's channels
-                    //Warning : there can be multiple conflictual channels for one imported channel
-                    if (importedChannels.Count() != importedChannels.Where(ic => conflictualChannels.Any(c => c.TagCode == ic.TagCode)).Count() && conflictualChannels.Count() > 0)
+                    List<Cnl> ChannelsToAdd = new List<Cnl>();
+                    
+                    if(conflictualChannels.Count()!=0)
                     {
-                        // we create channels for all other rows, which were not in conflict
-                        List<Cnl> nonConflictualChannels = importedChannels.Where(ic => !conflictualChannels.Any(c => c.TagCode == ic.TagCode)).ToList();
-                        //we add them to the project's channels
-                        AddChannelsToProject(nonConflictualChannels);
+                        ChannelsToAdd = channelsToCreateAfterMerge.Concat(importedChannels.Where(
+                            ic=>!channelsToCreateAfterMerge.Any(c => c.TagCode == ic.TagCode) && 
+                            !channelsToReplaceWithoutExplicitUserAction.Any(c => c.TagCode == ic.TagCode) && 
+                            !conflictualChannels.Any(c => c.TagCode == ic.TagCode)
+                            )).ToList();
                     }
+                    else if (channelsToReplaceWithoutExplicitUserAction.Count() == 0)
+                    {
+                        ChannelsToAdd = importedChannels;
+                    }
+                    else
+                    {
+                        ChannelsToAdd = importedChannels.Where(ic => !channelsToReplaceWithoutExplicitUserAction.Any(c => c.TagCode == ic.TagCode)).ToList();
+                    }
+                    AddChannelsToProject(ChannelsToAdd);
                     using (Stream s = File.Open(saveFileDialog1.FileName, FileMode.Create))
                     using (StreamWriter sw = new StreamWriter(s))
                     {
@@ -795,8 +809,8 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
                         }
                     }
                     doNext = true;
-                }
             }
+                }
             else
             {
                 MessageBox.Show("An error occured while saving the file. Please try again.");
