@@ -305,11 +305,6 @@ namespace Scada.Admin.Extensions.ExtImport.Forms
                     Cnl cnl = (Cnl)row.Cells[6].Value;
                     channelsToCreate.Add(cnl);
                 }
-                else if (Convert.ToBoolean(row.Cells[7].Value) == true)
-                {
-                    Cnl cnl = (Cnl)row.Cells[12].Value;
-                    channelsToCreate.Add(cnl);
-                }
             }
 
             DialogResult = DialogResult.OK;
