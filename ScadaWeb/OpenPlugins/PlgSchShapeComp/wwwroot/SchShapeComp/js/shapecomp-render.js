@@ -573,17 +573,15 @@ scada.scheme.DynamicTextRenderer.prototype.updateData = function (
 		//add condition textContente to set spanText
 		if (props.conditions && cnlDataExt.d.stat > 0) {
 			var cnlVal = cnlDataExt.d.val;
+			let isConditionSatisfied = false;
 			for (var cond of props.conditions) {
-				if (scada.scheme.calc.conditionSatisfied(cond, cnlVal)) {
+				if (!isConditionSatisfied && scada.scheme.calc.conditionSatisfied(cond, cnlVal)) {
+					isConditionSatisfied = true;
 					if (cond.textContent) {
 						spanText.text(cond.textContent);
 					}
-				}
-				//update font size
-				if (scada.scheme.calc.conditionSatisfied(cond, cnlVal)) {
 					this.setFontSize(spanComp, cond.fontSize);
 				}
-				break;
 			}
 		}
 
